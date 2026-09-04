@@ -135,6 +135,9 @@ jobs:
       - name: Generate server config from secrets
         run: |
           set -euo pipefail
+          # upload-artifact drops empty directories, so bundle/app/config/ does
+          # not survive the round-trip from the build job. Recreate it here.
+          mkdir -p bundle/app/config
           cat > bundle/app/config/.env <<EOF
           APP_ENV=staging
           APP_DEBUG=false
@@ -163,6 +166,17 @@ jobs:
           EOF
           # Tell the api/ entrypoints where the non-public app directory lives.
           printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
+          # Prove the file exists and is populated, without printing any value.
+          # Keys only: a missing secret shows up as a key with an empty value.
+          echo "--- generated .env ---"
+          test -s bundle/app/config/.env || { echo "::error::.env is missing or empty"; exit 1; }
+          awk -F= '/^[A-Z]/ { printf "  %-26s %s\n", $1, ($2 == "" ? "(EMPTY!)" : "set") }' \
+            bundle/app/config/.env
+          empty=$(awk -F= '/^[A-Z]/ && $2 == "" { c++ } END { print c+0 }' bundle/app/config/.env)
+          echo "  -> $(grep -c '^[A-Z]' bundle/app/config/.env) keys, ${empty} with no value"
+          test -s bundle/web/api/_app_root.php || { echo "::error::_app_root.php is missing"; exit 1; }
+          echo "--- api/_app_root.php ---"
+          cat bundle/web/api/_app_root.php
 
       - name: Upload site + api
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -305,6 +319,9 @@ jobs:
       - name: Generate server config from secrets
         run: |
           set -euo pipefail
+          # upload-artifact drops empty directories, so bundle/app/config/ does
+          # not survive the round-trip from the build job. Recreate it here.
+          mkdir -p bundle/app/config
           cat > bundle/app/config/.env <<EOF
           APP_ENV=production
           APP_DEBUG=false
@@ -332,6 +349,17 @@ jobs:
           MAIL_FROM_NAME=Diwan POS
           EOF
           printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
+          # Prove the file exists and is populated, without printing any value.
+          # Keys only: a missing secret shows up as a key with an empty value.
+          echo "--- generated .env ---"
+          test -s bundle/app/config/.env || { echo "::error::.env is missing or empty"; exit 1; }
+          awk -F= '/^[A-Z]/ { printf "  %-26s %s\n", $1, ($2 == "" ? "(EMPTY!)" : "set") }' \
+            bundle/app/config/.env
+          empty=$(awk -F= '/^[A-Z]/ && $2 == "" { c++ } END { print c+0 }' bundle/app/config/.env)
+          echo "  -> $(grep -c '^[A-Z]' bundle/app/config/.env) keys, ${empty} with no value"
+          test -s bundle/web/api/_app_root.php || { echo "::error::_app_root.php is missing"; exit 1; }
+          echo "--- api/_app_root.php ---"
+          cat bundle/web/api/_app_root.php
 
       # Order matters: classes and config land BEFORE the entrypoints that call
       # them, so there is no window where new PHP looks for a class that is not
