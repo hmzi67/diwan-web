@@ -1,0 +1,36 @@
+# Deployed to public_html/api/ — the ONLY directory from which PHP is served.
+
+Options -Indexes
+DirectoryIndex index.php
+
+# Internal includes and the generated app-root pointer are never entrypoints.
+<FilesMatch "^_">
+  Require all denied
+</FilesMatch>
+
+# No dotfiles, no config, no leftovers.
+<FilesMatch "^\.|\.(env|ini|log|sql|md|sh|bak|dist|yml|yaml|example)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "no-referrer"
+  # Download links must never be cached by a proxy.
+  Header always set Cache-Control "no-store"
+</IfModule>
+
+# Large installers stream through download.php; give them room.
+<IfModule mod_php.c>
+  php_value max_execution_time 600
+  php_value output_buffering 0
+</IfModule>
+
+# Webhooks come from the gateway, not a browser — no CORS, no credentials.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/api/$1 [R=301,L]
+</IfModule>

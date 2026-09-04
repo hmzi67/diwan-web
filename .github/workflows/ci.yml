@@ -1,0 +1,71 @@
+name: CI
+
+# Runs on every PR and on branches that are not deploy targets, so problems
+# surface before they can ever reach a deploy branch.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main, staging]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint & build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Confirm the code is clean on the server's PHP version and the next
+        # one, so a host upgrade never breaks a live payment flow.
+        php: ['8.1', '8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: none
+
+      - name: PHP syntax check
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r -d '' file; do
+            php -l "$file" > /dev/null || { echo "::error file=$file::PHP syntax error"; fail=1; }
+          done < <(find backend -name '*.php' -print0)
+          [ "$fail" -eq 0 ] || exit 1
+
+      - name: Build frontend
+        run: bash frontend/build.sh
+
+      - name: Shell scripts parse cleanly
+        run: |
+          set -euo pipefail
+          for f in scripts/*.sh frontend/build.sh; do bash -n "$f"; done
+
+      - name: Schema is valid SQL
+        uses: shogo82148/actions-setup-mysql@v1
+        with: { mysql-version: '8.0' }
+
+      - name: Apply schema to a scratch database
+        run: |
+          set -euo pipefail
+          mysql -uroot -h127.0.0.1 -e 'CREATE DATABASE diwan_ci;'
+          mysql -uroot -h127.0.0.1 diwan_ci < database/schema.sql
+          mysql -uroot -h127.0.0.1 diwan_ci -e 'SHOW TABLES;'
+          # Re-apply: schema.sql must stay idempotent.
+          mysql -uroot -h127.0.0.1 diwan_ci < database/schema.sql
+
+      - name: No secrets committed
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '(^|/)\.env$|\.env\.(local|production|staging)$'; then
+            echo "::error::A real .env file is tracked in git."
+            exit 1
+          fi
+          if git ls-files | grep -E '\.(exe|dmg|apk|msi|pkg)$'; then
+            echo "::error::Installer binaries are tracked in git."
+            exit 1
+          fi

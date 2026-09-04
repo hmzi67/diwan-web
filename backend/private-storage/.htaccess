@@ -1,0 +1,15 @@
+# Defence in depth. On the intended layout this directory sits OUTSIDE the web
+# root and no URL can reach it. This file only matters if someone (or a future
+# deploy mistake) ever places src/ under public_html — then Apache still refuses.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>
+
+# Belt and braces: even if a rogue rule re-enabled access, refuse binaries.
+<FilesMatch "\.(exe|dmg|apk|msi|pkg|zip|sql|log)$">
+  Require all denied
+</FilesMatch>

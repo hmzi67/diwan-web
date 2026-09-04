@@ -1,0 +1,43 @@
+# Deployed to the production/staging web root (public_html/).
+# Governs the STATIC site. The API has its own .htaccess in public_html/api/.
+
+Options -Indexes
+DirectoryIndex index.html index.php
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  # Enable only once HTTPS is confirmed working on every hostname:
+  # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Force HTTPS
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+</IfModule>
+
+# Block dotfiles, the FTP sync state file, and anything that leaks config.
+<FilesMatch "^\.|\.(env|ini|log|sql|md|sh|json|bak|dist|yml|yaml)$">
+  Require all denied
+</FilesMatch>
+<Files ".ftp-deploy-sync-state.json">
+  Require all denied
+</Files>
+
+# Never let a stray binary be served from the web root.
+<FilesMatch "\.(exe|dmg|apk|msi|pkg|zip|tar|gz)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>

@@ -1,0 +1,368 @@
+name: Deploy
+
+# ---------------------------------------------------------------------------
+# push to `staging` -> staging site (automatic)
+# push to `main`    -> production   (requires manual approval, see README)
+# workflow_dispatch -> either, with an optional dry run
+# ---------------------------------------------------------------------------
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Where to deploy'
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+      dry_run:
+        description: 'Dry run only — list changes, upload nothing'
+        required: false
+        default: false
+        type: boolean
+
+# Never let two deploys race to the same FTP account.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # ==========================================================================
+  # 1. BUILD — everything that can fail, fails here, before any FTP connection
+  # ==========================================================================
+  build:
+    name: Build & verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'   # match the server; see docs/SERVER-CHECKLIST.md
+          tools: none
+
+      - name: Lint every PHP file
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r -d '' file; do
+            php -l "$file" > /dev/null || { echo "::error file=$file::PHP syntax error"; fail=1; }
+          done < <(find backend -name '*.php' -print0)
+          [ "$fail" -eq 0 ] || exit 1
+          echo "PHP lint passed."
+
+      - name: Build frontend
+        run: bash frontend/build.sh   # `set -e` inside; a failure stops the job
+
+      - name: Assemble deployment bundle
+        run: |
+          set -euo pipefail
+          # bundle/web -> public_html      (static site + api/)
+          # bundle/app -> ~/app            (PHP classes, NOT web accessible)
+          mkdir -p bundle/web/api bundle/app/src bundle/app/config
+
+          cp -R frontend/dist/.        bundle/web/
+          cp -R backend/public/.       bundle/web/api/
+          cp -R backend/src/.          bundle/app/src/
+
+          # Things that must never reach the server.
+          rm -f  bundle/web/api/_app_root.php.example
+          rm -rf bundle/web/node_modules bundle/app/node_modules
+          find bundle -name '.DS_Store' -delete
+          find bundle -name '*.md'      -delete
+          find bundle -name '.env*'     -delete
+
+          echo "--- bundle contents ---"
+          find bundle -type f | sort
+
+      # Hard stop: a binary or a secret in the bundle is a release-blocking bug.
+      - name: Guard — no installers or secrets in the bundle
+        run: |
+          set -euo pipefail
+          if find bundle -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.apk' \
+               -o -name '*.msi' -o -name '*.pkg' \) | grep -q .; then
+            echo "::error::Installer binaries found in the deploy bundle. They belong in private-storage, uploaded manually."
+            exit 1
+          fi
+          if find bundle -name '.env' -o -name '.env.*' | grep -q .; then
+            echo "::error::An .env file is in the deploy bundle."
+            exit 1
+          fi
+          if grep -rIl --exclude-dir=.git -E 'JAZZCASH_INTEGRITY_SALT=[^[:space:]]|DB_PASS=[^[:space:]]' bundle 2>/dev/null | grep -q .; then
+            echo "::error::Hardcoded credentials detected in the deploy bundle."
+            exit 1
+          fi
+          echo "Bundle guard passed."
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deploy-bundle
+          path: bundle/
+          retention-days: 7
+          include-hidden-files: true   # .htaccess files are the whole point
+
+  # ==========================================================================
+  # 2. STAGING — automatic on push to `staging`
+  # ==========================================================================
+  deploy-staging:
+    name: Deploy to staging
+    needs: build
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/staging') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: scripts }
+
+      - uses: actions/download-artifact@v4
+        with: { name: deploy-bundle, path: bundle }
+
+      - name: Generate server config from secrets
+        run: |
+          set -euo pipefail
+          cat > bundle/app/config/.env <<EOF
+          APP_ENV=staging
+          APP_DEBUG=false
+          APP_URL=${{ vars.SITE_URL }}
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_COMMIT=${{ github.sha }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ vars.DB_PORT || '3306' }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASS=${{ secrets.DB_PASS }}
+          PRIVATE_STORAGE_PATH=${{ vars.APP_ROOT }}/private-storage
+          DOWNLOAD_TOKEN_TTL_DAYS=30
+          DOWNLOAD_MAX_ATTEMPTS=5
+          PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
+          JAZZCASH_MERCHANT_ID=${{ secrets.JAZZCASH_MERCHANT_ID }}
+          JAZZCASH_PASSWORD=${{ secrets.JAZZCASH_PASSWORD }}
+          JAZZCASH_INTEGRITY_SALT=${{ secrets.JAZZCASH_INTEGRITY_SALT }}
+          JAZZCASH_ENDPOINT=${{ vars.JAZZCASH_ENDPOINT }}
+          EASYPAISA_STORE_ID=${{ secrets.EASYPAISA_STORE_ID }}
+          EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
+          SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
+          SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          MAIL_FROM=${{ vars.MAIL_FROM }}
+          MAIL_FROM_NAME=Diwan POS
+          EOF
+          # Tell the api/ entrypoints where the non-public app directory lives.
+          printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
+
+      - name: Upload site + api
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server:      ${{ secrets.FTP_SERVER }}
+          username:    ${{ secrets.FTP_USERNAME }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          port:        ${{ vars.FTP_PORT || 21 }}
+          protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir:   ./bundle/web/
+          server-dir:  ${{ vars.WEB_ROOT }}/
+          state-name:  .ftp-deploy-web.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/private-storage/**
+            **/.well-known/**
+            **/cgi-bin/**
+            **/error_log
+            **/.ftpquota
+            **/php.ini
+            **/.user.ini
+
+      - name: Upload backend classes
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server:      ${{ secrets.FTP_SERVER }}
+          username:    ${{ secrets.FTP_USERNAME }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          port:        ${{ vars.FTP_PORT || 21 }}
+          protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir:   ./bundle/app/src/
+          server-dir:  ${{ vars.APP_ROOT }}/src/
+          state-name:  .ftp-deploy-app-src.json
+          dangerous-clean-slate: false
+
+      - name: Upload generated .env
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server:      ${{ secrets.FTP_SERVER }}
+          username:    ${{ secrets.FTP_USERNAME }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          port:        ${{ vars.FTP_PORT || 21 }}
+          protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir:   ./bundle/app/config/
+          server-dir:  ${{ vars.APP_ROOT }}/config/
+          state-name:  .ftp-deploy-app-config.json
+          dangerous-clean-slate: false
+
+      - name: Smoke test
+        run: bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+
+  # ==========================================================================
+  # 3. PRODUCTION — dry run first, then a gated real deploy
+  # ==========================================================================
+  production-dry-run:
+    name: Production dry run
+    needs: build
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'production')
+    runs-on: ubuntu-latest
+    # No `environment:` here on purpose — the dry run needs no approval, so you
+    # can read the diff BEFORE deciding whether to approve the real thing.
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: deploy-bundle, path: bundle }
+
+      - name: Placeholder config (dry run never uploads it)
+        run: |
+          mkdir -p bundle/app/config
+          echo "APP_ENV=production" > bundle/app/config/.env
+          printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
+
+      - name: Dry run — show exactly what would change
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server:      ${{ secrets.FTP_SERVER }}
+          username:    ${{ secrets.FTP_USERNAME }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          port:        ${{ vars.FTP_PORT || 21 }}
+          protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir:   ./bundle/web/
+          server-dir:  ${{ vars.WEB_ROOT }}/
+          state-name:  .ftp-deploy-web.json
+          dry-run: true
+          log-level: verbose
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/private-storage/**
+            **/.well-known/**
+            **/cgi-bin/**
+            **/error_log
+            **/.ftpquota
+            **/php.ini
+            **/.user.ini
+
+  deploy-production:
+    name: Deploy to production
+    needs: [build, production-dry-run]
+    if: |
+      github.event.inputs.dry_run != 'true' && (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && inputs.target == 'production')
+      )
+    runs-on: ubuntu-latest
+    # Add a required reviewer to this environment in repo Settings and the job
+    # will pause here until a human clicks Approve. That is the confirmation gate.
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: scripts }
+
+      - uses: actions/download-artifact@v4
+        with: { name: deploy-bundle, path: bundle }
+
+      - name: Generate server config from secrets
+        run: |
+          set -euo pipefail
+          cat > bundle/app/config/.env <<EOF
+          APP_ENV=production
+          APP_DEBUG=false
+          APP_URL=${{ vars.SITE_URL }}
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_COMMIT=${{ github.sha }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ vars.DB_PORT || '3306' }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASS=${{ secrets.DB_PASS }}
+          PRIVATE_STORAGE_PATH=${{ vars.APP_ROOT }}/private-storage
+          DOWNLOAD_TOKEN_TTL_DAYS=30
+          DOWNLOAD_MAX_ATTEMPTS=5
+          PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
+          JAZZCASH_MERCHANT_ID=${{ secrets.JAZZCASH_MERCHANT_ID }}
+          JAZZCASH_PASSWORD=${{ secrets.JAZZCASH_PASSWORD }}
+          JAZZCASH_INTEGRITY_SALT=${{ secrets.JAZZCASH_INTEGRITY_SALT }}
+          JAZZCASH_ENDPOINT=${{ vars.JAZZCASH_ENDPOINT }}
+          EASYPAISA_STORE_ID=${{ secrets.EASYPAISA_STORE_ID }}
+          EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
+          SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
+          SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          MAIL_FROM=${{ vars.MAIL_FROM }}
+          MAIL_FROM_NAME=Diwan POS
+          EOF
+          printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
+
+      # Order matters: classes and config land BEFORE the entrypoints that call
+      # them, so there is no window where new PHP looks for a class that is not
+      # there yet.
+      - name: Upload backend classes
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server:      ${{ secrets.FTP_SERVER }}
+          username:    ${{ secrets.FTP_USERNAME }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          port:        ${{ vars.FTP_PORT || 21 }}
+          protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir:   ./bundle/app/src/
+          server-dir:  ${{ vars.APP_ROOT }}/src/
+          state-name:  .ftp-deploy-app-src.json
+          dangerous-clean-slate: false
+
+      - name: Upload generated .env
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server:      ${{ secrets.FTP_SERVER }}
+          username:    ${{ secrets.FTP_USERNAME }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          port:        ${{ vars.FTP_PORT || 21 }}
+          protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir:   ./bundle/app/config/
+          server-dir:  ${{ vars.APP_ROOT }}/config/
+          state-name:  .ftp-deploy-app-config.json
+          dangerous-clean-slate: false
+
+      - name: Upload site + api
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server:      ${{ secrets.FTP_SERVER }}
+          username:    ${{ secrets.FTP_USERNAME }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          port:        ${{ vars.FTP_PORT || 21 }}
+          protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir:   ./bundle/web/
+          server-dir:  ${{ vars.WEB_ROOT }}/
+          state-name:  .ftp-deploy-web.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/private-storage/**
+            **/.well-known/**
+            **/cgi-bin/**
+            **/error_log
+            **/.ftpquota
+            **/php.ini
+            **/.user.ini
+
+      - name: Smoke test
+        run: bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"

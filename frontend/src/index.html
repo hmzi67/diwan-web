@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diwan POS — Point of Sale for Pakistani Retail</title>
+  <meta name="description" content="Diwan is a fast, offline-first point of sale system for retail and restaurants.">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/">Diwan</a>
+    <nav><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#download">Download</a></nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Point of sale that keeps selling when the internet stops.</h1>
+      <p>Offline-first billing, inventory and reporting for shops and restaurants across Pakistan.</p>
+      <a class="btn" href="#pricing">Buy Diwan — Rs 12,000</a>
+    </section>
+
+    <section id="features"><h2>Features</h2><ul>
+      <li>Offline-first billing with automatic sync</li>
+      <li>Inventory, purchase orders and stock alerts</li>
+      <li>Urdu and English receipts, thermal printer support</li>
+    </ul></section>
+
+    <section id="pricing">
+      <h2>Pricing</h2>
+      <form id="checkout-form">
+        <label>Email <input type="email" name="email" required placeholder="you@example.com"></label>
+        <label>Phone <input type="tel" name="phone" required placeholder="03001234567"></label>
+        <input type="hidden" name="product_sku" value="diwan-pos-standard">
+        <button class="btn" type="submit">Pay with JazzCash</button>
+      </form>
+      <p id="checkout-status" role="status"></p>
+    </section>
+
+    <section id="download">
+      <h2>Already purchased?</h2>
+      <p>Paste the licence key from your receipt email to get your installer.</p>
+      <form id="download-form">
+        <label>Licence key <input type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
+        <select name="platform"><option value="windows">Windows (.exe)</option><option value="macos">macOS (.dmg)</option><option value="android">Android (.apk)</option></select>
+        <button class="btn" type="submit">Get download link</button>
+      </form>
+      <p id="download-status" role="status"></p>
+    </section>
+  </main>
+
+  <footer><p>&copy; 2026 Diwan. All rights reserved.</p></footer>
+  <script src="/js/main.js"></script>
+</body>
+</html>
