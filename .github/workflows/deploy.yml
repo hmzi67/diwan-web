@@ -167,7 +167,6 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
-          PRIVATE_STORAGE_PATH=${{ vars.APP_ROOT }}/private-storage
           DOWNLOAD_TOKEN_TTL_DAYS=30
           DOWNLOAD_MAX_ATTEMPTS=5
           PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
@@ -182,8 +181,6 @@ jobs:
           MAIL_FROM=${{ vars.MAIL_FROM }}
           MAIL_FROM_NAME=Diwan POS
           EOF
-          # Tell the api/ entrypoints where the non-public app directory lives.
-          printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
           # Prove the file exists and is populated, without printing any value.
           # Keys only: a missing secret shows up as a key with an empty value.
           echo "--- generated .env ---"
@@ -192,9 +189,6 @@ jobs:
             bundle/app/config/.env
           empty=$(awk -F= '/^[A-Z]/ && $2 == "" { c++ } END { print c+0 }' bundle/app/config/.env)
           echo "  -> $(grep -c '^[A-Z]' bundle/app/config/.env) keys, ${empty} with no value"
-          test -s bundle/web/api/_app_root.php || { echo "::error::_app_root.php is missing"; exit 1; }
-          echo "--- api/_app_root.php ---"
-          cat bundle/web/api/_app_root.php
 
       - name: Upload site + api
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -297,7 +291,6 @@ jobs:
         run: |
           mkdir -p bundle/app/config
           echo "APP_ENV=production" > bundle/app/config/.env
-          printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
 
       - name: Dry run — show exactly what would change
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -387,7 +380,6 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
-          PRIVATE_STORAGE_PATH=${{ vars.APP_ROOT }}/private-storage
           DOWNLOAD_TOKEN_TTL_DAYS=30
           DOWNLOAD_MAX_ATTEMPTS=5
           PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
@@ -402,7 +394,6 @@ jobs:
           MAIL_FROM=${{ vars.MAIL_FROM }}
           MAIL_FROM_NAME=Diwan POS
           EOF
-          printf '<?php return %s;\n' "'${{ vars.APP_ROOT }}'" > bundle/web/api/_app_root.php
           # Prove the file exists and is populated, without printing any value.
           # Keys only: a missing secret shows up as a key with an empty value.
           echo "--- generated .env ---"
@@ -411,9 +402,6 @@ jobs:
             bundle/app/config/.env
           empty=$(awk -F= '/^[A-Z]/ && $2 == "" { c++ } END { print c+0 }' bundle/app/config/.env)
           echo "  -> $(grep -c '^[A-Z]' bundle/app/config/.env) keys, ${empty} with no value"
-          test -s bundle/web/api/_app_root.php || { echo "::error::_app_root.php is missing"; exit 1; }
-          echo "--- api/_app_root.php ---"
-          cat bundle/web/api/_app_root.php
 
       # Order matters: classes and config land BEFORE the entrypoints that call
       # them, so there is no window where new PHP looks for a class that is not

@@ -27,7 +27,9 @@ final class Logger
 
     private static function write(string $level, string $message, array $context): void
     {
-        $dir = rtrim(Env::get('PRIVATE_STORAGE_PATH', dirname(__DIR__, 2) . '/private-storage'), '/') . '/logs';
+        $dir = (defined('DIWAN_PRIVATE_STORAGE')
+            ? DIWAN_PRIVATE_STORAGE
+            : dirname(__DIR__, 2) . '/private-storage') . '/logs';
         if (!is_dir($dir)) {
             @mkdir($dir, 0750, true);
         }

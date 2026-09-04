@@ -24,8 +24,7 @@ try {
     // Reported as false; details go to the log, not the response.
 }
 
-$storage = Env::get('PRIVATE_STORAGE_PATH');
-$checks['private_storage'] = $storage !== null && is_dir($storage) && is_readable($storage);
+$checks['private_storage'] = is_dir(DIWAN_PRIVATE_STORAGE) && is_readable(DIWAN_PRIVATE_STORAGE);
 
 $ok = !in_array(false, $checks, true);
 

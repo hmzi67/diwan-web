@@ -133,9 +133,9 @@ final class DownloadService
      */
     private function resolvePath(string $storagePath): string
     {
-        $base = realpath(rtrim(Env::require('PRIVATE_STORAGE_PATH'), '/'));
+        $base = realpath(DIWAN_PRIVATE_STORAGE);
         if ($base === false) {
-            throw new RuntimeException('PRIVATE_STORAGE_PATH does not exist on this server');
+            throw new RuntimeException('Private storage directory does not exist on this server');
         }
 
         $full = realpath($base . '/releases/' . ltrim($storagePath, '/'));

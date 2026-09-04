@@ -31,8 +31,9 @@ Every one of these exits non-zero on failure, and the deploy jobs `needs: build`
 until this job is green.
 
 ### Job 2/3 — deploy
-`.env` and `api/_app_root.php` are generated on the runner from the environment's
-secrets, then three separate FTP transfers run:
+`.env` is generated on the runner from the environment's secrets, then three
+separate FTP transfers run. No filesystem path is injected into the PHP — the
+app discovers its own root at runtime (see README, "The app finds itself"):
 
 | # | Local | Server | State file |
 |---|---|---|---|

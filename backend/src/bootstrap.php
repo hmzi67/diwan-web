@@ -28,11 +28,18 @@ use Diwan\Support\Logger;
 
 Env::load(DIWAN_ROOT . '/config/.env');
 
+// Derived from the discovered root, so a missing or wrong PRIVATE_STORAGE_PATH
+// in .env cannot break downloads. An explicit value still wins if it is set.
+define('DIWAN_PRIVATE_STORAGE', rtrim(
+    Env::get('PRIVATE_STORAGE_PATH', DIWAN_ROOT . '/private-storage'),
+    '/'
+));
+
 // --- Error handling: never leak stack traces to a paying customer ---
 $debug = Env::bool('APP_DEBUG', false);
 ini_set('display_errors', $debug ? '1' : '0');
 ini_set('log_errors', '1');
-ini_set('error_log', Env::get('PRIVATE_STORAGE_PATH', DIWAN_ROOT . '/private-storage') . '/logs/php-error.log');
+ini_set('error_log', DIWAN_PRIVATE_STORAGE . '/logs/php-error.log');
 error_reporting(E_ALL);
 
 set_exception_handler(static function (Throwable $e) use ($debug): void {
