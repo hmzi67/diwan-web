@@ -14,11 +14,23 @@ use Diwan\Support\Logger;
 
 $checks = [
     'env'             => true, // reaching here means the .env parsed
+    'app_key'         => false,
     'database'        => false,
     'private_storage' => false,
 ];
 
 $hints = [];
+
+// APP_KEY signs every licence lookup and download token. Without it the store
+// is dead — but nothing else in this endpoint touches it, so before this check
+// health could report "ok" while download.php returned 500 on every request.
+$appKey = Env::get('APP_KEY');
+$checks['app_key'] = $appKey !== null && strlen($appKey) >= 32;
+if ($appKey === null) {
+    $hints['app_key'] = 'not_configured';
+} elseif (strlen($appKey) < 32) {
+    $hints['app_key'] = 'too_short';   // needs >= 32 chars; generate 32 random bytes, base64
+}
 
 try {
     Database::pdo()->query('SELECT 1');
