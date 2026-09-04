@@ -1,0 +1,43 @@
+name: FTP path probe
+
+# Read-only. Confirms where the FTP account lands before any deploy is trusted.
+# Uploads nothing, creates nothing, deletes nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Which credentials to use'
+        required: true
+        default: production
+        type: choice
+        options: [production, staging]
+      os_path:
+        description: 'Absolute OS path from the hosting panel (optional, to test if it resolves)'
+        required: false
+        default: ''
+      domain:
+        description: 'Domain name, e.g. diwan.codehunts.co.uk (optional)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe FTP login root
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: scripts }
+
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      - name: Probe
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: bash scripts/ftp-probe.sh "${{ inputs.os_path }}" "${{ inputs.domain }}"

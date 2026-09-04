@@ -126,6 +126,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with: { name: deploy-bundle, path: bundle }
 
+      - name: Preflight — verify server paths before connecting
+        run: |
+          bash scripts/preflight-paths.sh \
+            "${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}" \
+            "${{ vars.APP_ROOT }}/"
+
       - name: Generate server config from secrets
         run: |
           set -euo pipefail
@@ -161,13 +167,13 @@ jobs:
       - name: Upload site + api
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:      ${{ secrets.FTP_SERVER }}
+          server:      ${{ secrets.FTP_HOST }}
           username:    ${{ secrets.FTP_USERNAME }}
           password:    ${{ secrets.FTP_PASSWORD }}
           port:        ${{ vars.FTP_PORT || 21 }}
           protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
           local-dir:   ./bundle/web/
-          server-dir:  ${{ vars.WEB_ROOT }}/
+          server-dir:  ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
           state-name:  .ftp-deploy-web.json
           dangerous-clean-slate: false
           exclude: |
@@ -185,7 +191,7 @@ jobs:
       - name: Upload backend classes
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:      ${{ secrets.FTP_SERVER }}
+          server:      ${{ secrets.FTP_HOST }}
           username:    ${{ secrets.FTP_USERNAME }}
           password:    ${{ secrets.FTP_PASSWORD }}
           port:        ${{ vars.FTP_PORT || 21 }}
@@ -198,7 +204,7 @@ jobs:
       - name: Upload generated .env
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:      ${{ secrets.FTP_SERVER }}
+          server:      ${{ secrets.FTP_HOST }}
           username:    ${{ secrets.FTP_USERNAME }}
           password:    ${{ secrets.FTP_PASSWORD }}
           port:        ${{ vars.FTP_PORT || 21 }}
@@ -224,8 +230,18 @@ jobs:
     # No `environment:` here on purpose — the dry run needs no approval, so you
     # can read the diff BEFORE deciding whether to approve the real thing.
     steps:
+      # checkout FIRST: it cleans the workspace, which would wipe the artifact.
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: scripts }
+
       - uses: actions/download-artifact@v4
         with: { name: deploy-bundle, path: bundle }
+
+      - name: Preflight — verify server paths before connecting
+        run: |
+          bash scripts/preflight-paths.sh \
+            "${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}" \
+            "${{ vars.APP_ROOT }}/"
 
       - name: Placeholder config (dry run never uploads it)
         run: |
@@ -236,13 +252,13 @@ jobs:
       - name: Dry run — show exactly what would change
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:      ${{ secrets.FTP_SERVER }}
+          server:      ${{ secrets.FTP_HOST }}
           username:    ${{ secrets.FTP_USERNAME }}
           password:    ${{ secrets.FTP_PASSWORD }}
           port:        ${{ vars.FTP_PORT || 21 }}
           protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
           local-dir:   ./bundle/web/
-          server-dir:  ${{ vars.WEB_ROOT }}/
+          server-dir:  ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
           state-name:  .ftp-deploy-web.json
           dry-run: true
           log-level: verbose
@@ -279,6 +295,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with: { name: deploy-bundle, path: bundle }
+
+      - name: Preflight — verify server paths before connecting
+        run: |
+          bash scripts/preflight-paths.sh \
+            "${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}" \
+            "${{ vars.APP_ROOT }}/"
 
       - name: Generate server config from secrets
         run: |
@@ -317,7 +339,7 @@ jobs:
       - name: Upload backend classes
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:      ${{ secrets.FTP_SERVER }}
+          server:      ${{ secrets.FTP_HOST }}
           username:    ${{ secrets.FTP_USERNAME }}
           password:    ${{ secrets.FTP_PASSWORD }}
           port:        ${{ vars.FTP_PORT || 21 }}
@@ -330,7 +352,7 @@ jobs:
       - name: Upload generated .env
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:      ${{ secrets.FTP_SERVER }}
+          server:      ${{ secrets.FTP_HOST }}
           username:    ${{ secrets.FTP_USERNAME }}
           password:    ${{ secrets.FTP_PASSWORD }}
           port:        ${{ vars.FTP_PORT || 21 }}
@@ -343,13 +365,13 @@ jobs:
       - name: Upload site + api
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server:      ${{ secrets.FTP_SERVER }}
+          server:      ${{ secrets.FTP_HOST }}
           username:    ${{ secrets.FTP_USERNAME }}
           password:    ${{ secrets.FTP_PASSWORD }}
           port:        ${{ vars.FTP_PORT || 21 }}
           protocol:    ${{ vars.FTP_PROTOCOL || 'ftps' }}
           local-dir:   ./bundle/web/
-          server-dir:  ${{ vars.WEB_ROOT }}/
+          server-dir:  ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
           state-name:  .ftp-deploy-web.json
           dangerous-clean-slate: false
           exclude: |
