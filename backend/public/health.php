@@ -28,6 +28,20 @@ try {
     // never the driver message, the host, the user or the database name.
     Logger::error('Health check: database unreachable', ['message' => $e->getMessage()]);
     $hints['database'] = classifyDatabaseFailure($e);
+
+    // Naming the absent keys is safe — they are documented in .env.example —
+    // and it turns "not_configured" into something you can act on directly.
+    if ($hints['database'] === 'not_configured') {
+        $missing = [];
+        foreach (['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'] as $key) {
+            if (Env::get($key) === null) {
+                $missing[] = $key;
+            }
+        }
+        if ($missing !== []) {
+            $hints['database_missing_keys'] = $missing;
+        }
+    }
 }
 
 $checks['private_storage'] = is_dir(DIWAN_PRIVATE_STORAGE) && is_readable(DIWAN_PRIVATE_STORAGE);

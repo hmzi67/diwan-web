@@ -198,6 +198,17 @@ jobs:
             bundle/app/config/.env
           empty=$(awk -F= '/^[A-Z]/ && $2 == "" { c++ } END { print c+0 }' bundle/app/config/.env)
           echo "  -> $(grep -c '^[A-Z]' bundle/app/config/.env) keys, ${empty} with no value"
+          # Surface unset secrets in the run summary, named. Not fatal: you may
+          # legitimately deploy before every gateway credential exists.
+          blank=$(awk -F= '/^[A-Z]/ && $2 == "" { printf "%s ", $1 }' bundle/app/config/.env)
+          if [ -n "$blank" ]; then
+            echo "::warning::Unset secrets/variables, deployed as empty: ${blank}"
+          fi
+          for required in DB_HOST DB_NAME DB_USER DB_PASS APP_KEY; do
+            if ! grep -q "^${required}=." bundle/app/config/.env; then
+              echo "::warning::${required} is empty — the app cannot reach MySQL until it is set."
+            fi
+          done
 
       - name: Upload site + api (attempt 1)
         id: upload_site_api_0
@@ -543,6 +554,17 @@ jobs:
             bundle/app/config/.env
           empty=$(awk -F= '/^[A-Z]/ && $2 == "" { c++ } END { print c+0 }' bundle/app/config/.env)
           echo "  -> $(grep -c '^[A-Z]' bundle/app/config/.env) keys, ${empty} with no value"
+          # Surface unset secrets in the run summary, named. Not fatal: you may
+          # legitimately deploy before every gateway credential exists.
+          blank=$(awk -F= '/^[A-Z]/ && $2 == "" { printf "%s ", $1 }' bundle/app/config/.env)
+          if [ -n "$blank" ]; then
+            echo "::warning::Unset secrets/variables, deployed as empty: ${blank}"
+          fi
+          for required in DB_HOST DB_NAME DB_USER DB_PASS APP_KEY; do
+            if ! grep -q "^${required}=." bundle/app/config/.env; then
+              echo "::warning::${required} is empty — the app cannot reach MySQL until it is set."
+            fi
+          done
 
       # Order matters: classes and config land BEFORE the entrypoints that call
       # them, so there is no window where new PHP looks for a class that is not
