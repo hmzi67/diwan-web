@@ -60,3 +60,35 @@ downloadForm?.addEventListener('submit', async (e) => {
     setStatus(status, err.message, 'error');
   }
 });
+
+// --- Nav: mobile menu + stuck-state border. No library, no dependencies. ---
+(function () {
+  const toggle = document.getElementById('nav-toggle');
+  const links  = document.getElementById('nav-links');
+  const nav    = document.getElementById('nav');
+  const mobile = () => window.matchMedia('(max-width: 860px)').matches;
+
+  function close() {
+    if (!links || !toggle) return;
+    links.hidden = mobile();
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  toggle?.addEventListener('click', () => {
+    const open = links.hidden;
+    links.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+
+  links?.addEventListener('click', (e) => { if (e.target.tagName === 'A') close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  window.addEventListener('resize', close);
+  close();
+
+  // Border appears only once the page has scrolled past the nav.
+  if (nav) {
+    const onScroll = () => nav.setAttribute('data-stuck', String(window.scrollY > 8));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+})();
