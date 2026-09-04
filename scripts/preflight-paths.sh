@@ -9,6 +9,7 @@ set -Eeuo pipefail
 
 WEB="${1-}"
 APP="${2-}"
+URL="${3-}"
 fail=0
 
 check() {
@@ -38,9 +39,31 @@ check() {
   echo "  ${name} = ${value}"
 }
 
+check_url() {
+  local name="$1" value="$2"
+
+  if [[ -z "$value" ]]; then
+    echo "::error::${name} is empty. The post-deploy smoke test cannot run without it."
+    echo "::error::Set ${name} as a Variable (e.g. https://diwan.codehunts.co.uk) in this environment."
+    fail=1
+    return
+  fi
+  if [[ "$value" != https://* ]]; then
+    echo "::error::${name}='${value}' must start with https:// — the smoke test builds every URL from it."
+    fail=1
+  fi
+  if [[ "$value" == */ ]]; then
+    # Harmless (smoke-test.sh strips it) but a trailing slash here usually means
+    # the value was pasted from a browser bar along with a path.
+    echo "::warning::${name}='${value}' has a trailing slash; it will be stripped."
+  fi
+  echo "  ${name} = ${value}"
+}
+
 echo "Preflight: server paths"
 check "FTP_SERVER_DIR" "$WEB"
 [[ -n "${APP+x}" ]] && check "APP_ROOT" "$APP"
+check_url "SITE_URL" "$URL"
 
 echo
 if [[ $fail -ne 0 ]]; then

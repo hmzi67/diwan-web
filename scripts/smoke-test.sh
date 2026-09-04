@@ -5,7 +5,14 @@
 #   bash scripts/smoke-test.sh https://diwan.example.com
 set -Eeuo pipefail
 
-BASE="${1:?usage: smoke-test.sh <base-url>}"
+if [[ -z "${1-}" ]]; then
+  echo "usage: smoke-test.sh <base-url>      e.g. https://diwan.codehunts.co.uk" >&2
+  echo >&2
+  echo "Called from CI with an empty argument? The SITE_URL variable is unset" >&2
+  echo "for this environment. Settings -> Environments -> <env> -> Variables." >&2
+  exit 2
+fi
+BASE="$1"
 BASE="${BASE%/}"
 failures=0
 
