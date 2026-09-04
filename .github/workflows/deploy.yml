@@ -127,11 +127,28 @@ jobs:
         with: { name: deploy-bundle, path: bundle }
 
       - name: Preflight — verify server paths before connecting
+        # Values come in via `env:` rather than being interpolated straight into
+        # the shell: it keeps a variable containing quotes or $() from being
+        # executed, and it lets the step report what actually resolved.
+        env:
+          JOB_ENVIRONMENT: 'staging'
+          SITE_URL: ${{ vars.SITE_URL }}
+          APP_ROOT: ${{ vars.APP_ROOT }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
         run: |
-          bash scripts/preflight-paths.sh \
-            "${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}" \
-            "${{ vars.APP_ROOT }}/" \
-            "${{ vars.SITE_URL }}"
+          echo "Variable resolution for this job"
+          echo "  job environment : ${JOB_ENVIRONMENT}"
+          echo "  repository      : ${GITHUB_REPOSITORY}"
+          for v in SITE_URL APP_ROOT FTP_SERVER_DIR; do
+            val="${!v}"
+            if [ -n "$val" ]; then
+              printf '  %-18s set (%s chars)\n' "vars.$v" "${#val}"
+            else
+              printf '  %-18s EMPTY — not visible to this job\n' "vars.$v"
+            fi
+          done
+          echo
+          bash scripts/preflight-paths.sh "$FTP_SERVER_DIR" "${APP_ROOT}/" "$SITE_URL"
 
       - name: Generate server config from secrets
         run: |
@@ -253,11 +270,28 @@ jobs:
         with: { name: deploy-bundle, path: bundle }
 
       - name: Preflight — verify server paths before connecting
+        # Values come in via `env:` rather than being interpolated straight into
+        # the shell: it keeps a variable containing quotes or $() from being
+        # executed, and it lets the step report what actually resolved.
+        env:
+          JOB_ENVIRONMENT: '(none — repository-level variables only)'
+          SITE_URL: ${{ vars.SITE_URL }}
+          APP_ROOT: ${{ vars.APP_ROOT }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
         run: |
-          bash scripts/preflight-paths.sh \
-            "${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}" \
-            "${{ vars.APP_ROOT }}/" \
-            "${{ vars.SITE_URL }}"
+          echo "Variable resolution for this job"
+          echo "  job environment : ${JOB_ENVIRONMENT}"
+          echo "  repository      : ${GITHUB_REPOSITORY}"
+          for v in SITE_URL APP_ROOT FTP_SERVER_DIR; do
+            val="${!v}"
+            if [ -n "$val" ]; then
+              printf '  %-18s set (%s chars)\n' "vars.$v" "${#val}"
+            else
+              printf '  %-18s EMPTY — not visible to this job\n' "vars.$v"
+            fi
+          done
+          echo
+          bash scripts/preflight-paths.sh "$FTP_SERVER_DIR" "${APP_ROOT}/" "$SITE_URL"
 
       - name: Placeholder config (dry run never uploads it)
         run: |
@@ -313,11 +347,28 @@ jobs:
         with: { name: deploy-bundle, path: bundle }
 
       - name: Preflight — verify server paths before connecting
+        # Values come in via `env:` rather than being interpolated straight into
+        # the shell: it keeps a variable containing quotes or $() from being
+        # executed, and it lets the step report what actually resolved.
+        env:
+          JOB_ENVIRONMENT: 'production'
+          SITE_URL: ${{ vars.SITE_URL }}
+          APP_ROOT: ${{ vars.APP_ROOT }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
         run: |
-          bash scripts/preflight-paths.sh \
-            "${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}" \
-            "${{ vars.APP_ROOT }}/" \
-            "${{ vars.SITE_URL }}"
+          echo "Variable resolution for this job"
+          echo "  job environment : ${JOB_ENVIRONMENT}"
+          echo "  repository      : ${GITHUB_REPOSITORY}"
+          for v in SITE_URL APP_ROOT FTP_SERVER_DIR; do
+            val="${!v}"
+            if [ -n "$val" ]; then
+              printf '  %-18s set (%s chars)\n' "vars.$v" "${#val}"
+            else
+              printf '  %-18s EMPTY — not visible to this job\n' "vars.$v"
+            fi
+          done
+          echo
+          bash scripts/preflight-paths.sh "$FTP_SERVER_DIR" "${APP_ROOT}/" "$SITE_URL"
 
       - name: Generate server config from secrets
         run: |
