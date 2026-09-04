@@ -39,6 +39,13 @@ define('DIWAN_PRIVATE_STORAGE', rtrim(
 $debug = Env::bool('APP_DEBUG', false);
 ini_set('display_errors', $debug ? '1' : '0');
 ini_set('log_errors', '1');
+// Self-heal the log directory. private-storage is deliberately never deployed,
+// so on a fresh host it does not exist yet — and without it the very errors you
+// need in order to diagnose a fresh host go nowhere. The path is derived, never
+// user-supplied, so this cannot be steered somewhere unintended.
+if (!is_dir(DIWAN_PRIVATE_STORAGE . '/logs')) {
+    @mkdir(DIWAN_PRIVATE_STORAGE . '/logs', 0750, true);
+}
 ini_set('error_log', DIWAN_PRIVATE_STORAGE . '/logs/php-error.log');
 error_reporting(E_ALL);
 
