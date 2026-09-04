@@ -144,6 +144,8 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
           APP_ROOT: ${{ vars.APP_ROOT }}
           FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_PORT: ${{ vars.FTP_PORT || 21 }}
         run: |
           echo "Variable resolution for this job"
           echo "  job environment : ${JOB_ENVIRONMENT}"
@@ -158,6 +160,8 @@ jobs:
           done
           echo
           bash scripts/preflight-paths.sh "$FTP_SERVER_DIR" "${APP_ROOT}/" "$SITE_URL"
+          echo
+          bash scripts/check-ftp-host.sh "$FTP_HOST" "${FTP_PORT:-21}"
 
       - name: Generate server config from secrets
         run: |
@@ -204,11 +208,12 @@ jobs:
           if [ -n "$blank" ]; then
             echo "::warning::Unset secrets/variables, deployed as empty: ${blank}"
           fi
-          for required in DB_HOST DB_NAME DB_USER DB_PASS APP_KEY; do
-            if ! grep -q "^${required}=." bundle/app/config/.env; then
+          for required in DB_HOST DB_NAME DB_USER DB_PASS; do
+            grep -q "^${required}=." bundle/app/config/.env || \
               echo "::warning::${required} is empty — the app cannot reach MySQL until it is set."
-            fi
           done
+          grep -q "^APP_KEY=." bundle/app/config/.env || \
+            echo "::warning::APP_KEY is empty — licence lookups and download tokens will fail with a 500."
 
       - name: Upload site + api (attempt 1)
         id: upload_site_api_0
@@ -386,6 +391,8 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
           APP_ROOT: ${{ vars.APP_ROOT }}
           FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_PORT: ${{ vars.FTP_PORT || 21 }}
         run: |
           echo "Variable resolution for this job"
           echo "  job environment : ${JOB_ENVIRONMENT}"
@@ -400,6 +407,8 @@ jobs:
           done
           echo
           bash scripts/preflight-paths.sh "$FTP_SERVER_DIR" "${APP_ROOT}/" "$SITE_URL"
+          echo
+          bash scripts/check-ftp-host.sh "$FTP_HOST" "${FTP_PORT:-21}"
 
       - name: Placeholder config (dry run never uploads it)
         run: |
@@ -500,6 +509,8 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
           APP_ROOT: ${{ vars.APP_ROOT }}
           FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || secrets.FTP_SERVER_DIR }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_PORT: ${{ vars.FTP_PORT || 21 }}
         run: |
           echo "Variable resolution for this job"
           echo "  job environment : ${JOB_ENVIRONMENT}"
@@ -514,6 +525,8 @@ jobs:
           done
           echo
           bash scripts/preflight-paths.sh "$FTP_SERVER_DIR" "${APP_ROOT}/" "$SITE_URL"
+          echo
+          bash scripts/check-ftp-host.sh "$FTP_HOST" "${FTP_PORT:-21}"
 
       - name: Generate server config from secrets
         run: |
@@ -560,11 +573,12 @@ jobs:
           if [ -n "$blank" ]; then
             echo "::warning::Unset secrets/variables, deployed as empty: ${blank}"
           fi
-          for required in DB_HOST DB_NAME DB_USER DB_PASS APP_KEY; do
-            if ! grep -q "^${required}=." bundle/app/config/.env; then
+          for required in DB_HOST DB_NAME DB_USER DB_PASS; do
+            grep -q "^${required}=." bundle/app/config/.env || \
               echo "::warning::${required} is empty — the app cannot reach MySQL until it is set."
-            fi
           done
+          grep -q "^APP_KEY=." bundle/app/config/.env || \
+            echo "::warning::APP_KEY is empty — licence lookups and download tokens will fail with a 500."
 
       # Order matters: classes and config land BEFORE the entrypoints that call
       # them, so there is no window where new PHP looks for a class that is not
