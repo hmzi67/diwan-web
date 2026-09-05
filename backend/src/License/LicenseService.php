@@ -70,6 +70,74 @@ final class LicenseService
         return (int) $license['downloads_used'] < (int) $license['max_downloads'];
     }
 
+    /**
+     * One-time device activation. `activation_status` is separate from the
+     * entitlement `status` used by findActive()/downloads: a licence can be
+     * fully entitled and still "unused" the first time this runs.
+     *
+     * Locks the row (SELECT ... FOR UPDATE) so two activation calls racing on
+     * the same key cannot both observe "unused" and both win — the second
+     * one always sees the first one's write.
+     *
+     * Returns one of:
+     *   invalid_key             — key doesn't exist, or is revoked/expired
+     *   activated                — first activation, now bound to this device
+     *   already_active_same_device — re-activation from the bound device (no-op, success)
+     *   device_mismatch          — bound to a different device
+     */
+    public function activate(string $rawKey, string $fingerprintHash, ?string $machineHint): array
+    {
+        $hash = $this->hash($this->normalise($rawKey));
+
+        return Database::transaction(function (PDO $pdo) use ($hash, $fingerprintHash, $machineHint) {
+            $stmt = $pdo->prepare(
+                'SELECT id, activation_status, activated_machine_hash,
+                        (status = "active" AND (expires_at IS NULL OR expires_at > NOW())) AS entitled
+                   FROM licenses
+                  WHERE license_key_hash = :hash
+                  LIMIT 1 FOR UPDATE'
+            );
+            $stmt->execute(['hash' => $hash]);
+            $license = $stmt->fetch();
+
+            if (!$license) {
+                return ['result' => 'invalid_key'];
+            }
+
+            if (!(bool) $license['entitled']) {
+                // Same response as "doesn't exist" — a revoked/expired key
+                // must not be distinguishable from a wrong one.
+                return ['result' => 'invalid_key'];
+            }
+
+            if ($license['activation_status'] === 'unused') {
+                $update = $pdo->prepare(
+                    'UPDATE licenses
+                        SET activation_status = "activated",
+                            activated_machine_hash = :fp,
+                            activated_machine_hint = :hint,
+                            activated_at = NOW()
+                      WHERE id = :id'
+                );
+                $update->execute([
+                    'fp'   => $fingerprintHash,
+                    'hint' => $machineHint,
+                    'id'   => $license['id'],
+                ]);
+
+                return ['result' => 'activated', 'license_id' => (int) $license['id']];
+            }
+
+            // Already activated: same device is a no-op success (app restarts,
+            // reinstalls without a machine-id change); different device is refused.
+            if (hash_equals((string) $license['activated_machine_hash'], $fingerprintHash)) {
+                return ['result' => 'already_active_same_device', 'license_id' => (int) $license['id']];
+            }
+
+            return ['result' => 'device_mismatch'];
+        });
+    }
+
     /** HMAC, not a bare hash: a stolen DB is useless without APP_KEY. */
     private function hash(string $key): string
     {

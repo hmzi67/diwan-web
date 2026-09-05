@@ -26,12 +26,44 @@ CREATE TABLE IF NOT EXISTS products (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
+-- customers — one row per email that has ever checked out or logged in.
+-- No password column: login is passwordless (magic link via login_tokens).
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS customers (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email       VARCHAR(190)    NOT NULL,
+  name        VARCHAR(160)    NULL,
+  created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_customers_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- login_tokens — single-use magic links. Same shape as download_tokens: only
+-- the hash is stored, so a DB leak alone cannot forge a session.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS login_tokens (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  token_hash   CHAR(64)        NOT NULL,
+  customer_id  BIGINT UNSIGNED NOT NULL,
+  issued_ip    VARCHAR(45)     NULL,
+  used_at      DATETIME        NULL,
+  expires_at   DATETIME        NOT NULL,
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_login_tokens_hash (token_hash),
+  KEY idx_login_tokens_expiry (expires_at),
+  CONSTRAINT fk_login_tokens_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
 -- orders — one row per checkout attempt.
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS orders (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   order_ref       VARCHAR(40)     NOT NULL COMMENT 'Our reference, sent to the gateway',
   product_id      INT UNSIGNED    NOT NULL,
+  customer_id     BIGINT UNSIGNED NULL COMMENT 'Set at checkout time from customer_email',
   customer_email  VARCHAR(190)    NOT NULL,
   customer_phone  VARCHAR(20)     NOT NULL,
   amount_paisa    INT UNSIGNED    NOT NULL,
@@ -46,30 +78,45 @@ CREATE TABLE IF NOT EXISTS orders (
   UNIQUE KEY uq_orders_ref (order_ref),
   KEY idx_orders_email (customer_email),
   KEY idx_orders_status_created (status, created_at),
-  CONSTRAINT fk_orders_product FOREIGN KEY (product_id) REFERENCES products (id)
+  CONSTRAINT fk_orders_product FOREIGN KEY (product_id) REFERENCES products (id),
+  CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- licenses — issued only by the verified webhook. One per paid order.
 -- Only an HMAC of the key is stored; the plaintext is emailed once.
+--
+-- `status` is the download/entitlement gate (unchanged, still checked by
+-- issue-download.php). `activation_status` is a separate axis: whether the
+-- key has been bound to a device yet. A license can be status=active
+-- (downloads allowed) and activation_status=unused (not yet installed) at
+-- the same time — that's the normal state right after purchase.
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS licenses (
-  id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  order_id           BIGINT UNSIGNED NOT NULL,
-  license_key_hash   CHAR(64)        NOT NULL COMMENT 'hash_hmac(sha256, key, APP_KEY)',
-  license_key_prefix VARCHAR(16)     NOT NULL COMMENT 'First group only, for support lookup',
-  customer_email     VARCHAR(190)    NOT NULL,
-  status             ENUM('active','revoked','expired') NOT NULL DEFAULT 'active',
-  max_downloads      SMALLINT UNSIGNED NOT NULL DEFAULT 5,
-  downloads_used     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  activated_machine  VARCHAR(190)    NULL COMMENT 'Optional device binding',
-  expires_at         DATETIME        NULL,
-  created_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  order_id               BIGINT UNSIGNED NOT NULL,
+  customer_id            BIGINT UNSIGNED NULL,
+  license_key_hash       CHAR(64)        NOT NULL COMMENT 'hash_hmac(sha256, key, APP_KEY)',
+  license_key_prefix     VARCHAR(16)     NOT NULL COMMENT 'First group only, for support lookup',
+  customer_email         VARCHAR(190)    NOT NULL,
+  status                 ENUM('active','revoked','expired') NOT NULL DEFAULT 'active',
+  activation_status      ENUM('unused','activated') NOT NULL DEFAULT 'unused',
+  activated_machine_hash CHAR(64)        NULL COMMENT 'sha256(machine id), never the raw fingerprint',
+  activated_machine_hint VARCHAR(64)     NULL COMMENT 'e.g. "Windows 11 x64", for admin display only',
+  activated_at           DATETIME        NULL,
+  last_reactivated_at    DATETIME        NULL COMMENT 'throttles self-service device moves to once/30 days',
+  reactivated_count      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  max_downloads          SMALLINT UNSIGNED NOT NULL DEFAULT 5,
+  downloads_used         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  expires_at             DATETIME        NULL,
+  created_at             DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_licenses_hash (license_key_hash),
   UNIQUE KEY uq_licenses_order (order_id) COMMENT 'Hard guarantee: one licence per order',
   KEY idx_licenses_email (customer_email),
-  CONSTRAINT fk_licenses_order FOREIGN KEY (order_id) REFERENCES orders (id)
+  KEY idx_licenses_activation_status (activation_status),
+  CONSTRAINT fk_licenses_order FOREIGN KEY (order_id) REFERENCES orders (id),
+  CONSTRAINT fk_licenses_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
@@ -137,6 +184,22 @@ CREATE TABLE IF NOT EXISTS download_attempts (
   attempted_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_attempts_ip_time (ip, attempted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- license_activation_attempts — rolling window for rate-limiting
+-- activate-license.php. Mirrors download_attempts, plus what was targeted, so
+-- abuse of one specific key from rotating IPs is also visible.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS license_activation_attempts (
+  id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ip                  VARCHAR(45)     NOT NULL,
+  license_key_prefix  VARCHAR(16)     NULL,
+  result              ENUM('activated','reactivated','already_bound','invalid_key','rate_limited') NOT NULL,
+  attempted_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_activation_attempts_ip_time (ip, attempted_at),
+  KEY idx_activation_attempts_prefix_time (license_key_prefix, attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------

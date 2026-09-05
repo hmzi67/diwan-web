@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diwan POS — Point of Sale for Pakistani Retail</title>
+  <meta name="description" content="Keyboard-first point of sale for retail, restaurants and pharmacies. Offline-first billing, inventory and reporting.">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+
+      <nav class="nav__links" id="nav-links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#support">Docs &amp; Support</a>
+      </nav>
+
+      <div class="nav__actions">
+        <a class="nav__login" href="#download">Log in</a>
+        <a class="btn btn--primary" href="#pricing">Get Started</a>
+        <button class="nav__toggle" id="nav-toggle" type="button"
+                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow"><b>New</b> Shift reconciliation in v1.4</p>
+
+        <h1>Run your counter at <em>the speed of typing.</em></h1>
+
+        <p class="hero__sub">
+          Diwan is a keyboard-first point of sale for retail, restaurants and
+          pharmacies. Bill without touching a mouse, print tokens instantly, and
+          keep selling when the internet drops.
+        </p>
+
+        <div class="hero__cta">
+          <a class="btn btn--primary btn--lg" href="#pricing">Get Started</a>
+          <a class="btn btn--ghost btn--lg" href="#features">See how it works</a>
+        </div>
+        <p class="hero__note">One-time licence · Works offline · Windows, macOS &amp; Android</p>
+
+        <!-- Product mockup: no image asset, drawn in CSS to keep page weight down -->
+        <div class="mockup" role="img"
+             aria-label="Diwan billing screen: a product grid on the left and a running bill totalling Rs 2,480 on the right.">
+          <div class="mockup__bar">
+            <div class="mockup__dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <span class="mockup__url">diwan · counter 1 · shift open</span>
+          </div>
+
+          <div class="pos" aria-hidden="true">
+            <div class="pos__main">
+              <p class="pos__label">Quick items — press 1–9</p>
+              <div class="pos__grid">
+                <div class="pos__item pos__item--hot"><span>Chicken Karahi</span>Rs 1,150</div>
+                <div class="pos__item"><span>Naan</span>Rs 30</div>
+                <div class="pos__item"><span>Cold Drink</span>Rs 120</div>
+                <div class="pos__item"><span>Raita</span>Rs 80</div>
+                <div class="pos__item"><span>Biryani</span>Rs 450</div>
+                <div class="pos__item"><span>Kebab Roll</span>Rs 320</div>
+                <div class="pos__item"><span>Tea</span>Rs 60</div>
+                <div class="pos__item"><span>Salad</span>Rs 90</div>
+              </div>
+            </div>
+
+            <div class="pos__side">
+              <p class="pos__label">Table 4 · Bill #1042</p>
+              <div class="pos__lines">
+                <div class="pos__line"><b>Chicken Karahi</b><span>× 1 · 1,150</span></div>
+                <div class="pos__line"><b>Naan</b><span>× 6 · 180</span></div>
+                <div class="pos__line"><b>Cold Drink</b><span>× 4 · 480</span></div>
+                <div class="pos__line"><b>Kebab Roll</b><span>× 2 · 640</span></div>
+              </div>
+              <div class="pos__total"><span>Total payable</span><b>Rs 2,450</b></div>
+              <div class="pos__pay">Ctrl + Enter — Place order</div>
+              <p class="pos__kbd">Ctrl + K print token · T4 switch table</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         Sections 3–9 land in the next pass. The checkout and
+         download flows below are UNCHANGED and still functional —
+         same form ids, same fields, same API calls.
+         ========================================================= -->
+    <section class="legacy" id="pricing">
+      <div class="wrap">
+        <h2>Pricing</h2>
+        <form id="checkout-form">
+          <label>Email <input type="email" name="email" required placeholder="you@example.com"></label>
+          <label>Phone <input type="tel" name="phone" required placeholder="03001234567"></label>
+          <input type="hidden" name="product_sku" value="diwan-pos-standard">
+          <button class="btn btn--primary" type="submit">Pay with JazzCash</button>
+        </form>
+        <p id="checkout-status" role="status"></p>
+      </div>
+    </section>
+
+    <section class="legacy" id="download">
+      <div class="wrap">
+        <h2>Already purchased?</h2>
+        <p style="color:var(--text-muted)">Paste the licence key from your receipt email to get your installer.</p>
+        <form id="download-form">
+          <label>Licence key <input type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
+          <select name="platform">
+            <option value="windows">Windows (.exe)</option>
+            <option value="macos">macOS (.dmg)</option>
+            <option value="android">Android (.apk)</option>
+          </select>
+          <button class="btn btn--primary" type="submit">Get download link</button>
+        </form>
+        <p id="download-status" role="status"></p>
+      </div>
+    </section>
+
+    <section class="legacy" id="features"><div class="wrap"><h2>Features</h2>
+      <p style="color:var(--text-muted)">Redesigned feature grid lands in the next pass.</p></div></section>
+    <section class="legacy" id="support"><div class="wrap"><h2>Docs &amp; Support</h2>
+      <p style="color:var(--text-muted)">Coming with the footer build-out.</p></div></section>
+  </main>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
