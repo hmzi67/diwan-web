@@ -49,7 +49,7 @@ function escapeHtml(s) {
 
 function supportMailto(subject, order) {
   const body = `Order reference: ${order.order_ref}\nLicence prefix: ${order.license_key_prefix || 'n/a'}\n\n`;
-  return `mailto:support@diwan.local?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `mailto:hamzawaheed057@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function renderOrder(order) {

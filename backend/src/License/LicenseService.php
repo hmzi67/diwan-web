@@ -74,7 +74,7 @@ final class LicenseService
             'enc'          => $this->encrypt($key),
             'prefix'       => substr($key, 0, 11),
             'email'        => $email,
-            'max'          => Env::int('DOWNLOAD_MAX_ATTEMPTS', 5),
+            'max'          => Env::int('DOWNLOAD_MAX_ATTEMPTS', 20),
         ];
         if ($validityDays > 0) {
             $params['validity_days'] = $validityDays;

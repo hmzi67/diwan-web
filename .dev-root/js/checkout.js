@@ -2,9 +2,9 @@
 // is just so a logged-out visitor gets a redirect instead of a 401).
 const API = '/api';
 
-// PLACEHOLDER names/prices — cosmetic only, must match database/schema.sql /
-// migration 003. The real price is never trusted from here: checkout.php
-// reads it from the products table when it creates the order.
+// Display names/prices only — must match database/schema.sql, index.html
+// #pricing and products.html. The real price is never trusted from here:
+// checkout.php reads it from the products table when it creates the order.
 const PLANS = {
   'diwan-pos-starter':    { name: 'Starter',    price: 'Rs 8,000' },
   'diwan-pos-standard':   { name: 'Standard',   price: 'Rs 12,000' },

@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS licenses (
   activated_at           DATETIME        NULL,
   last_reactivated_at    DATETIME        NULL COMMENT 'throttles self-service device moves to once/30 days',
   reactivated_count      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  max_downloads          SMALLINT UNSIGNED NOT NULL DEFAULT 5,
+  max_downloads          SMALLINT UNSIGNED NOT NULL DEFAULT 20,
   downloads_used         SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   expires_at             DATETIME        NULL,
   created_at             DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,

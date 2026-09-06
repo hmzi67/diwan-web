@@ -4,72 +4,359 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy Policy — Diwan POS</title>
-  <meta name="robots" content="noindex">
+  <meta name="description" content="How Diwan collects, uses, stores and deletes your personal data.">
   <meta name="theme-color" content="#0A0F0D">
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css?v=202609062257">
 </head>
-<!--
-  PLACEHOLDER — NOT LEGAL TEXT. This page exists so sign-up does not ask people
-  to accept documents that don't exist. It must be replaced with real content,
-  written or reviewed by someone qualified, before Diwan is publicly launched.
--->
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="nav" id="nav">
     <div class="wrap nav__inner">
-      <a class="brand" href="/">
+      <a class="brand" href="index.html">
         <span class="brand__mark" aria-hidden="true">D</span>
         Diwan
       </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="products.html">Products</a>
+        <a href="index.html#pricing">Pricing</a>
+        <a href="contact.html">Contact</a>
+      </nav>
     </div>
   </header>
 
   <main id="main">
-    <section class="legacy">
-      <div class="wrap" style="max-width:70ch">
-        <p class="eyebrow"><b>Draft</b> Not yet final</p>
-        <h2>Privacy Policy</h2>
+    <section class="doc">
+      <div class="wrap doc__inner">
+        <h1>Privacy Policy</h1>
+        <p class="doc__meta">Effective 7 September 2026 · Last updated 7 September 2026</p>
 
-        <p style="color:var(--text-muted)">
-          <b style="color:var(--accent)">This is a placeholder.</b> It is not a
-          legal document and has not been reviewed by a lawyer. It is here so
-          the sign-up form does not link to a page that does not exist. Replace
-          it before launch.
+        <div class="doc__toc">
+          <p>On this page</p>
+          <ol>
+            <li><a href="#who">Who we are</a></li>
+            <li><a href="#collect">What we collect</a></li>
+            <li><a href="#never">What we never collect</a></li>
+            <li><a href="#why">Why we collect it</a></li>
+            <li><a href="#device">Device activation data</a></li>
+            <li><a href="#share">Who we share it with</a></li>
+            <li><a href="#retention">How long we keep it</a></li>
+            <li><a href="#rights">Your rights</a></li>
+            <li><a href="#cookies">Cookies</a></li>
+            <li><a href="#transfers">International transfers</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#children">Children</a></li>
+            <li><a href="#changes">Changes to this policy</a></li>
+            <li><a href="#contact">Contact us</a></li>
+          </ol>
+        </div>
+
+        <h2 id="who">1. Who we are</h2>
+        <p>
+          Diwan is point-of-sale software operated by <strong>Hamza Waheed</strong>, an
+          individual sole proprietor trading as &ldquo;Diwan&rdquo;. Diwan is not a
+          registered company; it is operated by an individual in his personal capacity.
+          Throughout this policy, &ldquo;we&rdquo;, &ldquo;us&rdquo; and &ldquo;our&rdquo;
+          refer to that sole proprietorship.
+        </p>
+        <p>
+          We are the data controller for the personal data described below.
+          Our contact details are in <a href="#contact">section 14</a>.
         </p>
 
-        <h3>What we collect</h3>
-        <p style="color:var(--text-muted)">
-          Your email address and phone number, which you give us at sign-up and
-          checkout; your orders and licence keys; and basic technical records
-          such as IP addresses attached to sign-in and download attempts, which
-          we keep in order to rate-limit abuse.
+        <h2 id="collect">2. What we collect</h2>
+        <p>We collect only what we need to sell you a licence, deliver it, and support it.</p>
+        <div class="doc__wrap">
+          <table class="doc__table">
+            <tr>
+              <th>Account data</th>
+              <td>
+                Your email address, and a one-way cryptographic hash of your password.
+                We never store your password itself and cannot read it.
+              </td>
+            </tr>
+            <tr>
+              <th>Order data</th>
+              <td>
+                Your phone number (collected at checkout), the product purchased, the
+                amount and currency, our own order reference, and the payment
+                processor&rsquo;s transaction identifier.
+              </td>
+            </tr>
+            <tr>
+              <th>Licence data</th>
+              <td>
+                A cryptographic hash of your licence key, an encrypted copy of the key
+                so we can re-send it to you from your dashboard, the first segment of
+                the key for support lookups, and the dates on which it was issued and
+                activated.
+              </td>
+            </tr>
+            <tr>
+              <th>Device data</th>
+              <td>
+                A hashed device identifier and a short, coarse description of your
+                operating system, such as &ldquo;Windows 11 x64&rdquo;. See
+                <a href="#device">section 5</a>.
+              </td>
+            </tr>
+            <tr>
+              <th>Technical records</th>
+              <td>
+                IP addresses recorded against sign-in attempts, licence activation
+                attempts and download requests. We use these solely to rate-limit abuse
+                and to investigate suspected fraud.
+              </td>
+            </tr>
+            <tr>
+              <th>Support correspondence</th>
+              <td>
+                Emails you send us, and our replies, so we have a record of your issue.
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <h2 id="never">3. What we never collect or store</h2>
+        <div class="doc__callout">
+          <p>
+            <strong>We never see or store your card details.</strong> Card numbers,
+            expiry dates and security codes are entered on our payment processor&rsquo;s
+            own hosted page and are transmitted directly to them. They never pass
+            through, and are never stored on, our servers.
+          </p>
+        </div>
+        <p>We also do not collect:</p>
+        <ul>
+          <li>Your password in readable form — only a one-way hash.</li>
+          <li>The raw hardware or device identifier of the computer you install on.</li>
+          <li>
+            Any of the business data you enter into Diwan itself — your sales, stock,
+            customers and pricing stay on your own device. Diwan is offline-first and
+            does not upload your trading data to us.
+          </li>
+          <li>Location data, contacts, browsing history, or advertising identifiers.</li>
+        </ul>
+
+        <h2 id="why">4. Why we collect it</h2>
+        <ul>
+          <li><strong>To fulfil your order</strong> — to take payment, issue a licence key and email it to you.</li>
+          <li><strong>To manage your licence</strong> — to let you retrieve your key, download installers, and activate the software.</li>
+          <li><strong>To enforce licence terms</strong> — to ensure one licence key activates on one device, as described in our <a href="terms.html">Terms &amp; Conditions</a>.</li>
+          <li><strong>To provide support</strong> — to identify your order when you contact us.</li>
+          <li><strong>To prevent abuse and fraud</strong> — to rate-limit repeated failed sign-ins, activations and downloads.</li>
+          <li><strong>To meet legal and accounting obligations</strong> — to keep records of sales as required by law.</li>
+        </ul>
+
+        <h2 id="device">5. Device activation data</h2>
+        <p>
+          Diwan licences are locked to a single device. To make that work, the
+          application calculates an identifier for the computer it is running on and
+          sends it to us when you first activate.
+        </p>
+        <div class="doc__callout">
+          <p>
+            <strong>We never receive your raw device identifier.</strong> The
+            application hashes it before it leaves your computer, and our server hashes
+            it again before storing it. What we hold is a value that lets us recognise
+            the same device presenting the same licence key — and nothing more. It
+            cannot be reversed to reveal your hardware, and it cannot be used to
+            identify you anywhere else.
+          </p>
+        </div>
+        <p>
+          Alongside it we store a short, plain-text description of the platform, capped
+          at 64 characters — for example &ldquo;Windows 11 x64&rdquo;. This exists only
+          so that our support team can tell you which device your licence is currently
+          bound to when you ask us to move it.
         </p>
 
-        <h3>What we do not store</h3>
-        <p style="color:var(--text-muted)">
-          We do not store your password — only a one-way hash of it. We do not
-          store card details: payments are handled by the payment gateway, and
-          card numbers never reach our servers.
+        <h2 id="share">6. Who we share it with</h2>
+        <p>We do not sell your personal data, and we do not share it for advertising. We share it only with the following, and only to the extent needed:</p>
+        <ul>
+          <li>
+            <strong>Our payment processor</strong> — to take payment and to process
+            refunds and disputes. They receive your email address and the order amount;
+            they handle your card details independently of us under their own privacy
+            policy.
+          </li>
+          <li>
+            <strong>Our email provider</strong> — to deliver your licence key, sign-in
+            links and password reset emails.
+          </li>
+          <li>
+            <strong>Our hosting provider</strong> — which stores the database and
+            server logs on our behalf.
+          </li>
+          <li>
+            <strong>Legal authorities</strong> — where we are required by law to
+            disclose information, or where disclosure is necessary to establish or
+            defend a legal claim.
+          </li>
+        </ul>
+
+        <h2 id="retention">7. How long we keep it</h2>
+        <div class="doc__wrap">
+          <table class="doc__table">
+            <tr>
+              <th>Account and licence records</th>
+              <td>For as long as your account exists, and for 7 years after your last purchase, to meet tax and accounting record-keeping obligations.</td>
+            </tr>
+            <tr>
+              <th>Order and payment records</th>
+              <td>7 years from the date of the transaction, for the same reason.</td>
+            </tr>
+            <tr>
+              <th>Activation and download attempt logs</th>
+              <td>Automatically deleted after 1 hour. These exist only to enforce rate limits.</td>
+            </tr>
+            <tr>
+              <th>Sign-in attempt records</th>
+              <td>Retained for up to 90 days, then deleted.</td>
+            </tr>
+            <tr>
+              <th>Raw payment notification records</th>
+              <td>Retained for up to 12 months for reconciliation and dispute handling, then deleted.</td>
+            </tr>
+            <tr>
+              <th>Support correspondence</th>
+              <td>Retained for up to 3 years from the close of your enquiry.</td>
+            </tr>
+          </table>
+        </div>
+
+        <h2 id="rights">8. Your rights</h2>
+        <p>You may ask us to:</p>
+        <ul>
+          <li><strong>Give you a copy</strong> of the personal data we hold about you.</li>
+          <li><strong>Correct</strong> anything that is inaccurate.</li>
+          <li><strong>Delete</strong> your personal data, subject to the limits below.</li>
+          <li><strong>Stop</strong> using your data for a particular purpose.</li>
+        </ul>
+        <p>
+          Email us at <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+          from the address on your account. We will respond within 30 days.
+        </p>
+        <p>
+          <strong>Two honest limits on deletion.</strong> First, if you hold an active
+          licence, deleting your licence record will stop that licence working — we
+          cannot delete it and leave your software running, so we will ask you to
+          confirm you understand that before proceeding. Second, we are required to keep
+          records of completed sales for 7 years for tax purposes, so we cannot delete
+          order records within that period. We can, however, delete your account, your
+          contact details and your support history at any time.
         </p>
 
-        <h3>Who we share it with</h3>
-        <p style="color:var(--text-muted)">
-          Our payment gateway, in order to take payment, and our email provider,
-          in order to send you licence keys and sign-in links. We do not sell
-          your data.
+        <h2 id="cookies">9. Cookies</h2>
+        <p>
+          We use a single cookie: a session cookie that keeps you signed in while you
+          use your dashboard. It is deleted when you sign out or when your session
+          expires.
+        </p>
+        <p>
+          We do not use analytics cookies, advertising cookies, tracking pixels or
+          third-party trackers of any kind on this website.
         </p>
 
-        <h3>Still to be written</h3>
-        <p style="color:var(--text-muted)">
-          Retention periods, your rights over your data, how to request
-          deletion, cookie details, and the contact address for privacy
-          questions.
+        <h2 id="transfers">10. International transfers</h2>
+        <p>
+          We operate from Pakistan. Our payment processor, email provider and hosting
+          provider may process and store data on servers outside Pakistan. Where that
+          happens, we rely on those providers&rsquo; own contractual safeguards for
+          international transfers.
         </p>
 
-        <p style="margin-top:2.5rem"><a class="btn btn--ghost" href="/">← Back to Diwan</a></p>
+        <h2 id="security">11. Security</h2>
+        <p>
+          The website is served over HTTPS. Passwords are stored only as one-way
+          hashes. Licence keys are stored hashed, with a separately encrypted copy used
+          solely for re-sending them to you. Device identifiers are double-hashed. Our
+          application code and configuration files are stored outside the public web
+          directory and are not reachable by URL.
+        </p>
+        <p>
+          No system is perfectly secure. If we become aware of a breach affecting your
+          personal data, we will notify you without undue delay.
+        </p>
+
+        <h2 id="children">12. Children</h2>
+        <p>
+          Diwan is business software sold to traders. It is not directed at children,
+          and we do not knowingly collect personal data from anyone under 18.
+        </p>
+
+        <h2 id="changes">13. Changes to this policy</h2>
+        <p>
+          If we change this policy we will update the &ldquo;last updated&rdquo; date at
+          the top. Where a change materially affects how we use your data, we will email
+          account holders before it takes effect.
+        </p>
+
+        <h2 id="contact">14. Contact us</h2>
+        <p>For any privacy question, or to exercise any right above:</p>
+        <p>
+          <strong>Hamza Waheed</strong> (sole proprietor, trading as Diwan)<br>
+          Email: <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a><br>
+          Phone: <a href="tel:+923143288112">0314 3288112</a>
+        </p>
+        <p>I-10/2, Islamabad 44000, Islamabad Capital Territory, Pakistan</p>
+        <p style="margin-top:2.5rem"><a class="btn btn--ghost" href="index.html">&larr; Back to Diwan</a></p>
       </div>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html">
+            <span class="brand__mark" aria-hidden="true">D</span>
+            Diwan
+          </a>
+          <p class="site-footer__tagline">
+            Keyboard-first point of sale for retail, restaurants and pharmacies.
+            One-time licence, works offline.
+          </p>
+        </div>
+
+        <div>
+          <h2>Product</h2>
+          <ul>
+            <li><a href="products.html">Products &amp; Editions</a></li>
+            <li><a href="index.html#pricing">Pricing</a></li>
+            <li><a href="index.html#features">Features</a></li>
+            <li><a href="index.html#download">Download</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Legal</h2>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="service-delivery.html">Service Delivery</a></li>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Contact</h2>
+          <address>
+            Diwan — operated by Hamza Waheed<br>
+            I-10/2, Islamabad 44000<br>
+            Islamabad Capital Territory, Pakistan<br>
+            <a href="tel:+923143288112">0314 3288112</a><br>
+            <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+          </address>
+        </div>
+      </div>
+
+      <div class="site-footer__bottom">
+        <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
+        <p><a href="contact.html">Contact</a></p>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
