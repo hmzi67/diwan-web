@@ -361,7 +361,20 @@ jobs:
           dangerous-clean-slate: false
 
       - name: Smoke test
-        run: bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+        run: |
+          set +e
+          bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+          rc=$?
+          set -e
+          # 0 = passed. 1 = a real failure (site broken, or something private is
+          # reachable) — must break the build. 2 = the host's edge blocked the
+          # runner, so nothing could be verified; that is not evidence the deploy
+          # is bad, so warn loudly and carry on.
+          if [ "$rc" -eq 2 ]; then
+            echo "::warning::Smoke test was INCONCLUSIVE (edge blocked the runner). Verify the site manually."
+            exit 0
+          fi
+          exit "$rc"
 
   # ==========================================================================
   # 3. PRODUCTION — dry run first, then a gated real deploy
@@ -735,4 +748,17 @@ jobs:
             **/.user.ini
 
       - name: Smoke test
-        run: bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+        run: |
+          set +e
+          bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+          rc=$?
+          set -e
+          # 0 = passed. 1 = a real failure (site broken, or something private is
+          # reachable) — must break the build. 2 = the host's edge blocked the
+          # runner, so nothing could be verified; that is not evidence the deploy
+          # is bad, so warn loudly and carry on.
+          if [ "$rc" -eq 2 ]; then
+            echo "::warning::Smoke test was INCONCLUSIVE (edge blocked the runner). Verify the site manually."
+            exit 0
+          fi
+          exit "$rc"
