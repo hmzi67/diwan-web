@@ -20,8 +20,10 @@
 
       <nav class="nav__links" id="nav-links" aria-label="Primary">
         <a href="#features">Features</a>
+        <a href="products.html">Products</a>
         <a href="#pricing">Pricing</a>
         <a href="#support">Docs &amp; Support</a>
+        <a href="contact.html">Contact</a>
       </nav>
 
       <div class="nav__actions">
@@ -102,16 +104,15 @@
          is UNCHANGED and still functional — same form id, same
          fields, same API call.
 
-         PRICING CONTENT IS PLACEHOLDER: only diwan-pos-standard is a
-         real product (see database/schema.sql). diwan-pos-starter and
-         diwan-pos-enterprise, their prices, and every feature bullet
-         below are invented for layout purposes — see migration 003.
-         Replace with the real tiers before launch.
-
          "Get Started" no longer checks out directly: it hands off to
          /auth/sign-in.html (which links on to sign-up), or straight to
          checkout.html if already signed in, carrying the chosen plan
          along either way. See js/main.js.
+
+         Prices and inclusions here are the ones published on
+         products.html and referenced by the refund and terms pages.
+         Change all four together, plus the products table seed in
+         database/schema.sql.
          ========================================================= -->
     <section class="pricing" id="pricing">
       <div class="wrap">
@@ -219,5 +220,60 @@
   </main>
 
   <script src="/js/main.js"></script>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html">
+            <span class="brand__mark" aria-hidden="true">D</span>
+            Diwan
+          </a>
+          <p class="site-footer__tagline">
+            Keyboard-first point of sale for retail, restaurants and pharmacies.
+            One-time licence, works offline.
+          </p>
+        </div>
+
+        <div>
+          <h2>Product</h2>
+          <ul>
+            <li><a href="products.html">Products &amp; Editions</a></li>
+            <li><a href="index.html#pricing">Pricing</a></li>
+            <li><a href="index.html#features">Features</a></li>
+            <li><a href="index.html#download">Download</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Legal</h2>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="service-delivery.html">Service Delivery</a></li>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Contact</h2>
+          <address>
+            Diwan — operated by Hamza Waheed<br>
+            <span class="pending"><b>Pending</b>[FULL STREET ADDRESS — PENDING]</span>
+            Islamabad, <span class="pending"><b>Pending</b>[PROVINCE/TERRITORY — PENDING CONFIRMATION]</span>
+            Pakistan<br>
+            <a href="tel:+923143288112">0314 3288112</a><br>
+            <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+          </address>
+        </div>
+      </div>
+
+      <div class="site-footer__bottom">
+        <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
+        <p><a href="contact.html">Contact</a></p>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>

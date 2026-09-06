@@ -180,8 +180,9 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
-          DOWNLOAD_TOKEN_TTL_DAYS=30
-          DOWNLOAD_MAX_ATTEMPTS=5
+          LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          DOWNLOAD_LINK_TTL_MINUTES=${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
+          DOWNLOAD_MAX_ATTEMPTS=${{ vars.DOWNLOAD_MAX_ATTEMPTS || 5 }}
           PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
           JAZZCASH_MERCHANT_ID=${{ secrets.JAZZCASH_MERCHANT_ID }}
           JAZZCASH_PASSWORD=${{ secrets.JAZZCASH_PASSWORD }}
@@ -545,8 +546,9 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
-          DOWNLOAD_TOKEN_TTL_DAYS=30
-          DOWNLOAD_MAX_ATTEMPTS=5
+          LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          DOWNLOAD_LINK_TTL_MINUTES=${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
+          DOWNLOAD_MAX_ATTEMPTS=${{ vars.DOWNLOAD_MAX_ATTEMPTS || 5 }}
           PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
           JAZZCASH_MERCHANT_ID=${{ secrets.JAZZCASH_MERCHANT_ID }}
           JAZZCASH_PASSWORD=${{ secrets.JAZZCASH_PASSWORD }}

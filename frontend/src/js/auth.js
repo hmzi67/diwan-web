@@ -1,10 +1,10 @@
 // Login page: request a magic link, show the confirmation state.
 const API = '/api';
 
-// PLACEHOLDER names — must match the SKUs in database/schema.sql /
-// migration 003. Purely cosmetic (which word appears in the copy below);
-// the actual plan is never trusted from here, only from the signed session
-// once checkout.php looks up the order's product.
+// Display names — must match the SKUs in database/schema.sql. Purely
+// cosmetic (which word appears in the copy below); the actual plan is never
+// trusted from here, only from the signed session once checkout.php looks
+// up the order's product.
 const PLAN_NAMES = {
   'diwan-pos-starter':    'Starter',
   'diwan-pos-standard':   'Standard',

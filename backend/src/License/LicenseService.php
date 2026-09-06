@@ -28,7 +28,20 @@ final class LicenseService
         }
 
         $key = $this->generateKey();
-        $ttl = Env::int('DOWNLOAD_TOKEN_TTL_DAYS', 30);
+
+        // Licence lifetime is its OWN setting, deliberately unrelated to how
+        // long a download link stays valid (DownloadService::TOKEN_TTL_MINUTES,
+        // configurable via DOWNLOAD_LINK_TTL_MINUTES).
+        //
+        // 0 — the default — means the licence never expires, which is what the
+        // "one-time licence, no subscription" offer on the pricing page
+        // actually promises. Set a positive number only if you deliberately
+        // start selling time-limited licences.
+        //
+        // This previously read DOWNLOAD_TOKEN_TTL_DAYS, which made every
+        // licence expire 30 days after purchase. See migration 005, which
+        // repairs licences issued while that was live.
+        $validityDays = Env::int('LICENSE_VALIDITY_DAYS', 0);
 
         // customer_id is copied from the order rather than looked up by email:
         // checkout.php sets it from the authenticated session, so it is already
@@ -38,15 +51,23 @@ final class LicenseService
         // nothing ever populated it for NEW licences — so every licence issued
         // between then and now has customer_id NULL, and any query joining
         // licences by owner silently misses them.
+        // NULL expires_at means "never expires" — every read path already
+        // spells this as `expires_at IS NULL OR expires_at > NOW()`, so a
+        // perpetual licence needs no other change.
+        $expiresSql = $validityDays > 0
+            ? 'DATE_ADD(NOW(), INTERVAL :validity_days DAY)'
+            : 'NULL';
+
         $stmt = $pdo->prepare(
             'INSERT INTO licenses (order_id, customer_id, license_key_hash, license_key_encrypted,
                                    license_key_prefix, customer_email, status, max_downloads,
                                    downloads_used, expires_at, created_at)
              SELECT :order, o.customer_id, :hash, :enc, :prefix, :email, "active", :max, 0,
-                    DATE_ADD(NOW(), INTERVAL :ttl DAY), NOW()
+                    ' . $expiresSql . ', NOW()
                FROM orders o WHERE o.id = :order_lookup'
         );
-        $stmt->execute([
+
+        $params = [
             'order'        => $orderId,
             'order_lookup' => $orderId,
             'hash'         => $this->hash($key),
@@ -54,8 +75,11 @@ final class LicenseService
             'prefix'       => substr($key, 0, 11),
             'email'        => $email,
             'max'          => Env::int('DOWNLOAD_MAX_ATTEMPTS', 5),
-            'ttl'          => $ttl,
-        ]);
+        ];
+        if ($validityDays > 0) {
+            $params['validity_days'] = $validityDays;
+        }
+        $stmt->execute($params);
 
         Logger::info('Licence issued', ['order_id' => $orderId, 'prefix' => substr($key, 0, 11)]);
 

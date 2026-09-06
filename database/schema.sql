@@ -246,19 +246,22 @@ CREATE TABLE IF NOT EXISTS license_activation_attempts (
 -- -----------------------------------------------------------------------------
 -- Seed data
 --
--- diwan-pos-starter and diwan-pos-enterprise are PLACEHOLDERS (see migration
--- 003) — invented prices/copy so the 3-tier pricing page has real SKUs to
--- check out against. Replace before launch.
+-- These three tiers are the real, sellable catalogue. The descriptions and
+-- prices here are published in three other places and must be changed in all
+-- four together:
+--   frontend/src/index.html   (#pricing cards)
+--   frontend/src/products.html (catalogue)
+--   frontend/src/refund-policy.html + terms.html (reference the tier names)
 -- -----------------------------------------------------------------------------
 INSERT INTO products (sku, name, description, price_paisa, currency, is_active)
 VALUES
   ('diwan-pos-starter', 'Diwan POS — Starter Licence',
-   'PLACEHOLDER: single-terminal licence for a single counter, 1 year of updates.',
+   'One-time licence for a single terminal at one branch. Core billing and inventory, offline-first sync and email support.',
    800000, 'PKR', 1),
   ('diwan-pos-standard', 'Diwan POS — Standard Licence',
-   'Single-terminal perpetual licence with 1 year of updates.',
+   'One-time licence for up to 3 terminals at one branch. Adds reporting, receipt and kitchen printer support, and priority email support.',
    1200000, 'PKR', 1),
   ('diwan-pos-enterprise', 'Diwan POS — Enterprise Licence',
-   'PLACEHOLDER: multi-branch licence, unlimited terminals, 2 years of updates.',
+   'One-time licence for unlimited terminals across multiple branches. Adds multi-branch sync and priority phone and email support.',
    2500000, 'PKR', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name);

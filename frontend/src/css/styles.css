@@ -819,3 +819,178 @@ img, svg { max-width: 100%; display: block; }
   .pos__grid { grid-template-columns: repeat(2, 1fr); }
   .mockup__url { display: none; }
 }
+
+/* ==========================================================================
+   Legal / policy documents
+   Long-form prose pages: privacy, terms, refund, service delivery.
+   ========================================================================== */
+.doc { padding-block: var(--section-y); border-top: 1px solid var(--border); }
+.doc__inner { max-width: 72ch; }
+.doc h1 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -.03em; margin: 0 0 .6rem;
+}
+.doc__meta {
+  color: var(--text-faint); font-size: .85rem; margin: 0 0 2.5rem;
+  padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);
+}
+.doc h2 {
+  font-size: 1.18rem; letter-spacing: -.01em;
+  margin: 2.75rem 0 .9rem; scroll-margin-top: 6rem;
+}
+.doc h2:first-of-type { margin-top: 0; }
+.doc h3 { font-size: .98rem; margin: 1.75rem 0 .6rem; color: var(--text); }
+.doc p, .doc li { color: var(--text-muted); font-size: .94rem; line-height: 1.75; }
+.doc p { margin: 0 0 1rem; }
+.doc strong { color: var(--text); font-weight: 600; }
+.doc a { color: var(--accent); }
+.doc ul, .doc ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+.doc li { margin-bottom: .5rem; }
+.doc li::marker { color: var(--accent-dim); }
+
+/* Definition-style rows for "what we collect" tables */
+.doc__table { width: 100%; border-collapse: collapse; margin: 0 0 1.5rem; font-size: .9rem; }
+.doc__table th, .doc__table td {
+  text-align: left; vertical-align: top;
+  padding: .8rem .9rem; border-bottom: 1px solid var(--border);
+}
+.doc__table th { color: var(--text); font-weight: 600; width: 34%; }
+.doc__table td { color: var(--text-muted); }
+.doc__table tr:last-child th, .doc__table tr:last-child td { border-bottom: 0; }
+.doc__wrap { overflow-x: auto; }
+
+/* Callout for the single most important clause on a policy page */
+.doc__callout {
+  background: var(--glow-soft);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--r);
+  padding: 1.25rem 1.4rem;
+  margin: 0 0 1.75rem;
+}
+.doc__callout p { margin: 0; color: var(--text); }
+.doc__callout p + p { margin-top: .75rem; }
+
+/* Table of contents */
+.doc__toc {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.25rem 1.5rem; margin: 0 0 3rem;
+}
+.doc__toc p { font-size: .8rem; font-weight: 600; color: var(--text-muted); margin: 0 0 .75rem; }
+.doc__toc ol { margin: 0; padding-left: 1.1rem; }
+.doc__toc li { margin-bottom: .35rem; font-size: .88rem; }
+.doc__toc a { color: var(--text-muted); }
+.doc__toc a:hover { color: var(--accent); }
+
+/* ==========================================================================
+   PENDING — unfilled content that must never reach production.
+   Deliberately loud. If you can see this on the live site, it is not ready.
+   ========================================================================== */
+.pending {
+  display: block;
+  background: repeating-linear-gradient(
+    45deg, rgba(255,176,0,.10), rgba(255,176,0,.10) 10px,
+    rgba(255,176,0,.04) 10px, rgba(255,176,0,.04) 20px);
+  border: 1px dashed #FFB000;
+  border-radius: var(--r-sm);
+  color: #FFD37A;
+  font-family: var(--mono); font-size: .82rem; line-height: 1.6;
+  padding: .7rem .9rem;
+  margin: .35rem 0;
+}
+.pending b { color: #FFB000; display: block; margin-bottom: .2rem; font-size: .74rem;
+  letter-spacing: .06em; text-transform: uppercase; }
+
+/* ==========================================================================
+   Products / editions catalogue
+   ========================================================================== */
+.catalogue { padding-block: var(--section-y); border-top: 1px solid var(--border); }
+.catalogue__head { max-width: 640px; margin: 0 0 3rem; }
+.catalogue__head h1 { font-size: clamp(1.9rem, 4vw, 2.7rem); letter-spacing: -.03em; margin: 0 0 .75rem; }
+.catalogue__head p { color: var(--text-muted); font-size: 1rem; margin: 0; line-height: 1.7; }
+
+.catgroup { margin-top: 3.5rem; }
+.catgroup__head { display: flex; align-items: baseline; gap: .9rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.catgroup__head h2 { font-size: 1.3rem; letter-spacing: -.02em; margin: 0; }
+.catgroup__tag {
+  font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: .28rem .7rem; border-radius: var(--r-pill);
+  border: 1px solid var(--border-hi); color: var(--text-muted); background: var(--surface);
+}
+.catgroup__tag--buy { border-color: var(--accent-dim); color: var(--accent); background: var(--glow-soft); }
+.catgroup__note { color: var(--text-muted); font-size: .9rem; margin: 0 0 1.75rem; max-width: 62ch; line-height: 1.7; }
+
+.catgrid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+.item {
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.5rem;
+}
+.item__no {
+  font-family: var(--mono); font-size: .72rem; color: var(--text-faint);
+  letter-spacing: .08em; margin: 0 0 .6rem;
+}
+.item h3 { font-size: 1.02rem; margin: 0 0 .5rem; letter-spacing: -.01em; }
+.item p { color: var(--text-muted); font-size: .88rem; line-height: 1.65; margin: 0 0 1rem; }
+.item__price { display: flex; align-items: baseline; gap: .45rem; margin: 0 0 1.1rem; }
+.item__amount { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; color: var(--text); }
+.item__period { font-size: .8rem; color: var(--text-faint); }
+.item__spec { list-style: none; margin: 0 0 1.25rem; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+.item__spec li { font-size: .84rem; color: var(--text-muted); display: flex; gap: .55rem; }
+.item__spec li::before { content: "·"; color: var(--accent-dim); font-weight: 700; }
+.item__cta { margin-top: auto; }
+
+/* ==========================================================================
+   Contact page
+   ========================================================================== */
+.contact { padding-block: var(--section-y); border-top: 1px solid var(--border); }
+.contact__grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); margin-top: 2.5rem; }
+.contact__card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.6rem;
+}
+.contact__card h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--text-muted); margin: 0 0 .9rem; font-weight: 600; }
+.contact__card p { margin: 0 0 .5rem; font-size: .95rem; color: var(--text); line-height: 1.65; }
+.contact__card p:last-child { margin-bottom: 0; }
+.contact__card a { color: var(--accent); }
+.contact__card small { display: block; color: var(--text-faint); font-size: .82rem; margin-top: .6rem; line-height: 1.6; }
+
+/* ==========================================================================
+   Site footer
+   ========================================================================== */
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  padding-block: 3.5rem 2rem;
+  margin-top: 0;
+}
+.site-footer__grid {
+  display: grid; gap: 2.5rem;
+  grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+}
+.site-footer__brand .brand { margin-bottom: .9rem; }
+.site-footer__tagline { color: var(--text-muted); font-size: .88rem; line-height: 1.7; margin: 0; max-width: 34ch; }
+.site-footer h2 {
+  font-size: .76rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-faint); margin: 0 0 1rem; font-weight: 600;
+}
+.site-footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .6rem; }
+.site-footer a { color: var(--text-muted); font-size: .88rem; }
+.site-footer a:hover { color: var(--accent); }
+.site-footer address { font-style: normal; color: var(--text-muted); font-size: .88rem; line-height: 1.75; }
+.site-footer address a { display: inline; }
+.site-footer__bottom {
+  margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  color: var(--text-faint); font-size: .82rem;
+}
+.site-footer__bottom p { margin: 0; }
+
+@media (max-width: 860px) {
+  .site-footer__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .site-footer__brand { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) {
+  .site-footer__grid { grid-template-columns: 1fr; }
+}

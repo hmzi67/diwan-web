@@ -21,14 +21,26 @@ use RuntimeException;
  */
 final class DownloadService
 {
+    /**
+     * How long a single download LINK stays valid, in minutes. This governs the
+     * link only — it has nothing to do with how long the customer's licence
+     * lasts, which is LICENSE_VALIDITY_DAYS (see LicenseService::issueForOrder).
+     * Keep it short: the link is single-use and is the only thing standing
+     * between a leaked URL and a free installer.
+     */
     private const TOKEN_TTL_MINUTES = 15;
 
     public function issueToken(int $licenseId, string $platform, string $ip): array
     {
         $release = $this->activeRelease($platform);
 
+        $ttlMinutes = Env::int('DOWNLOAD_LINK_TTL_MINUTES', self::TOKEN_TTL_MINUTES);
+        if ($ttlMinutes < 1) {
+            $ttlMinutes = self::TOKEN_TTL_MINUTES;
+        }
+
         $token     = bin2hex(random_bytes(32));
-        $expiresAt = (new \DateTimeImmutable('+' . self::TOKEN_TTL_MINUTES . ' minutes'));
+        $expiresAt = (new \DateTimeImmutable('+' . $ttlMinutes . ' minutes'));
 
         $stmt = Database::pdo()->prepare(
             'INSERT INTO download_tokens (token_hash, license_id, release_id, issued_ip, expires_at, created_at)
