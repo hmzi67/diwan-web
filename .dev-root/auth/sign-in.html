@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — Diwan POS</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<!--
+  Wired to POST /api/sign-in.php. Sets the same signed session cookie every
+  other authenticated endpoint already reads (Diwan\Auth\Session), so
+  checkout.php and dashboard-data.php needed no changes.
+-->
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <main id="main" class="auth-split">
+    <div class="auth-split__panel">
+      <div class="auth-split__rays" aria-hidden="true"></div>
+
+      <a class="brand auth-split__brand" href="/">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+
+      <div class="auth-split__pitch">
+        <h2>Welcome back.</h2>
+        <p>Your licences, downloads and activation status — all in one place.</p>
+      </div>
+    </div>
+
+    <div class="auth-split__form">
+      <div class="auth-split__inner">
+
+        <div id="step-form">
+          <h1>Sign in</h1>
+          <p class="sub">Manage your licences, downloads and receipts.</p>
+
+          <form class="auth__form" id="signin-form" novalidate>
+            <label class="field" for="si-email">
+              Email address
+              <input class="input" id="si-email" name="email" type="email" required
+                     placeholder="you@example.com" autocomplete="email">
+            </label>
+
+            <div class="field">
+              <div class="auth-row">
+                <label for="si-password">Password</label>
+                <a href="forgot-password.html" id="forgot-link" data-carry-plan>Forgot password?</a>
+              </div>
+              <div class="pw">
+                <input class="input" id="si-password" name="password" type="password" required
+                       placeholder="Your password" autocomplete="current-password" data-pw>
+                <button class="pw__toggle" type="button" data-pw-toggle aria-label="Show password">Show</button>
+              </div>
+            </div>
+
+            <button class="btn btn--primary" type="submit">Sign in</button>
+          </form>
+          <p id="signin-status" role="status"></p>
+
+          <p class="auth-foot">New to Diwan? <a href="sign-up.html" data-carry-plan>Create an account</a></p>
+        </div>
+
+
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth-ui.js"></script>
+</body>
+</html>

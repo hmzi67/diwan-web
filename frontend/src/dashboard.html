@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your account — Diwan POS</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+      <div class="nav__actions">
+        <button class="btn btn--ghost" id="logout-btn" type="button">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section style="padding-block: var(--section-y)">
+      <div class="wrap" style="max-width: 760px">
+
+        <div id="loading" class="empty-state">Loading your account…</div>
+
+        <div id="content" hidden>
+          <div class="dash-header">
+            <div>
+              <h1>Welcome back</h1>
+              <p id="welcome-email"></p>
+            </div>
+          </div>
+
+          <div id="orders" class="orders"></div>
+          <div id="no-orders" class="empty-state" hidden>
+            No orders yet on this account.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

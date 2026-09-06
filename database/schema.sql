@@ -30,12 +30,52 @@ CREATE TABLE IF NOT EXISTS products (
 -- No password column: login is passwordless (magic link via login_tokens).
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS customers (
-  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  email       VARCHAR(190)    NOT NULL,
-  name        VARCHAR(160)    NULL,
-  created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email           VARCHAR(190)    NOT NULL,
+  name            VARCHAR(160)    NULL,
+  password_hash   VARCHAR(255)    NULL COMMENT 'password_hash() output. NULL = predates password auth, must set one via the reset flow.',
+  password_set_at DATETIME        NULL COMMENT 'When the current password was set. Support/audit only.',
+  session_epoch   INT UNSIGNED    NOT NULL DEFAULT 0 COMMENT 'Bumped on password reset; signed into the session cookie to revoke older ones.',
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_customers_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- password_reset_tokens — single-use reset links, hash-only like login_tokens
+-- and download_tokens. Also serves as the "set your first password" path for
+-- accounts created during the magic-link era (password_hash IS NULL).
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  token_hash   CHAR(64)        NOT NULL,
+  customer_id  BIGINT UNSIGNED NOT NULL,
+  issued_ip    VARCHAR(45)     NULL,
+  used_at      DATETIME        NULL,
+  expires_at   DATETIME        NOT NULL,
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_password_reset_tokens_hash (token_hash),
+  KEY idx_password_reset_tokens_expiry (expires_at),
+  KEY idx_password_reset_tokens_customer (customer_id),
+  CONSTRAINT fk_password_reset_tokens_customer
+    FOREIGN KEY (customer_id) REFERENCES customers (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- login_attempts — rolling window for rate-limiting password sign-in. Mirrors
+-- download_attempts. Emails are stored hashed so this never becomes a log of
+-- who tried to sign in and when.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ip           VARCHAR(45)     NOT NULL,
+  email_hash   CHAR(64)        NULL COMMENT 'hash_hmac(sha256, lowercased email, APP_KEY)',
+  result       ENUM('ok','bad_password','unknown_email','rate_limited','no_password_set') NOT NULL,
+  attempted_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_login_attempts_ip_time (ip, attempted_at),
+  KEY idx_login_attempts_email_time (email_hash, attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
@@ -96,7 +136,8 @@ CREATE TABLE IF NOT EXISTS licenses (
   id                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   order_id               BIGINT UNSIGNED NOT NULL,
   customer_id            BIGINT UNSIGNED NULL,
-  license_key_hash       CHAR(64)        NOT NULL COMMENT 'hash_hmac(sha256, key, APP_KEY)',
+  license_key_hash       CHAR(64)        NOT NULL COMMENT 'hash_hmac(sha256, key, APP_KEY) — sole source of truth for lookups',
+  license_key_encrypted  VARCHAR(255)    NULL COMMENT 'AES-256-GCM(key), reversible, for dashboard resend only — see migration 002',
   license_key_prefix     VARCHAR(16)     NOT NULL COMMENT 'First group only, for support lookup',
   customer_email         VARCHAR(190)    NOT NULL,
   status                 ENUM('active','revoked','expired') NOT NULL DEFAULT 'active',
@@ -204,9 +245,20 @@ CREATE TABLE IF NOT EXISTS license_activation_attempts (
 
 -- -----------------------------------------------------------------------------
 -- Seed data
+--
+-- diwan-pos-starter and diwan-pos-enterprise are PLACEHOLDERS (see migration
+-- 003) — invented prices/copy so the 3-tier pricing page has real SKUs to
+-- check out against. Replace before launch.
 -- -----------------------------------------------------------------------------
 INSERT INTO products (sku, name, description, price_paisa, currency, is_active)
-VALUES ('diwan-pos-standard', 'Diwan POS — Standard Licence',
-        'Single-terminal perpetual licence with 1 year of updates.',
-        1200000, 'PKR', 1)
+VALUES
+  ('diwan-pos-starter', 'Diwan POS — Starter Licence',
+   'PLACEHOLDER: single-terminal licence for a single counter, 1 year of updates.',
+   800000, 'PKR', 1),
+  ('diwan-pos-standard', 'Diwan POS — Standard Licence',
+   'Single-terminal perpetual licence with 1 year of updates.',
+   1200000, 'PKR', 1),
+  ('diwan-pos-enterprise', 'Diwan POS — Enterprise Licence',
+   'PLACEHOLDER: multi-branch licence, unlimited terminals, 2 years of updates.',
+   2500000, 'PKR', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name);

@@ -25,7 +25,7 @@
       </nav>
 
       <div class="nav__actions">
-        <a class="nav__login" href="#download">Log in</a>
+        <a class="nav__login" href="/auth/sign-in.html">Log in</a>
         <a class="btn btn--primary" href="#pricing">Get Started</a>
         <button class="nav__toggle" id="nav-toggle" type="button"
                 aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
@@ -98,20 +98,100 @@
     </section>
 
     <!-- =========================================================
-         Sections 3–9 land in the next pass. The checkout and
-         download flows below are UNCHANGED and still functional —
-         same form ids, same fields, same API calls.
+         Sections 4–9 land in the next pass. The download flow below
+         is UNCHANGED and still functional — same form id, same
+         fields, same API call.
+
+         PRICING CONTENT IS PLACEHOLDER: only diwan-pos-standard is a
+         real product (see database/schema.sql). diwan-pos-starter and
+         diwan-pos-enterprise, their prices, and every feature bullet
+         below are invented for layout purposes — see migration 003.
+         Replace with the real tiers before launch.
+
+         "Get Started" no longer checks out directly: it hands off to
+         /auth/sign-in.html (which links on to sign-up), or straight to
+         checkout.html if already signed in, carrying the chosen plan
+         along either way. See js/main.js.
          ========================================================= -->
-    <section class="legacy" id="pricing">
+    <section class="pricing" id="pricing">
       <div class="wrap">
-        <h2>Pricing</h2>
-        <form id="checkout-form">
-          <label>Email <input type="email" name="email" required placeholder="you@example.com"></label>
-          <label>Phone <input type="tel" name="phone" required placeholder="03001234567"></label>
-          <input type="hidden" name="product_sku" value="diwan-pos-standard">
-          <button class="btn btn--primary" type="submit">Pay with JazzCash</button>
-        </form>
-        <p id="checkout-status" role="status"></p>
+        <div class="pricing__head">
+          <h2>Simple pricing, one licence.</h2>
+          <p class="pricing__sub">
+            Pick the plan that matches how many counters you run.
+            One-time payment — no subscriptions, no surprise renewals.
+          </p>
+        </div>
+
+        <div class="pricing__grid">
+          <article class="plan">
+            <div class="plan__head">
+              <h3>Starter</h3>
+              <p class="plan__desc">For a single counter just getting started.</p>
+            </div>
+            <p class="plan__price">
+              <span class="plan__amount">Rs 8,000</span>
+              <span class="plan__period">one-time</span>
+            </p>
+            <a class="btn btn--ghost plan__cta" href="auth/sign-in.html?plan=diwan-pos-starter"
+               data-plan="diwan-pos-starter">Get Started</a>
+            <div class="plan__divider"></div>
+            <p class="plan__includes">Everything in Starter includes:</p>
+            <ul class="plan__features">
+              <li>1 terminal licence</li>
+              <li>Core billing &amp; inventory</li>
+              <li>Offline-first sync</li>
+              <li>Email support</li>
+              <li>1 year of updates</li>
+            </ul>
+          </article>
+
+          <article class="plan plan--popular">
+            <p class="plan__badge">Most popular</p>
+            <div class="plan__head">
+              <h3>Standard</h3>
+              <p class="plan__desc">For growing shops running a few counters.</p>
+            </div>
+            <p class="plan__price">
+              <span class="plan__amount">Rs 12,000</span>
+              <span class="plan__period">one-time</span>
+            </p>
+            <a class="btn btn--primary plan__cta" href="auth/sign-in.html?plan=diwan-pos-standard"
+               data-plan="diwan-pos-standard">Get Started</a>
+            <div class="plan__divider"></div>
+            <p class="plan__includes">Everything in Standard includes:</p>
+            <ul class="plan__features">
+              <li>Up to 3 terminals, 1 branch</li>
+              <li>All core modules + reporting</li>
+              <li>Receipt &amp; kitchen printer support</li>
+              <li>Priority email support</li>
+              <li>1 year of updates</li>
+            </ul>
+          </article>
+
+          <article class="plan">
+            <div class="plan__head">
+              <h3>Enterprise</h3>
+              <p class="plan__desc">For multi-branch chains.</p>
+            </div>
+            <p class="plan__price">
+              <span class="plan__amount">Rs 25,000</span>
+              <span class="plan__period">one-time</span>
+            </p>
+            <a class="btn btn--ghost plan__cta" href="auth/sign-in.html?plan=diwan-pos-enterprise"
+               data-plan="diwan-pos-enterprise">Get Started</a>
+            <div class="plan__divider"></div>
+            <p class="plan__includes">Everything in Enterprise includes:</p>
+            <ul class="plan__features">
+              <li>Unlimited terminals, multi-branch</li>
+              <li>All modules + multi-branch sync</li>
+              <li>Priority phone &amp; email support</li>
+              <li>2 years of updates</li>
+            </ul>
+          </article>
+        </div>
+
+        <p class="pricing__more"><a href="#features">…and a lot more →</a></p>
       </div>
     </section>
 

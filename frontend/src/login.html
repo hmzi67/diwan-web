@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in — Diwan POS</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="auth">
+      <div class="auth__card">
+
+        <!-- Step 1: ask for email -->
+        <div id="step-email">
+          <div class="auth__mark" aria-hidden="true">D</div>
+          <h1 id="login-title">Log in to Diwan</h1>
+          <p class="sub" id="login-sub">
+            Enter your email — new or returning, it doesn't matter. We'll
+            send you a link to continue. No password needed.
+          </p>
+
+          <form class="auth__form" id="login-form">
+            <label class="field">
+              Email address
+              <input class="input" type="email" name="email" required
+                     placeholder="you@example.com" autocomplete="email" autofocus>
+            </label>
+            <button class="btn btn--primary" type="submit">Send me a login link</button>
+          </form>
+          <p id="login-status" role="status"></p>
+          <p class="sub" style="margin:1.25rem 0 0">
+            New to Diwan? <a href="signup.html" style="color:var(--accent)">Create an account</a>
+          </p>
+        </div>
+
+        <!-- Step 2: confirmation -->
+        <div id="step-sent" hidden>
+          <div class="auth__success-icon" aria-hidden="true">✓</div>
+          <h1>Check your email</h1>
+          <p class="sub">
+            We've sent a login link to <b id="sent-email"></b>.
+            Open it on this device to <span id="sent-continue">continue</span>. The link
+            works once and expires in 20 minutes.
+          </p>
+          <p class="sub" style="margin:0">
+            Didn't get it? Check spam, or
+            <a href="#" id="try-again" style="color:var(--accent)">try a different email</a>.
+          </p>
+        </div>
+
+        <a class="auth__back" href="/">← Back to homepage</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/auth.js"></script>
+</body>
+</html>

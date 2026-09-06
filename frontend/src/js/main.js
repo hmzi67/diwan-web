@@ -17,33 +17,23 @@ function setStatus(el, message, kind) {
   el.className = kind || '';
 }
 
-const checkoutForm = document.getElementById('checkout-form');
-checkoutForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const status = document.getElementById('checkout-status');
-  const button = checkoutForm.querySelector('button');
-  button.disabled = true;
-  setStatus(status, 'Creating your order…');
-  try {
-    const payload = Object.fromEntries(new FormData(checkoutForm));
-    const { redirect_url, fields } = await postJson('/checkout.php', payload);
-    // The gateway requires a form POST, so build and submit one.
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = redirect_url;
-    for (const [name, value] of Object.entries(fields || {})) {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = name;
-      input.value = value;
-      form.appendChild(input);
+// Pricing cards: "Get Started" needs a session before it can reach checkout.
+// The href on each card already points at /auth/sign-in.html?plan=X, so anyone
+// without JS (or if this fetch fails) still lands somewhere correct — this
+// listener just skips the login hop for someone already signed in.
+document.querySelectorAll('.plan__cta[data-plan]').forEach((link) => {
+  link.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const plan = link.dataset.plan;
+    try {
+      const res = await fetch(API + '/dashboard-data.php', { credentials: 'same-origin' });
+      window.location.href = res.ok
+        ? `/checkout.html?plan=${encodeURIComponent(plan)}`
+        : `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
+    } catch {
+      window.location.href = `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
     }
-    document.body.appendChild(form);
-    form.submit();
-  } catch (err) {
-    setStatus(status, err.message, 'error');
-    button.disabled = false;
-  }
+  });
 });
 
 const downloadForm = document.getElementById('download-form');

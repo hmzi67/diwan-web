@@ -30,19 +30,31 @@ final class LicenseService
         $key = $this->generateKey();
         $ttl = Env::int('DOWNLOAD_TOKEN_TTL_DAYS', 30);
 
+        // customer_id is copied from the order rather than looked up by email:
+        // checkout.php sets it from the authenticated session, so it is already
+        // the right answer and cannot drift from the order it belongs to.
+        //
+        // Migration 001 added this column and backfilled existing rows, but
+        // nothing ever populated it for NEW licences — so every licence issued
+        // between then and now has customer_id NULL, and any query joining
+        // licences by owner silently misses them.
         $stmt = $pdo->prepare(
-            'INSERT INTO licenses (order_id, license_key_hash, license_key_prefix, customer_email,
-                                   status, max_downloads, downloads_used, expires_at, created_at)
-             VALUES (:order, :hash, :prefix, :email, "active", :max, 0,
-                     DATE_ADD(NOW(), INTERVAL :ttl DAY), NOW())'
+            'INSERT INTO licenses (order_id, customer_id, license_key_hash, license_key_encrypted,
+                                   license_key_prefix, customer_email, status, max_downloads,
+                                   downloads_used, expires_at, created_at)
+             SELECT :order, o.customer_id, :hash, :enc, :prefix, :email, "active", :max, 0,
+                    DATE_ADD(NOW(), INTERVAL :ttl DAY), NOW()
+               FROM orders o WHERE o.id = :order_lookup'
         );
         $stmt->execute([
-            'order'  => $orderId,
-            'hash'   => $this->hash($key),
-            'prefix' => substr($key, 0, 11),
-            'email'  => $email,
-            'max'    => Env::int('DOWNLOAD_MAX_ATTEMPTS', 5),
-            'ttl'    => $ttl,
+            'order'        => $orderId,
+            'order_lookup' => $orderId,
+            'hash'         => $this->hash($key),
+            'enc'          => $this->encrypt($key),
+            'prefix'       => substr($key, 0, 11),
+            'email'        => $email,
+            'max'          => Env::int('DOWNLOAD_MAX_ATTEMPTS', 5),
+            'ttl'          => $ttl,
         ]);
 
         Logger::info('Licence issued', ['order_id' => $orderId, 'prefix' => substr($key, 0, 11)]);
@@ -142,6 +154,39 @@ final class LicenseService
     private function hash(string $key): string
     {
         return hash_hmac('sha256', $key, Env::require('APP_KEY'));
+    }
+
+    /**
+     * Reversible copy of the key, for the dashboard's "resend my key" only.
+     * Never used for lookup/authentication — hash() remains the sole source
+     * of truth there. See migration 002 for the trade-off this accepts.
+     */
+    private function encrypt(string $key): string
+    {
+        $encKey = hash('sha256', Env::require('APP_KEY'), true);
+        $nonce  = random_bytes(12);
+        $tag    = '';
+        $cipher = openssl_encrypt($key, 'aes-256-gcm', $encKey, OPENSSL_RAW_DATA, $nonce, $tag);
+        return base64_encode($nonce . $tag . $cipher);
+    }
+
+    /** Inverse of encrypt(). Returns null for anything malformed or pre-migration-002 (NULL). */
+    public function decrypt(?string $encoded): ?string
+    {
+        if ($encoded === null || $encoded === '') {
+            return null;
+        }
+        $raw = base64_decode($encoded, true);
+        if ($raw === false || strlen($raw) < 12 + 16) {
+            return null;
+        }
+        $nonce  = substr($raw, 0, 12);
+        $tag    = substr($raw, 12, 16);
+        $cipher = substr($raw, 28);
+
+        $encKey = hash('sha256', Env::require('APP_KEY'), true);
+        $plain  = openssl_decrypt($cipher, 'aes-256-gcm', $encKey, OPENSSL_RAW_DATA, $nonce, $tag);
+        return $plain === false ? null : $plain;
     }
 
     private function normalise(string $key): string

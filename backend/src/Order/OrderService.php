@@ -10,8 +10,14 @@ use RuntimeException;
 
 final class OrderService
 {
-    /** Creates a pending order and returns it. Amounts are stored in paisa. */
-    public function createPending(string $sku, string $email, string $phone, string $gateway): array
+    /**
+     * Creates a pending order and returns it. Amounts are stored in paisa.
+     * $customerId ties the order to the already-authenticated customer whose
+     * session created it (checkout.php requires a session — see there) so
+     * dashboard-data.php and resend-license-email.php can find it by owner
+     * instead of by trusting a typed email.
+     */
+    public function createPending(string $sku, int $customerId, string $email, string $phone, string $gateway): array
     {
         $pdo = Database::pdo();
 
@@ -19,13 +25,14 @@ final class OrderService
         $orderRef = $this->generateReference();
 
         $stmt = $pdo->prepare(
-            'INSERT INTO orders (order_ref, product_id, customer_email, customer_phone,
+            'INSERT INTO orders (order_ref, product_id, customer_id, customer_email, customer_phone,
                                  amount_paisa, currency, gateway, status, created_at)
-             VALUES (:ref, :product, :email, :phone, :amount, :currency, :gateway, "pending", NOW())'
+             VALUES (:ref, :product, :customer, :email, :phone, :amount, :currency, :gateway, "pending", NOW())'
         );
         $stmt->execute([
             'ref'      => $orderRef,
             'product'  => $product['id'],
+            'customer' => $customerId,
             'email'    => $email,
             'phone'    => $phone,
             'amount'   => $product['price_paisa'],

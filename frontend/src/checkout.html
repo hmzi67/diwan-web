@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout — Diwan POS</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="auth">
+      <div class="auth__card">
+        <div class="auth__mark" aria-hidden="true">D</div>
+        <h1 id="checkout-title">Checkout</h1>
+        <p class="sub" id="checkout-summary">Loading your plan…</p>
+
+        <form class="auth__form" id="checkout-form" hidden>
+          <label class="field">
+            Email
+            <span class="input" id="checkout-email" style="color:var(--text-muted)"></span>
+          </label>
+          <label class="field">
+            Phone
+            <input class="input" type="tel" name="phone" required
+                   placeholder="03001234567" autocomplete="tel">
+          </label>
+          <button class="btn btn--primary" type="submit">Pay with JazzCash</button>
+        </form>
+        <p id="checkout-status" role="status"></p>
+
+        <a class="auth__back" href="index.html#pricing">← Choose a different plan</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/checkout.js"></script>
+</body>
+</html>

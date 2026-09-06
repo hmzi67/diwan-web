@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign up — Diwan POS</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <main id="main" class="signup">
+    <!-- Decorative panel: pure CSS, no image asset (same approach as the
+         hero mockup) — a radiating line pattern in the accent colour. -->
+    <div class="signup__panel" aria-hidden="true">
+      <a class="brand signup__brand" href="/">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+      <div class="signup__rays"></div>
+      <blockquote class="signup__quote">
+        <p>&ldquo;Switched three counters over in an afternoon. Billing hasn't
+        slowed down once.&rdquo;</p>
+        <cite>— a Diwan shop owner</cite>
+      </blockquote>
+    </div>
+
+    <div class="signup__form-side">
+      <div class="auth__card">
+
+        <!-- Step 1: email + terms -->
+        <div id="step-email">
+          <h1>Get started with Diwan</h1>
+          <p class="sub">
+            Enter your email and we'll send you a link to create your
+            account — no password to set or remember.
+          </p>
+
+          <form class="auth__form" id="signup-form">
+            <label class="field">
+              Email address
+              <input class="input" type="email" name="email" required
+                     placeholder="you@example.com" autocomplete="email" autofocus>
+            </label>
+
+            <label class="signup__terms">
+              <input type="checkbox" name="terms" required>
+              <span>I accept the <a href="#" target="_blank" rel="noopener">terms of use</a>
+                &amp; <a href="#" target="_blank" rel="noopener">privacy policy</a></span>
+            </label>
+
+            <button class="btn btn--primary" type="submit">Send me a login link</button>
+          </form>
+          <p id="signup-status" role="status"></p>
+
+          <p class="sub signup__switch">
+            Already have an account? <a href="login.html" style="color:var(--accent)">Sign in</a>
+          </p>
+        </div>
+
+        <!-- Step 2: confirmation -->
+        <div id="step-sent" hidden>
+          <div class="auth__success-icon" aria-hidden="true">✓</div>
+          <h1>Check your email</h1>
+          <p class="sub">
+            We've sent a login link to <b id="sent-email"></b>.
+            Open it on this device to <span id="sent-continue">finish creating your account</span>.
+            The link works once and expires in 20 minutes.
+          </p>
+          <p class="sub" style="margin:0">
+            Didn't get it? Check spam, or
+            <a href="#" id="try-again" style="color:var(--accent)">try a different email</a>.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/signup.js"></script>
+</body>
+</html>

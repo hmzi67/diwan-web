@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign up — Diwan POS</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<!--
+  Wired to POST /api/register.php, which creates the account and starts the
+  session in one step, then redirects to the chosen plan's checkout (?plan=)
+  or the dashboard. The old magic-link pages (/login.html, /signup.html) are
+  still live but no longer linked; they are removed in a later pass.
+-->
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <main id="main" class="auth-split">
+    <div class="auth-split__panel">
+      <div class="auth-split__rays" aria-hidden="true"></div>
+
+      <a class="brand auth-split__brand" href="/">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+
+      <div class="auth-split__pitch">
+        <h2>Run your counter at the speed of typing.</h2>
+        <p>Keyboard-first point of sale for retail, restaurants and pharmacies.</p>
+      </div>
+
+      <ol class="auth-steps">
+        <li><div><b>Create your account</b><span>Email and a password, that's it.</span></div></li>
+        <li><div><b>Choose your plan</b><span>One-time licence, no subscription.</span></div></li>
+        <li><div><b>Start billing</b><span>Download, activate, run your counter.</span></div></li>
+      </ol>
+    </div>
+
+    <div class="auth-split__form">
+      <div class="auth-split__inner">
+
+        <div id="step-form">
+          <h1>Get started with Diwan</h1>
+          <p class="sub">Create your account — it takes about a minute.</p>
+
+          <form class="auth__form" id="signup-form" novalidate>
+            <label class="field" for="su-email">
+              Email address
+              <input class="input" id="su-email" name="email" type="email" required
+                     placeholder="you@example.com" autocomplete="email">
+            </label>
+
+            <div class="field">
+              <label for="su-password">Password</label>
+              <div class="pw">
+                <input class="input" id="su-password" name="password" type="password" required
+                       minlength="8" placeholder="Enter a password"
+                       autocomplete="new-password" data-pw>
+                <button class="pw__toggle" type="button" data-pw-toggle aria-label="Show password">Show</button>
+              </div>
+              <p class="pw-hint">Use at least 8 characters.</p>
+            </div>
+
+            <div class="field">
+              <label for="su-confirm">Confirm password</label>
+              <div class="pw">
+                <input class="input" id="su-confirm" name="confirm" type="password" required
+                       placeholder="Re-enter your password" autocomplete="new-password"
+                       data-pw data-pw-match="su-password">
+                <button class="pw__toggle" type="button" data-pw-toggle aria-label="Show password">Show</button>
+              </div>
+            </div>
+
+            <label class="auth-terms">
+              <input type="checkbox" name="terms" required>
+              <span>I accept the <a href="/terms.html" target="_blank" rel="noopener">terms of use</a>
+                &amp; <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a></span>
+            </label>
+
+            <button class="btn btn--primary" type="submit">Create account</button>
+          </form>
+          <p id="signup-status" role="status"></p>
+
+          <p class="auth-foot">Already have an account? <a href="sign-in.html" data-carry-plan>Sign in</a></p>
+        </div>
+
+
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth-ui.js"></script>
+</body>
+</html>

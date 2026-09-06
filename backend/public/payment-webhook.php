@@ -17,6 +17,7 @@ use Diwan\Order\OrderService;
 use Diwan\Payment\GatewayFactory;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
+use Diwan\Support\Mailer;
 
 Http::requireMethod('POST');
 
@@ -91,7 +92,7 @@ if ($result['status'] === 'not_paid') {
 
 // --- Deliver the licence (outside the transaction) -------------------------
 if ($result['status'] === 'paid' && $result['license_key'] !== null) {
-    $sent = mail(
+    $sent = Mailer::send(
         (string) $order['customer_email'],
         'Your Diwan POS licence key',
         "Thank you for your purchase.\n\n"

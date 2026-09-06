@@ -70,6 +70,12 @@ $body = [
     'env'    => Env::get('APP_ENV', 'unknown'),
     'commit' => Env::get('APP_COMMIT', 'unknown'),
     'checks' => $checks,
+    // Which password algorithm this host actually gives us. Shared hosting
+    // often ships PHP without libargon2, and that is not visible from the PHP
+    // version alone — PasswordService picks the strongest available rather
+    // than hardcoding one, so this reports what it settled on. Safe to expose:
+    // the algorithm is already recoverable from any hash's prefix.
+    'password_algo' => Diwan\Auth\PasswordService::algorithmName(),
 ];
 
 // Diagnostics are on by default so a fresh deploy is debuggable. Set
