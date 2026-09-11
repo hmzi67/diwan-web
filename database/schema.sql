@@ -236,7 +236,10 @@ CREATE TABLE IF NOT EXISTS license_activation_attempts (
   id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   ip                  VARCHAR(45)     NOT NULL,
   license_key_prefix  VARCHAR(16)     NULL,
-  result              ENUM('activated','reactivated','already_bound','invalid_key','rate_limited') NOT NULL,
+  -- activated..rate_limited: activate-license.php. status_*: license-status.php
+  -- (migration 006) — both endpoints share this table via ActivationThrottle.
+  result              ENUM('activated','reactivated','already_bound','invalid_key','rate_limited',
+                           'status_refused','status_not_activated','status_active','status_revoked','status_expired') NOT NULL,
   attempted_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_activation_attempts_ip_time (ip, attempted_at),

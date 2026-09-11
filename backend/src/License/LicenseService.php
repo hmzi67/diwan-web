@@ -174,6 +174,70 @@ final class LicenseService
         });
     }
 
+    /**
+     * Current entitlement of a licence, for the device it is bound to.
+     *
+     * Backs license-status.php. Unlike activate(), this is read-only and is
+     * only willing to describe a licence to the machine that activated it —
+     * anyone else (wrong key, wrong device, key never activated) gets the
+     * same `unknown` answer, so the endpoint cannot be used to probe which
+     * keys exist or which have been revoked.
+     *
+     * Returns one of:
+     *   unknown        — no such key, or bound to a different device
+     *   not_activated  — key exists but has never been activated (the app
+     *                    must call activate-license.php first)
+     *   ok             — with `status` (active|revoked|expired) and
+     *                    `expires_at` (unix timestamp, or null = perpetual)
+     *
+     * `status` folds the row's own `status` together with `expires_at`: a
+     * row that is still marked "active" but whose expiry has passed reports
+     * "expired", so the app never has to reason about the row's two axes.
+     * `expires_at` is converted with MySQL's own UNIX_TIMESTAMP() so it is
+     * measured on the same clock as the `> NOW()` comparisons everywhere
+     * else in this class, rather than re-parsed under PHP's timezone.
+     */
+    public function statusForDevice(string $rawKey, string $fingerprintHash): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT status, activation_status, activated_machine_hash,
+                    UNIX_TIMESTAMP(expires_at) AS expires_ts,
+                    (expires_at IS NOT NULL AND expires_at <= NOW()) AS past_expiry
+               FROM licenses
+              WHERE license_key_hash = :hash
+              LIMIT 1'
+        );
+        $stmt->execute(['hash' => $this->hash($this->normalise($rawKey))]);
+        $license = $stmt->fetch();
+
+        if (!$license) {
+            return ['result' => 'unknown'];
+        }
+        if ($license['activation_status'] !== 'activated') {
+            return ['result' => 'not_activated'];
+        }
+        if (!hash_equals((string) $license['activated_machine_hash'], $fingerprintHash)) {
+            return ['result' => 'unknown'];
+        }
+
+        $status = $license['status'];
+        if ($status === 'active' && (bool) $license['past_expiry']) {
+            $status = 'expired';
+        }
+
+        return [
+            'result'     => 'ok',
+            'status'     => $status,
+            'expires_at' => $license['expires_ts'] === null ? null : (int) $license['expires_ts'],
+        ];
+    }
+
+    /** The canonical form of a key as the app must store and resend it. */
+    public function normaliseKey(string $key): string
+    {
+        return $this->normalise($key);
+    }
+
     /** HMAC, not a bare hash: a stolen DB is useless without APP_KEY. */
     private function hash(string $key): string
     {

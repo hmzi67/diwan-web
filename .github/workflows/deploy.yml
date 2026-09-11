@@ -181,6 +181,9 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
           LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          LICENSE_SIGNING_KEY_ID=${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
+          LICENSE_SIGNING_PRIVATE_KEY=${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
+          LICENSE_MAX_OFFLINE_DAYS=${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
           DOWNLOAD_LINK_TTL_MINUTES=${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
           DOWNLOAD_MAX_ATTEMPTS=${{ vars.DOWNLOAD_MAX_ATTEMPTS || 20 }}
           PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
@@ -215,6 +218,8 @@ jobs:
           done
           grep -q "^APP_KEY=." bundle/app/config/.env || \
             echo "::warning::APP_KEY is empty — licence lookups and download tokens will fail with a 500."
+          grep -q "^LICENSE_SIGNING_PRIVATE_KEY=." bundle/app/config/.env || \
+            echo "::warning::LICENSE_SIGNING_PRIVATE_KEY is empty — api/license-status.php will 500 and the desktop app cannot refresh its licence."
 
       - name: Upload site + api (attempt 1)
         id: upload_site_api_0
@@ -560,6 +565,9 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
           LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          LICENSE_SIGNING_KEY_ID=${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
+          LICENSE_SIGNING_PRIVATE_KEY=${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
+          LICENSE_MAX_OFFLINE_DAYS=${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
           DOWNLOAD_LINK_TTL_MINUTES=${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
           DOWNLOAD_MAX_ATTEMPTS=${{ vars.DOWNLOAD_MAX_ATTEMPTS || 20 }}
           PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
@@ -594,6 +602,8 @@ jobs:
           done
           grep -q "^APP_KEY=." bundle/app/config/.env || \
             echo "::warning::APP_KEY is empty — licence lookups and download tokens will fail with a 500."
+          grep -q "^LICENSE_SIGNING_PRIVATE_KEY=." bundle/app/config/.env || \
+            echo "::warning::LICENSE_SIGNING_PRIVATE_KEY is empty — api/license-status.php will 500 and the desktop app cannot refresh its licence."
 
       # Order matters: classes and config land BEFORE the entrypoints that call
       # them, so there is no window where new PHP looks for a class that is not
