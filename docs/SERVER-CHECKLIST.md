@@ -106,7 +106,11 @@ curl -i https://diwan.com/build.json              # expect 403
       — it will fatal on 7.x.
 - [ ] Update `php-version` in `.github/workflows/deploy.yml` to match the server
       exactly, so CI lints against what actually runs.
-- [ ] Extensions present: `pdo_mysql`, `openssl`, `curl`, `mbstring`, `json`.
+- [ ] Extensions present: `pdo_mysql`, `openssl`, `curl`, `mbstring`, `json`,
+      `sodium`. Without `sodium`, `LicenseSigner` cannot start and every real
+      licence activation/refresh from the app returns HTTP 500 (cPanel →
+      Select PHP Version → Extensions). `api/health.php` reports it as
+      `license_signing: sodium_extension_missing`.
 - [ ] `display_errors = Off` in the production PHP config (the app forces this,
       but a host-level `display_errors = On` during a fatal *before* bootstrap
       can still leak paths).
