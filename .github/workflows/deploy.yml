@@ -222,8 +222,12 @@ jobs:
           # and refresh from the app 500s, while health.php used to say "ok".
           grep -q "^LICENSE_SIGNING_PRIVATE_KEY=." bundle/app/config/.env || \
             { echo "::error::LICENSE_SIGNING_PRIVATE_KEY secret is not set — api/license-status.php would 500 for every app. Set it (php scripts/generate-license-signing-key.php) before deploying."; exit 1; }
-          grep -q "^LICENSE_SIGNING_KEY_ID=default$" bundle/app/config/.env && \
-            { echo "::error::LICENSE_SIGNING_KEY_ID variable is not set — it must match a kid in the app's ACCEPTED_PUBLIC_KEYS (e.g. 2026-09)."; exit 1; }
+          # `if`, not `grep && exit`: as a step's last command, a non-matching
+          # grep (the healthy case) would itself fail the step.
+          if grep -q "^LICENSE_SIGNING_KEY_ID=default$" bundle/app/config/.env; then
+            echo "::error::LICENSE_SIGNING_KEY_ID variable is not set — it must match a kid in the app's ACCEPTED_PUBLIC_KEYS (e.g. 2026-09)."
+            exit 1
+          fi
 
       - name: Upload site + api (attempt 1)
         id: upload_site_api_0
@@ -608,8 +612,12 @@ jobs:
             echo "::warning::APP_KEY is empty — licence lookups and download tokens will fail with a 500."
           grep -q "^LICENSE_SIGNING_PRIVATE_KEY=." bundle/app/config/.env || \
             { echo "::error::LICENSE_SIGNING_PRIVATE_KEY secret is not set — api/license-status.php would 500 for every app. Set it (php scripts/generate-license-signing-key.php) before deploying."; exit 1; }
-          grep -q "^LICENSE_SIGNING_KEY_ID=default$" bundle/app/config/.env && \
-            { echo "::error::LICENSE_SIGNING_KEY_ID variable is not set — it must match a kid in the app's ACCEPTED_PUBLIC_KEYS (e.g. 2026-09)."; exit 1; }
+          # `if`, not `grep && exit`: as a step's last command, a non-matching
+          # grep (the healthy case) would itself fail the step.
+          if grep -q "^LICENSE_SIGNING_KEY_ID=default$" bundle/app/config/.env; then
+            echo "::error::LICENSE_SIGNING_KEY_ID variable is not set — it must match a kid in the app's ACCEPTED_PUBLIC_KEYS (e.g. 2026-09)."
+            exit 1
+          fi
 
       # Order matters: classes and config land BEFORE the entrypoints that call
       # them, so there is no window where new PHP looks for a class that is not
