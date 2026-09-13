@@ -23,6 +23,17 @@ spl_autoload_register(static function (string $class): void {
     }
 });
 
+// --- libsodium fallback ---
+// LicenseSigner needs sodium_crypto_sign_* (Ed25519). The production host's PHP
+// ships without ext-sodium, which made every real licence activation/refresh
+// return HTTP 500. paragonie/sodium_compat (ISC, pure PHP, vendored because
+// there is no Composer on an FTP-only host) defines the same functions and
+// constants only when the extension is absent, so the native extension still
+// wins wherever it is installed. Signatures are byte-identical to ext-sodium.
+if (!extension_loaded('sodium')) {
+    require_once DIWAN_SRC . '/ThirdParty/sodium_compat/autoload.php';
+}
+
 use Diwan\Config\Env;
 use Diwan\Support\Logger;
 
