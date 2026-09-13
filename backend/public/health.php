@@ -31,7 +31,17 @@ try {
     new Diwan\License\LicenseSigner();
     $checks['license_signing'] = true;
 } catch (Throwable $e) {
-    $hints['license_signing'] = Env::get('LICENSE_SIGNING_PRIVATE_KEY') === null ? 'not_configured' : 'invalid_key';
+    // A fixed vocabulary naming which precondition failed — never the key,
+    // its length, or the exception message.
+    $signingKey = Env::get('LICENSE_SIGNING_PRIVATE_KEY');
+    $decoded    = $signingKey === null ? false : base64_decode($signingKey, true);
+    $hints['license_signing'] = match (true) {
+        !function_exists('sodium_crypto_sign_detached') => 'sodium_extension_missing',
+        $signingKey === null                             => 'not_configured',
+        $decoded === false                               => 'key_not_base64',
+        strlen($decoded) !== 64                          => 'key_wrong_length',
+        default                                          => 'unknown',
+    };
 }
 
 // APP_KEY signs every licence lookup and download token. Without it the store
