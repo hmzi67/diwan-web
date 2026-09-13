@@ -17,9 +17,22 @@ $checks = [
     'app_key'         => false,
     'database'        => false,
     'private_storage' => false,
+    'license_signing' => false,
 ];
 
 $hints = [];
+
+// The desktop/Android app refreshes its licence from license-status.php, which
+// constructs LicenseSigner only after a real key has been matched — so a
+// missing or malformed signing key 500s every genuine licence check while a
+// bogus-key probe (403, never reaches the signer) and this endpoint both looked
+// healthy. Constructing it here is the same check the real request makes.
+try {
+    new Diwan\License\LicenseSigner();
+    $checks['license_signing'] = true;
+} catch (Throwable $e) {
+    $hints['license_signing'] = Env::get('LICENSE_SIGNING_PRIVATE_KEY') === null ? 'not_configured' : 'invalid_key';
+}
 
 // APP_KEY signs every licence lookup and download token. Without it the store
 // is dead — but nothing else in this endpoint touches it, so before this check
