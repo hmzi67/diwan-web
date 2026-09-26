@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pricing — Diwan POS</title>
+  <meta name="description" content="Diwan POS pricing: three one-time licence editions in Pakistani Rupees — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscriptions.">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="index.html">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+
+      <nav class="nav__links" id="nav-links" aria-label="Primary">
+        <a href="features.html">Features</a>
+        <a href="products.html">Products</a>
+        <a href="pricing.html" aria-current="page">Pricing</a>
+        <a href="support.html">Docs &amp; Support</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+
+      <div class="nav__actions">
+        <a class="nav__login" href="/auth/sign-in.html">Log in</a>
+        <a class="btn btn--primary" href="auth/sign-in.html?plan=diwan-pos-standard">Get Started</a>
+        <button class="nav__toggle" id="nav-toggle" type="button"
+                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Prices and inclusions below are the ones published on products.html and
+         referenced by the refund and terms pages. Change all four together, plus
+         the products table seed in database/schema.sql. -->
+    <section class="pricing">
+      <div class="wrap">
+        <div class="pricing__head">
+          <h1>Simple pricing, one licence.</h1>
+          <p class="pricing__sub">
+            Pick the plan that matches how many counters you run.
+            One-time payment — no subscriptions, no surprise renewals.
+          </p>
+        </div>
+
+        <div class="pricing__grid">
+          <article class="plan">
+            <div class="plan__head">
+              <h3>Starter</h3>
+              <p class="plan__desc">For a single counter just getting started.</p>
+            </div>
+            <p class="plan__price">
+              <span class="plan__amount">Rs 8,000</span>
+              <span class="plan__period">one-time</span>
+            </p>
+            <a class="btn btn--ghost plan__cta" href="auth/sign-in.html?plan=diwan-pos-starter"
+               data-plan="diwan-pos-starter">Get Started</a>
+            <div class="plan__divider"></div>
+            <p class="plan__includes">Everything in Starter includes:</p>
+            <ul class="plan__features">
+              <li>1 terminal licence</li>
+              <li>Core billing &amp; inventory</li>
+              <li>Offline-first sync</li>
+              <li>Email support</li>
+              <li>Free software updates</li>
+            </ul>
+          </article>
+
+          <article class="plan plan--popular">
+            <p class="plan__badge">Most popular</p>
+            <div class="plan__head">
+              <h3>Standard</h3>
+              <p class="plan__desc">For growing shops running a few counters.</p>
+            </div>
+            <p class="plan__price">
+              <span class="plan__amount">Rs 12,000</span>
+              <span class="plan__period">one-time</span>
+            </p>
+            <a class="btn btn--primary plan__cta" href="auth/sign-in.html?plan=diwan-pos-standard"
+               data-plan="diwan-pos-standard">Get Started</a>
+            <div class="plan__divider"></div>
+            <p class="plan__includes">Everything in Standard includes:</p>
+            <ul class="plan__features">
+              <li>Up to 3 terminals, 1 branch</li>
+              <li>All core modules + reporting</li>
+              <li>Receipt &amp; kitchen printer support</li>
+              <li>Priority email support</li>
+              <li>Free software updates</li>
+            </ul>
+          </article>
+
+          <article class="plan">
+            <div class="plan__head">
+              <h3>Enterprise</h3>
+              <p class="plan__desc">For multi-branch chains.</p>
+            </div>
+            <p class="plan__price">
+              <span class="plan__amount">Rs 25,000</span>
+              <span class="plan__period">one-time</span>
+            </p>
+            <a class="btn btn--ghost plan__cta" href="auth/sign-in.html?plan=diwan-pos-enterprise"
+               data-plan="diwan-pos-enterprise">Get Started</a>
+            <div class="plan__divider"></div>
+            <p class="plan__includes">Everything in Enterprise includes:</p>
+            <ul class="plan__features">
+              <li>Unlimited terminals, multi-branch</li>
+              <li>All modules + multi-branch sync</li>
+              <li>Priority phone &amp; email support</li>
+              <li>Free software updates</li>
+            </ul>
+          </article>
+        </div>
+
+        <p class="pricing__more"><a href="features.html">…and a lot more →</a></p>
+      </div>
+    </section>
+
+    <section class="legacy">
+      <div class="wrap">
+        <h2>Already purchased?</h2>
+        <p style="color:var(--text-muted)">Paste the licence key from your receipt email to get your installer.</p>
+        <form id="download-form">
+          <label>Licence key <input type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
+          <select name="platform">
+            <option value="windows">Windows (.exe)</option>
+            <option value="macos">macOS (.dmg)</option>
+            <option value="android">Android (.apk)</option>
+          </select>
+          <button class="btn btn--primary" type="submit">Get download link</button>
+        </form>
+        <p id="download-status" role="status"></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/main.js"></script>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html">
+            <span class="brand__mark" aria-hidden="true">D</span>
+            Diwan
+          </a>
+          <p class="site-footer__tagline">
+            Keyboard-first point of sale for retail, restaurants and pharmacies.
+            One-time licence, works offline.
+          </p>
+        </div>
+
+        <div>
+          <h2>Product</h2>
+          <ul>
+            <li><a href="products.html">Products &amp; Editions</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="support.html">Docs &amp; Support</a></li>
+            <li><a href="index.html#download">Download</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Legal</h2>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="service-delivery.html">Service Delivery</a></li>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Contact</h2>
+          <address>
+            Diwan — operated by Hamza Waheed<br>
+            I-10/2, Islamabad 44000<br>
+            Islamabad Capital Territory, Pakistan<br>
+            <a href="tel:+923143288112">0314 3288112</a><br>
+            <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+          </address>
+        </div>
+      </div>
+
+      <div class="site-footer__bottom">
+        <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
+        <p><a href="contact.html">Contact</a></p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

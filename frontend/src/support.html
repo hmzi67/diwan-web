@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Docs &amp; Support — Diwan POS</title>
+  <meta name="description" content="Diwan POS help: download your installer, activate your licence, update, and reach support by email or phone.">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="index.html">
+        <span class="brand__mark" aria-hidden="true">D</span>
+        Diwan
+      </a>
+
+      <nav class="nav__links" id="nav-links" aria-label="Primary">
+        <a href="features.html">Features</a>
+        <a href="products.html">Products</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="support.html" aria-current="page">Docs &amp; Support</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+
+      <div class="nav__actions">
+        <a class="nav__login" href="/auth/sign-in.html">Log in</a>
+        <a class="btn btn--primary" href="pricing.html">Get Started</a>
+        <button class="nav__toggle" id="nav-toggle" type="button"
+                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="doc">
+      <div class="wrap doc__inner">
+        <h1>Docs &amp; Support</h1>
+        <p class="doc__meta">Self-service answers for Diwan POS · Support hours Monday to Saturday, 10:00am &ndash; 7:00pm PKT</p>
+
+        <div class="doc__callout">
+          <p>
+            <strong>Your licence key is the only credential you need.</strong> It arrives
+            by email with your installer, and the same key downloads every future
+            version. Nothing here asks for a password — if a page ever does, it is not
+            ours.
+          </p>
+        </div>
+
+        <div class="doc__toc">
+          <p>On this page</p>
+          <ol>
+            <li><a href="#download">Downloading your installer</a></li>
+            <li><a href="#missing">If your email did not arrive</a></li>
+            <li><a href="#activate">Activating your licence</a></li>
+            <li><a href="#device">Moving to a new device</a></li>
+            <li><a href="#update">Getting updates</a></li>
+            <li><a href="#requirements">System requirements</a></li>
+            <li><a href="#contact-support">Contacting support</a></li>
+            <li><a href="#policies">Policies &amp; terms</a></li>
+          </ol>
+        </div>
+
+        <h2 id="download">1. Downloading your installer</h2>
+        <p>
+          Paste your licence key below to get a single-use download link. The link is
+          valid for 15 minutes and works without signing in — the key is what proves
+          the purchase.
+        </p>
+
+        <div class="legacy" style="border-top:0;padding-block:0">
+          <form id="download-form">
+            <label>Licence key <input type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
+            <select name="platform">
+              <option value="windows">Windows (.exe)</option>
+              <option value="macos">macOS (.dmg)</option>
+              <option value="android">Android (.apk)</option>
+            </select>
+            <button class="btn btn--primary" type="submit">Get download link</button>
+          </form>
+          <p id="download-status" role="status"></p>
+        </div>
+
+        <p>
+          The same form lives on the <a href="index.html#download">home page</a>, and
+          signed-in customers can re-issue a link from the
+          <a href="/dashboard.html">dashboard</a>. Full delivery details — timings, what
+          the email contains, what to expect — are in the
+          <a href="service-delivery.html#when">Service Delivery Policy</a>.
+        </p>
+
+        <h2 id="missing">2. If your email did not arrive</h2>
+        <p>
+          Payment confirmation normally delivers your key and installer within a minute.
+          If it has not turned up:
+        </p>
+        <ol>
+          <li>Check spam and promotions — receipt mail from a sole proprietorship often lands there.</li>
+          <li>Confirm the payment actually completed with your gateway or bank.</li>
+          <li>
+            Email <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+            with your order reference and we will resend it.
+          </li>
+        </ol>
+        <p>
+          See <a href="service-delivery.html#missing">§4 of the Service Delivery
+          Policy</a> for the full procedure, and
+          <a href="service-delivery.html#failure">§11</a> for what happens if we cannot
+          deliver at all — in that case you are refunded in full.
+        </p>
+
+        <h2 id="activate">3. Activating your licence</h2>
+        <p>
+          Activation happens <strong>online, once</strong>, on first launch. After that
+          Diwan runs offline and does not phone home. One licence key is bound to one
+          device at a time.
+        </p>
+        <ul>
+          <li>Your key is entered once, inside the app, on first run.</li>
+          <li>A bound key activates the same device again with no friction.</li>
+          <li>A different device is rejected until the licence is moved (see below).</li>
+          <li>Repeated failed attempts from one address are throttled to protect the key.</li>
+        </ul>
+        <p>
+          The contractual detail sits in
+          <a href="service-delivery.html#activation">§6 of the Service Delivery
+          Policy</a>.
+        </p>
+
+        <h2 id="device">4. Moving to a new device</h2>
+        <p>
+          Device moves are done <strong>manually, by us</strong> — there is no
+          self-service transfer button. Email support with your licence key (or your
+          order reference) and the move is normally completed within one business day.
+        </p>
+        <p>
+          This is deliberate: an automated transfer would let anyone holding a leaked
+          key move the licence onto their own machine. Read
+          <a href="service-delivery.html#move">§7 Moving to a different device</a>.
+        </p>
+
+        <h2 id="update">5. Getting updates</h2>
+        <p>
+          Updates ship as new installers. Download them with the same licence key you
+          already own — no repurchase, no renewal, no subscription to maintain.
+        </p>
+        <p>
+          Details and the update policy are in
+          <a href="service-delivery.html#updates">§9 of the Service Delivery
+          Policy</a>.
+        </p>
+
+        <h2 id="requirements">6. System requirements</h2>
+        <div class="doc__wrap">
+          <table class="doc__table">
+            <tbody>
+              <tr><th>Windows</th><td>Windows 10 or later, 64-bit. Delivered as an <code>.exe</code> installer. USB and network printers.</td></tr>
+              <tr><th>macOS</th><td>macOS 11 (Big Sur) or later, universal binary for Intel and Apple Silicon. Delivered as a <code>.dmg</code>.</td></tr>
+              <tr><th>Android</th><td>Android 8.0 or later. Delivered as an <code>.apk</code>. Bluetooth and network printers.</td></tr>
+              <tr><th>Network</th><td>Required once, for activation. Not required to sell.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Full notes in <a href="service-delivery.html#requirements">§8</a>, and the
+          per-platform editions in the <a href="products.html">product catalogue</a>.
+        </p>
+
+        <h2 id="contact-support">7. Contacting support</h2>
+        <p>
+          Support covers installation, activation and defects in the software. Include
+          your order reference so we can find your account quickly.
+        </p>
+        <div class="doc__wrap">
+          <table class="doc__table">
+            <tbody>
+              <tr><th>Email — all editions</th><td><a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a></td></tr>
+              <tr><th>Phone — Enterprise</th><td><a href="tel:+923143288112">0314 3288112</a></td></tr>
+              <tr><th>Response time</th><td>Within 1 business day</td></tr>
+              <tr><th>Hours</th><td>Monday to Saturday, 10:00am &ndash; 7:00pm PKT (UTC+5). Closed Sundays and public holidays.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Business details, office address and the distinction between support and
+          sales enquiries are on the <a href="contact.html">contact page</a>.
+        </p>
+
+        <h2 id="policies">8. Policies &amp; terms</h2>
+        <ul>
+          <li><a href="service-delivery.html">Service Delivery Policy</a> — what you receive and when.</li>
+          <li><a href="refund-policy.html">Refund Policy</a> — the 14-day cooling-off terms.</li>
+          <li><a href="terms.html">Terms &amp; Conditions</a> — the contract for every licence.</li>
+          <li><a href="privacy.html">Privacy Policy</a> — what we collect, and what we never do.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/main.js"></script>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html">
+            <span class="brand__mark" aria-hidden="true">D</span>
+            Diwan
+          </a>
+          <p class="site-footer__tagline">
+            Keyboard-first point of sale for retail, restaurants and pharmacies.
+            One-time licence, works offline.
+          </p>
+        </div>
+
+        <div>
+          <h2>Product</h2>
+          <ul>
+            <li><a href="products.html">Products &amp; Editions</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="support.html">Docs &amp; Support</a></li>
+            <li><a href="index.html#download">Download</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Legal</h2>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="service-delivery.html">Service Delivery</a></li>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Contact</h2>
+          <address>
+            Diwan — operated by Hamza Waheed<br>
+            I-10/2, Islamabad 44000<br>
+            Islamabad Capital Territory, Pakistan<br>
+            <a href="tel:+923143288112">0314 3288112</a><br>
+            <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+          </address>
+        </div>
+      </div>
+
+      <div class="site-footer__bottom">
+        <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
+        <p><a href="contact.html">Contact</a></p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

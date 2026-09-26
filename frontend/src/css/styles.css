@@ -335,6 +335,7 @@ img, svg { max-width: 100%; display: block; }
 .pricing { padding-block: var(--section-y); border-top: 1px solid var(--border); }
 
 .pricing__head { text-align: center; max-width: 620px; margin: 0 auto 3.5rem; }
+.pricing__head h1,
 .pricing__head h2 {
   font-size: clamp(1.9rem, 4vw, 2.6rem);
   letter-spacing: -.03em;

@@ -19,16 +19,16 @@
       </a>
 
       <nav class="nav__links" id="nav-links" aria-label="Primary">
-        <a href="#features">Features</a>
+        <a href="features.html">Features</a>
         <a href="products.html">Products</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#support">Docs &amp; Support</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="support.html">Docs &amp; Support</a>
         <a href="contact.html">Contact</a>
       </nav>
 
       <div class="nav__actions">
         <a class="nav__login" href="/auth/sign-in.html">Log in</a>
-        <a class="btn btn--primary" href="#pricing">Get Started</a>
+        <a class="btn btn--primary" href="pricing.html">Get Started</a>
         <button class="nav__toggle" id="nav-toggle" type="button"
                 aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -55,7 +55,7 @@
 
         <div class="hero__cta">
           <a class="btn btn--primary btn--lg" href="#pricing">Get Started</a>
-          <a class="btn btn--ghost btn--lg" href="#features">See how it works</a>
+          <a class="btn btn--ghost btn--lg" href="features.html">See how it works</a>
         </div>
         <p class="hero__note">One-time licence · Works offline · Windows, macOS &amp; Android</p>
 
@@ -100,19 +100,19 @@
     </section>
 
     <!-- =========================================================
-         Sections 4–9 land in the next pass. The download flow below
-         is UNCHANGED and still functional — same form id, same
-         fields, same API call.
+         Features and Docs & Support moved to their own pages
+         (features.html, support.html); the download flow below is
+         UNCHANGED and still functional — same form id, same fields,
+         same API call.
 
          "Get Started" no longer checks out directly: it hands off to
          /auth/sign-in.html (which links on to sign-up), or straight to
          checkout.html if already signed in, carrying the chosen plan
          along either way. See js/main.js.
 
-         Prices and inclusions here are the ones published on
-         products.html and referenced by the refund and terms pages.
-         Change all four together, plus the products table seed in
-         database/schema.sql.
+         Prices and inclusions here are duplicated on pricing.html and
+         products.html and quoted in terms.html. Change all four
+         together, plus the products table seed in database/schema.sql.
          ========================================================= -->
     <section class="pricing" id="pricing">
       <div class="wrap">
@@ -192,7 +192,7 @@
           </article>
         </div>
 
-        <p class="pricing__more"><a href="#features">…and a lot more →</a></p>
+        <p class="pricing__more"><a href="features.html">…and a lot more →</a></p>
       </div>
     </section>
 
@@ -212,11 +212,6 @@
         <p id="download-status" role="status"></p>
       </div>
     </section>
-
-    <section class="legacy" id="features"><div class="wrap"><h2>Features</h2>
-      <p style="color:var(--text-muted)">Redesigned feature grid lands in the next pass.</p></div></section>
-    <section class="legacy" id="support"><div class="wrap"><h2>Docs &amp; Support</h2>
-      <p style="color:var(--text-muted)">Coming with the footer build-out.</p></div></section>
   </main>
 
   <script src="/js/main.js"></script>
@@ -239,8 +234,9 @@
           <h2>Product</h2>
           <ul>
             <li><a href="products.html">Products &amp; Editions</a></li>
-            <li><a href="index.html#pricing">Pricing</a></li>
-            <li><a href="index.html#features">Features</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="support.html">Docs &amp; Support</a></li>
             <li><a href="index.html#download">Download</a></li>
           </ul>
         </div>
