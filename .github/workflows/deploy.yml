@@ -195,6 +195,11 @@ jobs:
           EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
           SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
           SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          MAIL_DRIVER=${{ vars.MAIL_DRIVER || 'sendmail' }}
+          MAIL_HOST=${{ vars.MAIL_HOST || 'smtp.hostinger.com' }}
+          MAIL_PORT=${{ vars.MAIL_PORT || '587' }}
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
           MAIL_FROM=${{ vars.MAIL_FROM }}
           MAIL_FROM_NAME=Diwan POS
           EOF
@@ -587,6 +592,11 @@ jobs:
           EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
           SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
           SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          MAIL_DRIVER=${{ vars.MAIL_DRIVER || 'sendmail' }}
+          MAIL_HOST=${{ vars.MAIL_HOST || 'smtp.hostinger.com' }}
+          MAIL_PORT=${{ vars.MAIL_PORT || '587' }}
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
           MAIL_FROM=${{ vars.MAIL_FROM }}
           MAIL_FROM_NAME=Diwan POS
           EOF
