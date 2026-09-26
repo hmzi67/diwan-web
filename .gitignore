@@ -33,3 +33,5 @@ Thumbs.db
 
 # ---- FTP sync state (lives on the server, not in the repo) ----
 .ftp-deploy-sync-state.json
+
+/.dev-root/*

@@ -1,1 +1,0 @@
-/Users/hmzi/mine/Diwan/backend/public/resend-license-email.php

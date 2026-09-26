@@ -1,1 +1,0 @@
-/Users/hmzi/mine/Diwan/backend/public/_bootstrap.php
