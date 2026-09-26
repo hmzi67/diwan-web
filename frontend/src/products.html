@@ -11,17 +11,31 @@
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <header class="nav" id="nav">
+    <header class="nav" id="nav">
     <div class="wrap nav__inner">
-      <a class="brand" href="index.html">
+      <a class="brand" href="/">
         <span class="brand__mark" aria-hidden="true">D</span>
         Diwan
       </a>
-      <nav class="nav__links" aria-label="Primary">
-        <a href="products.html">Products</a>
+
+      <nav class="nav__links" id="nav-links" aria-label="Primary">
+        <a href="features.html">Features</a>
+        <a href="products.html" aria-current="page">Products</a>
         <a href="pricing.html">Pricing</a>
+        <a href="support.html">Docs &amp; Support</a>
         <a href="contact.html">Contact</a>
       </nav>
+
+      <div class="nav__actions">
+        <a class="nav__login" href="/auth/sign-in.html">Log in</a>
+        <a class="btn btn--primary" href="pricing.html">Get Started</a>
+        <button class="nav__toggle" id="nav-toggle" type="button"
+                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -244,6 +258,8 @@
       </div>
     </section>
   </main>
+
+  <script src="/js/main.js"></script>
 
   <footer class="site-footer">
     <div class="wrap">

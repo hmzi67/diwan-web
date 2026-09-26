@@ -1,8 +1,11 @@
 // All backend calls go through /api/* — the only web-accessible PHP entrypoints.
-const API = '/api';
+// This file loads FIRST on pages that also load their own script (checkout.js,
+// auth.js). Never declare a top-level `const` here whose name a page script also
+// declares (`API`, `params`, `form`, …): a duplicate `const` in global scope
+// throws SyntaxError and the page script dies with it.
 
 async function postJson(path, body) {
-  const res = await fetch(API + path, {
+  const res = await fetch('/api' + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -26,7 +29,7 @@ document.querySelectorAll('.plan__cta[data-plan]').forEach((link) => {
     e.preventDefault();
     const plan = link.dataset.plan;
     try {
-      const res = await fetch(API + '/dashboard-data.php', { credentials: 'same-origin' });
+      const res = await fetch('/api/dashboard-data.php', { credentials: 'same-origin' });
       window.location.href = res.ok
         ? `/checkout.html?plan=${encodeURIComponent(plan)}`
         : `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
