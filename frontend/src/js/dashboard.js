@@ -101,11 +101,14 @@ function renderOrder(order) {
   }
 
   return `
-    <article class="rounded-lg border border-line bg-surface p-6">
+    <article class="rounded-lg border border-line bg-surface p-6 transition-colors duration-200 ease-diwan hover:border-line-hi">
       <div class="mb-1 flex flex-wrap items-start justify-between gap-[.6rem]">
-        <div>
-          <div class="text-[1.05rem] font-bold">${escapeHtml(order.product_name)}</div>
-          <div class="mt-[.2rem] text-[.85rem] text-muted">${date(order.created_at)} · ${money(order.amount_paisa, order.currency)} · ${order.order_ref}</div>
+        <div class="flex items-start gap-3.5">
+          <span aria-hidden="true" class="mt-[.15rem] grid size-10 shrink-0 place-items-center rounded-[10px] bg-[linear-gradient(145deg,var(--color-accent),var(--color-accent-dim))] text-[.95rem] font-extrabold text-accent-ink shadow-[0_0_18px_-6px_var(--color-accent)]">${escapeHtml(order.product_name.charAt(0).toUpperCase())}</span>
+          <div>
+            <div class="text-[1.05rem] font-bold">${escapeHtml(order.product_name)}</div>
+            <div class="mt-[.2rem] text-[.85rem] text-muted">${date(order.created_at)} · ${money(order.amount_paisa, order.currency)} · ${order.order_ref}</div>
+          </div>
         </div>
         ${statusBadge(order.order_status)}
       </div>
@@ -121,6 +124,9 @@ async function load() {
     const data = await apiGet('/dashboard-data.php');
 
     document.getElementById('welcome-email').textContent = data.email;
+    const [local] = data.email.split('@');
+    const who = data.name || (local ? local.charAt(0).toUpperCase() + local.slice(1) : '');
+    if (who) document.getElementById('welcome-name').textContent = `, ${who}`;
 
     const ordersEl = document.getElementById('orders');
     const noOrders = document.getElementById('no-orders');
@@ -129,6 +135,15 @@ async function load() {
       noOrders.hidden = false;
     } else {
       ordersEl.innerHTML = data.orders.map(renderOrder).join('');
+
+      const paid = data.orders.filter((o) => o.order_status === 'paid');
+      const spent = paid.reduce((sum, o) => sum + Number(o.amount_paisa || 0), 0);
+      document.getElementById('stat-orders').textContent = String(data.orders.length);
+      document.getElementById('stat-spent').textContent = money(spent, paid[0]?.currency || 'PKR');
+      document.getElementById('stat-licences').textContent =
+        String(data.orders.filter((o) => o.license_status === 'active').length);
+      document.getElementById('stats').hidden = false;
+      document.getElementById('orders-heading').hidden = false;
     }
 
     loading.hidden = true;
