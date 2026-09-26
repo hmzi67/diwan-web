@@ -87,3 +87,58 @@ downloadForm?.addEventListener('submit', async (e) => {
     onScroll();
   }
 })();
+
+// --- Nav: signed-in state — swap the guest CTAs for an avatar dropdown. ---
+// Injected rather than templated because the header is duplicated across 12
+// pages (no build-time includes). Guest markup stays the no-JS default.
+(async function () {
+  const nav = document.getElementById('nav');
+  if (!nav) return;
+  const host = document.getElementById('nav-toggle')?.parentElement;
+  if (!host) return;
+
+  let me = null;
+  try {
+    const res = await fetch('/api/dashboard-data.php', { credentials: 'same-origin' });
+    if (res.ok) me = await res.json().catch(() => null);
+  } catch { /* backend unreachable — stay in guest state */ }
+  if (!me || !(me.email || me.name)) return;
+
+  // Scoped to #nav so the pricing cards' own "Get Started" links stay put.
+  nav.querySelectorAll('a').forEach((a) => {
+    const label = a.textContent.trim();
+    if (label === 'Log in' || label === 'Get Started') a.style.display = 'none';
+  });
+
+  const initial = ((me.name || me.email).trim()[0] || '?').toUpperCase();
+  host.insertAdjacentHTML('afterbegin', `
+    <div class="relative">
+      <button type="button" id="nav-user-btn" aria-haspopup="true" aria-expanded="false" aria-label="Account menu"
+        class="grid size-9 cursor-pointer place-items-center rounded-full bg-[linear-gradient(145deg,var(--color-accent),var(--color-accent-dim))] text-[.85rem] font-extrabold text-accent-ink shadow-[0_0_18px_-4px_var(--color-accent)] transition duration-200 ease-diwan hover:-translate-y-px">${initial}</button>
+      <div id="nav-user-menu" hidden
+        class="absolute right-0 top-full z-50 mt-2 w-44 rounded-2xl border border-line bg-surface p-1.5 shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]">
+        <a href="/dashboard.html" class="block rounded-xl px-3 py-2 text-[.9rem] text-muted transition hover:bg-surface-hi hover:text-ink">Dashboard</a>
+        <button type="button" id="logout-btn"
+          class="block w-full cursor-pointer rounded-xl px-3 py-2 text-left text-[.9rem] text-muted transition hover:bg-surface-hi hover:text-ink">Log out</button>
+      </div>
+    </div>`);
+
+  const btn = document.getElementById('nav-user-btn');
+  const menu = document.getElementById('nav-user-menu');
+  const setOpen = (open) => {
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(menu.hidden);
+  });
+  document.addEventListener('click', (e) => {
+    if (!menu.hidden && !menu.contains(e.target)) setOpen(false);
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    try { await postJson('/logout.php', {}); } catch { /* cookie is gone server-side regardless */ }
+    window.location.href = '/auth/login.html';
+  });
+})();

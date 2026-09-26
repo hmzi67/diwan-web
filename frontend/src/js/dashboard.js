@@ -194,9 +194,4 @@ function wireUpActions() {
   });
 }
 
-document.getElementById('logout-btn')?.addEventListener('click', async () => {
-  try { await apiPost('/logout.php'); } catch { /* clearing client-side regardless */ }
-  window.location.href = '/auth/login.html';
-});
-
 load();
