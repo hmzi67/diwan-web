@@ -9,36 +9,52 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="absolute -left-[9999px] z-[100] rounded-sm bg-accent px-[1.1rem] py-[.7rem] text-accent-ink focus:left-[clamp(1.25rem,4vw,2rem)] focus:top-3" href="#main">Skip to content</a>
 
-  <header class="nav" id="nav">
-    <div class="wrap nav__inner">
-      <a class="brand" href="/">
-        <span class="brand__mark" aria-hidden="true">D</span>
+    <header class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line" id="nav">
+    <div class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]">
+      <a class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
+        <span aria-hidden="true" class="grid size-7 place-items-center rounded-[8px] bg-[linear-gradient(145deg,var(--color-accent),var(--color-accent-dim))] text-[.85rem] font-extrabold text-accent-ink shadow-[0_0_18px_-4px_var(--color-accent)]">D</span>
         Diwan
       </a>
-      <div class="nav__actions">
-        <button class="btn btn--ghost" id="logout-btn" type="button">Log out</button>
+
+      <nav class="flex items-center gap-1 rounded-full border border-line bg-surface p-[.3rem] max-[860px]:absolute max-[860px]:inset-x-[clamp(1.25rem,4vw,2rem)] max-[860px]:top-[calc(100%_+_0.5rem)] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[.15rem] max-[860px]:rounded-md max-[860px]:bg-elevated max-[860px]:p-2 max-[860px]:shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]" id="nav-links" aria-label="Primary">
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="features.html">Features</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="products.html">Products</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="pricing.html">Pricing</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="support.html">Docs &amp; Support</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="contact.html">Contact</a>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <a class="px-3 py-2 text-[.92rem] text-muted hover:text-ink max-[860px]:hidden" href="/auth/sign-in.html">Log in</a>
+        <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" href="pricing.html">Get Started</a>
+        <button class="hidden size-10 cursor-pointer place-items-center rounded-sm border border-line bg-surface p-0 text-ink max-[860px]:inline-grid" id="nav-toggle" type="button"
+                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
 
   <main id="main">
-    <section style="padding-block: var(--section-y)">
-      <div class="wrap" style="max-width: 760px">
+    <section class="py-[clamp(4.5rem,9vw,8rem)]">
+      <div class="mx-auto w-full max-w-[760px] px-[clamp(1.25rem,4vw,2rem)]">
 
-        <div id="loading" class="empty-state">Loading your account…</div>
+        <div id="loading" class="px-4 py-12 text-center text-muted">Loading your account…</div>
 
         <div id="content" hidden>
-          <div class="dash-header">
+          <div class="mb-10 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1>Welcome back</h1>
-              <p id="welcome-email"></p>
+              <h1 class="mb-[.3rem] text-[1.7rem] tracking-[-.02em]">Welcome back</h1>
+              <p class="text-[.92rem] text-muted" id="welcome-email"></p>
             </div>
           </div>
 
-          <div id="orders" class="orders"></div>
-          <div id="no-orders" class="empty-state" hidden>
+          <div id="orders" class="flex flex-col gap-4"></div>
+          <div id="no-orders" class="px-4 py-12 text-center text-muted" hidden>
             No orders yet on this account.
           </div>
         </div>

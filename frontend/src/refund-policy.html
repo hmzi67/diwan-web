@@ -9,27 +9,27 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="absolute -left-[9999px] z-[100] rounded-sm bg-accent px-[1.1rem] py-[.7rem] text-accent-ink focus:left-[clamp(1.25rem,4vw,2rem)] focus:top-3" href="#main">Skip to content</a>
 
-    <header class="nav" id="nav">
-    <div class="wrap nav__inner">
-      <a class="brand" href="/">
-        <span class="brand__mark" aria-hidden="true">D</span>
+    <header class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line" id="nav">
+    <div class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]">
+      <a class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
+        <span aria-hidden="true" class="grid size-7 place-items-center rounded-[8px] bg-[linear-gradient(145deg,var(--color-accent),var(--color-accent-dim))] text-[.85rem] font-extrabold text-accent-ink shadow-[0_0_18px_-4px_var(--color-accent)]">D</span>
         Diwan
       </a>
 
-      <nav class="nav__links" id="nav-links" aria-label="Primary">
-        <a href="features.html">Features</a>
-        <a href="products.html">Products</a>
-        <a href="pricing.html">Pricing</a>
-        <a href="support.html">Docs &amp; Support</a>
-        <a href="contact.html">Contact</a>
+      <nav class="flex items-center gap-1 rounded-full border border-line bg-surface p-[.3rem] max-[860px]:absolute max-[860px]:inset-x-[clamp(1.25rem,4vw,2rem)] max-[860px]:top-[calc(100%_+_0.5rem)] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[.15rem] max-[860px]:rounded-md max-[860px]:bg-elevated max-[860px]:p-2 max-[860px]:shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]" id="nav-links" aria-label="Primary">
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="features.html">Features</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="products.html">Products</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="pricing.html">Pricing</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="support.html">Docs &amp; Support</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="contact.html">Contact</a>
       </nav>
 
-      <div class="nav__actions">
-        <a class="nav__login" href="/auth/sign-in.html">Log in</a>
-        <a class="btn btn--primary" href="pricing.html">Get Started</a>
-        <button class="nav__toggle" id="nav-toggle" type="button"
+      <div class="flex items-center gap-2">
+        <a class="px-3 py-2 text-[.92rem] text-muted hover:text-ink max-[860px]:hidden" href="/auth/sign-in.html">Log in</a>
+        <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" href="pricing.html">Get Started</a>
+        <button class="hidden size-10 cursor-pointer place-items-center rounded-sm border border-line bg-surface p-0 text-ink max-[860px]:inline-grid" id="nav-toggle" type="button"
                 aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
             <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
@@ -40,12 +40,12 @@
   </header>
 
   <main id="main">
-    <section class="doc">
-      <div class="wrap doc__inner">
-        <h1>Refund Policy</h1>
-        <p class="doc__meta">Effective 7 September 2026 · Last updated 7 September 2026</p>
+    <section class="doc border-t border-line py-[clamp(4.5rem,9vw,8rem)]">
+      <div class="mx-auto w-full max-w-[72ch] px-[clamp(1.25rem,4vw,2rem)]">
+        <h1 class="mb-[.6rem] text-[clamp(1.8rem,4vw,2.6rem)] tracking-[-.03em]">Refund Policy</h1>
+        <p class="mb-10 border-b border-line pb-6 text-[.85rem] text-faint">Effective 7 September 2026 · Last updated 7 September 2026</p>
 
-        <div class="doc__callout">
+        <div class="mb-7 rounded-md border border-accent-dim bg-glow-soft p-5 [&_p]:mb-0 [&_p]:text-ink [&_p+p]:mt-3">
           <p>
             <strong>In short:</strong> you can have a full refund within 14 days of
             purchase, as long as you have not yet activated your licence key.
@@ -54,23 +54,23 @@
           </p>
         </div>
 
-        <div class="doc__toc">
-          <p>On this page</p>
-          <ol>
-            <li><a href="#scope">What this covers</a></li>
-            <li><a href="#eligible">When you can get a refund</a></li>
-            <li><a href="#activation">Why activation is the cut-off</a></li>
-            <li><a href="#after">After activation</a></li>
-            <li><a href="#not">When we cannot refund</a></li>
-            <li><a href="#effect">What happens to your licence</a></li>
-            <li><a href="#how">How to request a refund</a></li>
-            <li><a href="#time">How long it takes</a></li>
-            <li><a href="#disputes">If you disagree with our decision</a></li>
-            <li><a href="#contact">Contact</a></li>
+        <div class="mb-12 rounded-md border border-line bg-surface px-6 py-5">
+          <p class="mb-3 text-[.8rem] font-semibold text-muted">On this page</p>
+          <ol class="pl-[1.1rem]">
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#scope">What this covers</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#eligible">When you can get a refund</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#activation">Why activation is the cut-off</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#after">After activation</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#not">When we cannot refund</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#effect">What happens to your licence</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#how">How to request a refund</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#time">How long it takes</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#disputes">If you disagree with our decision</a></li>
+            <li class="mb-[.35rem] text-[.88rem]"><a class="text-muted hover:text-accent" href="#contact">Contact</a></li>
           </ol>
         </div>
 
-        <h2 id="scope">1. What this covers</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="scope">1. What this covers</h2>
         <p>
           This policy applies to every Diwan POS licence bought through this website —
           the Starter, Standard and Enterprise editions. Diwan is downloadable software,
@@ -78,7 +78,7 @@
           to return; a refund means we reverse the payment and withdraw the licence.
         </p>
 
-        <h2 id="eligible">2. When you can get a refund</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="eligible">2. When you can get a refund</h2>
         <p>You are entitled to a <strong>full refund</strong> of what you paid if both of the following are true:</p>
         <ul>
           <li>You request it <strong>within 14 calendar days</strong> of the date of purchase; and</li>
@@ -90,7 +90,7 @@
           not count as activation.
         </p>
 
-        <h2 id="activation">3. Why activation is the cut-off</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="activation">3. Why activation is the cut-off</h2>
         <p>
           A Diwan licence key binds permanently to the first device it is activated on.
           That binding is what stops one key being used across many shops, and it cannot
@@ -104,7 +104,7 @@
           or still unused.
         </p>
 
-        <h2 id="after">4. After activation</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="after">4. After activation</h2>
         <p>
           Once your licence is activated, it is not automatically refundable. We will,
           however, consider a refund on a case-by-case basis where:
@@ -125,7 +125,7 @@
           fix them.
         </p>
 
-        <h2 id="not">5. When we cannot refund</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="not">5. When we cannot refund</h2>
         <ul>
           <li>Requests made more than 14 days after purchase, where the licence was activated.</li>
           <li>Licences revoked for a breach of our <a href="terms.html">Terms &amp; Conditions</a> — for example, sharing or reselling a key.</li>
@@ -133,8 +133,8 @@
           <li>Requests we cannot match to a real order, or that come from someone who is not the account holder.</li>
         </ul>
 
-        <h2 id="effect">6. What happens to your licence</h2>
-        <div class="doc__callout">
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="effect">6. What happens to your licence</h2>
+        <div class="mb-7 rounded-md border border-accent-dim bg-glow-soft p-5 [&_p]:mb-0 [&_p]:text-ink [&_p+p]:mt-3">
           <p>
             <strong>A refunded licence is revoked.</strong> When we issue a refund we
             permanently revoke the licence key attached to that order. The key stops
@@ -151,7 +151,7 @@
           payment dispute rather than through us directly.
         </p>
 
-        <h2 id="how">7. How to request a refund</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="how">7. How to request a refund</h2>
         <p>
           Email <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
           from the email address on your Diwan account, with the subject line
@@ -168,7 +168,7 @@
           have a record; we cannot process refunds by phone alone.
         </p>
 
-        <h2 id="time">8. How long it takes</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="time">8. How long it takes</h2>
         <ul>
           <li><strong>Acknowledgement:</strong> within 2 business days of your email.</li>
           <li><strong>Decision:</strong> within 5 business days of your request, for requests inside the 14-day window.</li>
@@ -179,77 +179,77 @@
           a different card, account or person.
         </p>
 
-        <h2 id="disputes">9. If you disagree with our decision</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="disputes">9. If you disagree with our decision</h2>
         <p>
           Reply to our email and tell us why. We will review it again and give you a
           final written answer. If you remain dissatisfied, you keep whatever rights you
           have under Pakistani consumer law — nothing in this policy removes them.
         </p>
 
-        <h2 id="contact">10. Contact</h2>
+        <h2 class="mt-11 mb-[.9rem] scroll-mt-24 text-[1.18rem] tracking-[-.01em] first-of-type:mt-0" id="contact">10. Contact</h2>
         <p>
           <strong>Hamza Waheed</strong> (sole proprietor, trading as Diwan)<br>
           Email: <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a><br>
           Phone: <a href="tel:+923143288112">0314 3288112</a>
         </p>
         <p>I-10/2, Islamabad 44000, Islamabad Capital Territory, Pakistan</p>
-        <p style="margin-top:2.5rem"><a class="btn btn--ghost" href="index.html">&larr; Back to Diwan</a></p>
+        <p class="mt-10"><a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi" href="index.html">&larr; Back to Diwan</a></p>
       </div>
     </section>
   </main>
 
   <script src="/js/main.js"></script>
 
-  <footer class="site-footer">
-    <div class="wrap">
-      <div class="site-footer__grid">
-        <div class="site-footer__brand">
-          <a class="brand" href="index.html">
-            <span class="brand__mark" aria-hidden="true">D</span>
+  <footer class="border-t border-line bg-elevated py-14 pb-8">
+    <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+      <div class="grid gap-10 grid-cols-[1.4fr_1fr_1fr_1.3fr] max-[860px]:grid-cols-2 max-[860px]:gap-8 max-xs:grid-cols-1">
+        <div class="max-[860px]:col-span-2">
+          <a class="mb-[.9rem] inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="index.html">
+            <span class="grid size-7 place-items-center rounded-[8px] bg-[linear-gradient(145deg,var(--color-accent),var(--color-accent-dim))] text-[.85rem] font-extrabold text-accent-ink shadow-[0_0_18px_-4px_var(--color-accent)]" aria-hidden="true">D</span>
             Diwan
           </a>
-          <p class="site-footer__tagline">
+          <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">
             Keyboard-first point of sale for retail, restaurants and pharmacies.
             One-time licence, works offline.
           </p>
         </div>
 
         <div>
-          <h2>Product</h2>
-          <ul>
-            <li><a href="products.html">Products &amp; Editions</a></li>
-            <li><a href="pricing.html">Pricing</a></li>
-            <li><a href="features.html">Features</a></li>
-            <li><a href="support.html">Docs &amp; Support</a></li>
-            <li><a href="index.html#download">Download</a></li>
+          <h2 class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint">Product</h2>
+          <ul class="flex flex-col gap-[.6rem]">
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="products.html">Products &amp; Editions</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="pricing.html">Pricing</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="features.html">Features</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="support.html">Docs &amp; Support</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="index.html#download">Download</a></li>
           </ul>
         </div>
 
         <div>
-          <h2>Legal</h2>
-          <ul>
-            <li><a href="privacy.html">Privacy Policy</a></li>
-            <li><a href="refund-policy.html">Refund Policy</a></li>
-            <li><a href="service-delivery.html">Service Delivery</a></li>
-            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+          <h2 class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint">Legal</h2>
+          <ul class="flex flex-col gap-[.6rem]">
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="privacy.html">Privacy Policy</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="refund-policy.html">Refund Policy</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="service-delivery.html">Service Delivery</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="terms.html">Terms &amp; Conditions</a></li>
           </ul>
         </div>
 
         <div>
-          <h2>Contact</h2>
-          <address>
+          <h2 class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint">Contact</h2>
+          <address class="not-italic text-[.88rem] leading-[1.75] text-muted [&_a]:inline">
             Diwan — operated by Hamza Waheed<br>
             I-10/2, Islamabad 44000<br>
             Islamabad Capital Territory, Pakistan<br>
-            <a href="tel:+923143288112">0314 3288112</a><br>
-            <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+            <a class="hover:text-accent" href="tel:+923143288112">0314 3288112</a><br>
+            <a class="hover:text-accent" href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
           </address>
         </div>
       </div>
 
-      <div class="site-footer__bottom">
+      <div class="mt-8 flex flex-wrap justify-between gap-4 border-t border-line pt-6 text-[.82rem] text-faint">
         <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
-        <p><a href="contact.html">Contact</a></p>
+        <p><a class="hover:text-accent" href="contact.html">Contact</a></p>
       </div>
     </div>
   </footer>

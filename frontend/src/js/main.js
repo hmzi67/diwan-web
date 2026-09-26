@@ -17,7 +17,9 @@ async function postJson(path, body) {
 
 function setStatus(el, message, kind) {
   el.textContent = message;
-  el.className = kind || '';
+  el.className = kind === 'ok' ? 'min-h-6 text-[.9rem] text-accent'
+    : kind === 'error' ? 'min-h-6 text-[.9rem] text-danger'
+    : 'min-h-6 text-[.9rem] text-muted';
 }
 
 // Pricing cards: "Get Started" needs a session before it can reach checkout.

@@ -30,8 +30,15 @@ const date = (isoish) => isoish
   ? new Date(isoish.replace(' ', 'T')).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   : '—';
 
+const BADGE = {
+  paid: 'inline-flex items-center whitespace-nowrap rounded-full px-3 py-[.3rem] text-[.74rem] font-semibold border border-accent-dim bg-glow-soft text-accent',
+  pending: 'inline-flex items-center whitespace-nowrap rounded-full px-3 py-[.3rem] text-[.74rem] font-semibold border border-line-hi bg-surface-hi text-muted',
+  failed: 'inline-flex items-center whitespace-nowrap rounded-full px-3 py-[.3rem] text-[.74rem] font-semibold border border-[rgba(255,122,122,.35)] bg-[rgba(255,122,122,.08)] text-danger',
+  refunded: 'inline-flex items-center whitespace-nowrap rounded-full px-3 py-[.3rem] text-[.74rem] font-semibold border border-[rgba(255,122,122,.35)] bg-[rgba(255,122,122,.08)] text-danger',
+};
+
 const statusBadge = (status) =>
-  `<span class="badge badge--${status}">${status.charAt(0).toUpperCase()}${status.slice(1)}</span>`;
+  `<span class="${BADGE[status] || 'inline-flex items-center whitespace-nowrap rounded-full px-3 py-[.3rem] text-[.74rem] font-semibold'}">${status.charAt(0).toUpperCase()}${status.slice(1)}</span>`;
 
 function activationCopy(order) {
   if (order.activation_status === 'activated') {
@@ -59,46 +66,46 @@ function renderOrder(order) {
   if (hasLicense) {
     const maskedKey = `${order.license_key_prefix}-••••-••••-••••`;
     const resendBtn = order.can_resend
-      ? `<button class="btn btn--ghost btn--sm" data-resend="${order.license_id}">Email me my key</button>`
-      : `<a class="btn btn--ghost btn--sm" href="${supportMailto('Recover my Diwan licence key', order)}">Contact support to recover key</a>`;
+      ? `<button class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi px-[1.1rem] py-[.55rem] text-[.85rem] font-semibold transition duration-200 ease-diwan bg-transparent text-ink hover:border-accent-dim hover:bg-surface-hi" data-resend="${order.license_id}">Email me my key</button>`
+      : `<a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi px-[1.1rem] py-[.55rem] text-[.85rem] font-semibold transition duration-200 ease-diwan bg-transparent text-ink hover:border-accent-dim hover:bg-surface-hi" href="${supportMailto('Recover my Diwan licence key', order)}">Contact support to recover key</a>`;
 
     licenseBox = `
-      <div class="license-box">
-        <div class="license-key">
+      <div class="mt-[1.1rem] border-t border-dashed border-line pt-[1.1rem]">
+        <div class="flex flex-wrap items-center gap-[.6rem] rounded-sm border border-line bg-canvas px-[.9rem] py-[.6rem] font-mono text-[.9rem] text-ink">
           <span>${escapeHtml(maskedKey)}</span>
-          <button class="copy-btn" data-copy="${escapeHtml(order.license_key_prefix)}"
+          <button class="ml-auto cursor-pointer rounded-sm border border-line-hi bg-transparent px-[.65rem] py-[.35rem] text-[.78rem] text-muted transition duration-[180ms] ease-diwan hover:border-accent-dim hover:text-ink" data-copy="${escapeHtml(order.license_key_prefix)}"
                   title="Copies the identifying prefix only — this is not your full licence key">Copy prefix</button>
         </div>
-        <p class="activation-line">${activationCopy(order)}</p>
-        <div class="license-actions">
+        <p class="mt-[.7rem] text-[.88rem] text-muted [&_b]:font-semibold [&_b]:text-ink">${activationCopy(order)}</p>
+        <div class="mt-[.9rem] flex flex-wrap gap-[.6rem]">
           ${resendBtn}
-          <a class="btn btn--ghost btn--sm" href="${supportMailto('Move my Diwan licence to a new device', order)}">Request device change</a>
+          <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi px-[1.1rem] py-[.55rem] text-[.85rem] font-semibold transition duration-200 ease-diwan bg-transparent text-ink hover:border-accent-dim hover:bg-surface-hi" href="${supportMailto('Move my Diwan licence to a new device', order)}">Request device change</a>
         </div>
         ${order.license_status === 'active' ? `
-        <form class="download-mini" data-download>
-          <input class="input" type="text" name="license_key" placeholder="Paste your licence key to download" required>
-          <select name="platform">
+        <form class="mt-4 flex flex-wrap items-start gap-2 [&_input]:min-w-40 [&_input]:flex-1 [&_select]:min-w-40 [&_select]:flex-1" data-download>
+          <input class="w-full rounded-sm border border-line bg-elevated px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" type="text" name="license_key" placeholder="Paste your licence key to download" required>
+          <select class="rounded-sm border border-line bg-elevated px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" name="platform">
             <option value="windows">Windows (.exe)</option>
             <option value="macos">macOS (.dmg)</option>
             <option value="android">Android (.apk)</option>
           </select>
-          <button class="btn btn--primary btn--sm" type="submit">Get download link</button>
+          <button class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent px-[1.1rem] py-[.55rem] text-[.85rem] font-semibold transition duration-200 ease-diwan bg-accent text-accent-ink shadow-[0_0_0_0_var(--color-glow)] hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" type="submit">Get download link</button>
         </form>
-        <p role="status" class="download-status"></p>
+        <p role="status" class="min-h-6 text-[.9rem] text-muted"></p>
         ` : ''}
       </div>`;
   } else if (order.order_status === 'paid') {
-    licenseBox = `<p class="activation-line">Your licence is being issued — refresh in a moment, or contact support if this persists.</p>`;
+    licenseBox = `<p class="mt-[.7rem] text-[.88rem] text-muted [&_b]:font-semibold [&_b]:text-ink">Your licence is being issued — refresh in a moment, or contact support if this persists.</p>`;
   } else {
-    licenseBox = `<p class="activation-line">A licence key will appear here once payment is confirmed.</p>`;
+    licenseBox = `<p class="mt-[.7rem] text-[.88rem] text-muted [&_b]:font-semibold [&_b]:text-ink">A licence key will appear here once payment is confirmed.</p>`;
   }
 
   return `
-    <article class="order-card">
-      <div class="order-card__head">
+    <article class="rounded-lg border border-line bg-surface p-6">
+      <div class="mb-1 flex flex-wrap items-start justify-between gap-[.6rem]">
         <div>
-          <div class="order-card__product">${escapeHtml(order.product_name)}</div>
-          <div class="order-card__meta">${date(order.created_at)} · ${money(order.amount_paisa, order.currency)} · ${order.order_ref}</div>
+          <div class="text-[1.05rem] font-bold">${escapeHtml(order.product_name)}</div>
+          <div class="mt-[.2rem] text-[.85rem] text-muted">${date(order.created_at)} · ${money(order.amount_paisa, order.currency)} · ${order.order_ref}</div>
         </div>
         ${statusBadge(order.order_status)}
       </div>
@@ -171,17 +178,17 @@ function wireUpActions() {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const status = form.nextElementSibling;
-      status.className = '';
+      status.className = 'min-h-6 text-[.9rem] text-muted';
       status.textContent = 'Verifying your licence…';
       try {
         const payload = Object.fromEntries(new FormData(form));
         const { download_url, expires_at } = await apiPost('/issue-download.php', payload);
         status.textContent = `Licence verified. Your link expires ${expires_at}.`;
-        status.className = 'ok';
+        status.className = 'min-h-6 text-[.9rem] text-accent';
         window.location.href = download_url;
       } catch (err) {
         status.textContent = err.message;
-        status.className = 'error';
+        status.className = 'min-h-6 text-[.9rem] text-danger';
       }
     });
   });
