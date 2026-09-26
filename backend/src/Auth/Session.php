@@ -42,9 +42,13 @@ final class Session
         setcookie(self::COOKIE_NAME, $payload . '.' . $signature, [
             'expires'  => $expires,
             'path'     => '/',
-            // Secure only when the request actually arrived over HTTPS, so
-            // this still works on `php -S localhost:8000` during local dev.
-            'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            // Secure when the request arrived over HTTPS, including behind a
+            // TLS-terminating proxy — same X-Forwarded-Proto test .htaccess
+            // uses to force the redirect, so the flag and the redirect can
+            // never disagree. Honoring HTTPS alone would leave the cookie
+            // unflagged on any host where TLS terminates in front of PHP.
+            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https',
             'httponly' => true,
             'samesite' => 'Lax',
         ]);

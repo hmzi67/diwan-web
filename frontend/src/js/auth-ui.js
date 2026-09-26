@@ -1,10 +1,21 @@
-// Behaviour for the /auth/ pages: sign-up, sign-in, forgot-password and
-// reset-password, all wired to the real backend.
+// Behaviour for the five auth pages: login, signup, forgot-password,
+// reset-password and verify-email, all wired to the real backend.
+//
+// The flow these pages implement, end to end:
+//
+//   signup  -> POST /register.php: account created (unverified), verification
+//              email sent, identical response whether or not the address
+//              already had an account. No session yet.
+//   verify  -> the emailed link lands on verify-email.html?token=..., which
+//              POSTs it to /api/verify-email.php; success starts the session.
+//   login   -> POST /api/sign-in.php. Closed until the account is verified:
+//              the server answers status:'email_not_verified' only after the
+//              password checks out, and this page swaps in the resend panel.
 //
 // The `plan` query param rides through the whole flow. Someone who clicked a
-// pricing card lands here as ?plan=diwan-pos-standard, and after a successful
-// sign-in or registration goes straight to that plan's checkout instead of the
-// dashboard — losing it would drop them at a generic page mid-purchase.
+// pricing card lands here as ?plan=diwan-pos-standard, and after verifying or
+// signing in goes straight to that plan's checkout instead of the dashboard —
+// losing it would drop them at a generic page mid-purchase.
 const API = '/api';
 
 const params = new URLSearchParams(window.location.search);
@@ -36,11 +47,16 @@ function setStatus(el, message, kind) {
 }
 
 function show(id) {
-  ['step-form', 'step-sent', 'step-done', 'step-invalid'].forEach((name) => {
+  ['step-form', 'step-sent', 'step-done', 'step-invalid', 'step-unverified'].forEach((name) => {
     const el = document.getElementById(name);
     if (el) el.hidden = (name !== id);
   });
 }
+
+// The email the login attempt used — carried over to the unverified panel so
+// the resend button knows where to send the link, and set again when signup
+// succeeds so its confirmation panel can resend too.
+let authEmail = '';
 
 // --- Password show/hide -----------------------------------------------------
 document.querySelectorAll('[data-pw-toggle]').forEach((button) => {
@@ -116,22 +132,23 @@ function wire(formId, statusId, submit) {
 
 // --- Sign up ----------------------------------------------------------------
 wire('signup-form', 'signup-status', async (data, status) => {
+  const email = data.get('email');
   const { ok, data: body } = await postJson('/register.php', {
-    email: data.get('email'),
+    email,
     password: data.get('password'),
+    plan,
   });
 
   if (!ok) {
     setStatus(status, body.error || 'Could not create your account.', 'error');
     return;
   }
-  // The email already had an account — register.php deliberately does not say
-  // so via an error, and never touches the existing password.
-  if (body.status === 'exists') {
-    setStatus(status, body.message, 'error');
-    return;
-  }
-  window.location.href = destination();   // registration signs you straight in
+  // Same response whether or not the address already existed — the page says
+  // "check your email" either way; the mailbox decides what they actually read.
+  authEmail = email;
+  const sent = document.getElementById('sent-email');
+  if (sent) sent.textContent = email;
+  show('step-sent');
 });
 
 // --- Sign in ----------------------------------------------------------------
@@ -153,7 +170,35 @@ wire('signin-form', 'signin-status', async (data, status) => {
     if (link) link.textContent = 'Set your password →';
     return;
   }
+  // Password checked out, mailbox not verified. Swap the form for the panel
+  // that offers the link again — the server only reveals this state to
+  // someone who already knows the password.
+  if (body.status === 'email_not_verified') {
+    authEmail = data.get('email');
+    const shown = document.getElementById('unverified-email');
+    if (shown) shown.textContent = authEmail;
+    show('step-unverified');
+    return;
+  }
   setStatus(status, body.error || 'Email or password is incorrect.', 'error');
+});
+
+// --- Resend verification ----------------------------------------------------
+// One handler, used by the login page's unverified panel and signup's
+// confirmation panel (whichever is on screen has the address stashed above).
+document.getElementById('resend-btn')?.addEventListener('click', async (e) => {
+  const button = e.currentTarget;
+  const status = document.getElementById('resend-status');
+  button.disabled = true;
+  setStatus(status, 'Sending…');
+  try {
+    const { ok, data: body } = await postJson('/resend-verification.php', { email: authEmail });
+    setStatus(status, ok ? body.message : (body.error || 'Could not send the link. Try again.'), ok ? 'ok' : 'error');
+  } catch {
+    setStatus(status, 'Could not reach the server. Please try again.', 'error');
+  } finally {
+    button.disabled = false;
+  }
 });
 
 // --- Forgot password --------------------------------------------------------
@@ -165,6 +210,7 @@ wire('forgot-form', 'forgot-status', async (data, status) => {
     setStatus(status, body.error || 'Could not send the link. Please try again.', 'error');
     return;
   }
+  authEmail = email;
   const sent = document.getElementById('sent-email');
   if (sent) sent.textContent = email;
   show('step-sent');
@@ -197,6 +243,35 @@ wire('reset-form', 'reset-status', async (data, status) => {
 // front instead of after they have typed a password twice.
 if (document.getElementById('reset-form') && !resetToken) {
   show('step-invalid');
+}
+
+// --- Verify email -----------------------------------------------------------
+// Reached from the emailed link with the token in the query string. Redeems
+// it immediately — nobody clicks a verification link to look at a button —
+// and on success the backend has already started the session, so we just walk
+// on to the dashboard (or the plan checkout they started from).
+if (document.getElementById('verify-panel')) {
+  const token = params.get('token');
+  const status = document.getElementById('verify-status');
+
+  if (!token) {
+    show('step-invalid');
+  } else {
+    postJson('/verify-email.php', { token })
+      .then(({ ok }) => {
+        if (ok) {
+          const cont = document.getElementById('verify-continue');
+          if (cont) cont.href = destination();
+          show('step-done');
+          setTimeout(() => { window.location.href = destination(); }, 1400);
+        } else {
+          show('step-invalid');
+        }
+      })
+      // Network trouble, not a dead link — say so rather than blaming the
+      // link, which may be perfectly fine.
+      .catch(() => setStatus(status, 'Could not reach the server. Refresh to try again.', 'error'));
+  }
 }
 
 // Carry the plan through the links between these pages, so it survives a

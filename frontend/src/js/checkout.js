@@ -53,7 +53,7 @@ const status  = document.getElementById('checkout-status');
 (async () => {
   const { ok, data } = await getJson('/dashboard-data.php');
   if (!ok) {
-    window.location.href = `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
+    window.location.href = `/auth/login.html?plan=${encodeURIComponent(plan)}`;
     return;
   }
   title.textContent = `Checkout — ${planInfo.name}`;

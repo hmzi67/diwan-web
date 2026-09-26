@@ -136,7 +136,7 @@ async function load() {
     wireUpActions();
   } catch (err) {
     if (err.status === 401) {
-      window.location.href = '/auth/sign-in.html';
+      window.location.href = '/auth/login.html';
       return;
     }
     loading.textContent = err.message || 'Something went wrong loading your account.';
@@ -196,7 +196,7 @@ function wireUpActions() {
 
 document.getElementById('logout-btn')?.addEventListener('click', async () => {
   try { await apiPost('/logout.php'); } catch { /* clearing client-side regardless */ }
-  window.location.href = '/auth/sign-in.html';
+  window.location.href = '/auth/login.html';
 });
 
 load();

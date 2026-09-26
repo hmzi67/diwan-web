@@ -23,7 +23,7 @@ function setStatus(el, message, kind) {
 }
 
 // Pricing cards: "Get Started" needs a session before it can reach checkout.
-// The href on each card already points at /auth/sign-in.html?plan=X, so anyone
+// The href on each card already points at /auth/login.html?plan=X, so anyone
 // without JS (or if this fetch fails) still lands somewhere correct — this
 // listener just skips the login hop for someone already signed in.
 document.querySelectorAll('.plan__cta[data-plan]').forEach((link) => {
@@ -34,9 +34,9 @@ document.querySelectorAll('.plan__cta[data-plan]').forEach((link) => {
       const res = await fetch('/api/dashboard-data.php', { credentials: 'same-origin' });
       window.location.href = res.ok
         ? `/checkout.html?plan=${encodeURIComponent(plan)}`
-        : `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
+        : `/auth/login.html?plan=${encodeURIComponent(plan)}`;
     } catch {
-      window.location.href = `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
+      window.location.href = `/auth/login.html?plan=${encodeURIComponent(plan)}`;
     }
   });
 });
