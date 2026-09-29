@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/health.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/health.php

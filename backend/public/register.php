@@ -2,14 +2,9 @@
 /**
  * POST /api/register.php  { email, password }
  *
- * Creates a customer account with a password and signs them straight in — no
- * email round-trip, so someone who came from a pricing card can go on to
- * checkout without leaving the browser.
- *
- * An email that already exists is NOT an error here, and the response is the
- * same either way: telling a stranger "that address is already registered"
- * turns this endpoint into an account-enumeration oracle. An existing account
- * is simply not touched, and the response points at sign-in.
+ * TEMPORARY no-payment onboarding: account and trial are committed together,
+ * then the customer is signed in. Existing accounts must sign in; registering
+ * again never changes their password or grants another trial.
  */
 declare(strict_types=1);
 
@@ -20,6 +15,7 @@ use Diwan\Auth\Session;
 use Diwan\Database\Database;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
+use Diwan\Trial\TrialService;
 
 Http::requireMethod('POST');
 
@@ -55,15 +51,24 @@ if ($existing) {
 $hash = PasswordService::hash($password);
 
 try {
-    $pdo->prepare(
-        'INSERT INTO customers (email, password_hash, password_set_at, created_at)
-         VALUES (:email, :hash, NOW(), NOW())'
-    )->execute(['email' => $email, 'hash' => $hash]);
-    $customerId = (int) $pdo->lastInsertId();
+    $customerId = Database::transaction(static function (PDO $pdo) use ($email, $hash): int {
+        $pdo->prepare(
+            'INSERT INTO customers (email, password_hash, password_set_at, created_at)
+             VALUES (:email, :hash, NOW(), NOW())'
+        )->execute(['email' => $email, 'hash' => $hash]);
+        $id = (int) $pdo->lastInsertId();
+        (new TrialService())->ensureForCustomer($pdo, $id);
+        return $id;
+    });
 } catch (PDOException $e) {
     // Unique key on customers.email: a concurrent request won the race.
-    if ($e->getCode() !== '23000') {
+    if (($e->errorInfo[1] ?? null) !== 1062) {
         throw $e;
+    }
+    $check = $pdo->prepare('SELECT id FROM customers WHERE email = :email');
+    $check->execute(['email' => $email]);
+    if ($check->fetchColumn() === false) {
+        throw $e; // An unrelated uniqueness failure must not pretend signup succeeded.
     }
     Http::json([
         'status'  => 'exists',

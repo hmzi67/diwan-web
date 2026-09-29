@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/index.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/index.php

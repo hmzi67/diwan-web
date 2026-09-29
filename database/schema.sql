@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS products (
 
 -- -----------------------------------------------------------------------------
 -- customers — one row per email that has ever checked out or logged in.
--- No password column: login is passwordless (magic link via login_tokens).
+-- Signs in with a password, or with Apple (apple_sub; password_hash NULL).
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS customers (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -36,9 +36,16 @@ CREATE TABLE IF NOT EXISTS customers (
   password_hash   VARCHAR(255)    NULL COMMENT 'password_hash() output. NULL = predates password auth, must set one via the reset flow.',
   password_set_at DATETIME        NULL COMMENT 'When the current password was set. Support/audit only.',
   session_epoch   INT UNSIGNED    NOT NULL DEFAULT 0 COMMENT 'Bumped on password reset; signed into the session cookie to revoke older ones.',
+  apple_sub       VARCHAR(255)    NULL COMMENT 'Sign in with Apple subject. Stable per Apple ID + team.',
+  apple_refresh_token_encrypted VARCHAR(1024) NULL COMMENT 'AES-256-GCM; only used to revoke at Apple on account deletion',
+  apple_token_client_id VARCHAR(190) NULL COMMENT 'Bundle id or Services ID the refresh token was issued to',
+  app_account_token CHAR(36)      NULL COMMENT 'StoreKit appAccountToken (UUID) for purchases made while signed in',
+  deleted_at      DATETIME        NULL COMMENT 'Account deleted by its owner; personal data already scrubbed',
   created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_customers_email (email)
+  UNIQUE KEY uq_customers_email (email),
+  UNIQUE KEY uq_customers_apple_sub (apple_sub),
+  UNIQUE KEY uq_customers_app_account_token (app_account_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
@@ -97,7 +104,8 @@ CREATE TABLE IF NOT EXISTS login_tokens (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- orders — one row per checkout attempt.
+-- orders — checkout attempts and zero-value fulfilled trial grants.
+-- gateway=trial is never paid, and never carries a payment transaction.
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS orders (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -110,7 +118,7 @@ CREATE TABLE IF NOT EXISTS orders (
   currency        CHAR(3)         NOT NULL DEFAULT 'PKR',
   gateway         VARCHAR(24)     NOT NULL,
   gateway_txn_id  VARCHAR(80)     NULL,
-  status          ENUM('pending','paid','failed','refunded') NOT NULL DEFAULT 'pending',
+  status          ENUM('pending','paid','failed','refunded','fulfilled') NOT NULL DEFAULT 'pending',
   failure_reason  VARCHAR(255)    NULL,
   created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   paid_at         DATETIME        NULL,
@@ -123,8 +131,8 @@ CREATE TABLE IF NOT EXISTS orders (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- licenses — issued only by the verified webhook. One per paid order.
--- Only an HMAC of the key is stored; the plaintext is emailed once.
+-- licenses — one per order: verified paid webhook or explicit TrialService.
+-- HMAC for lookup; encrypted copy for authenticated dashboard/recovery.
 --
 -- `status` is the download/entitlement gate (unchanged, still checked by
 -- issue-download.php). `activation_status` is a separate axis: whether the
@@ -137,7 +145,7 @@ CREATE TABLE IF NOT EXISTS licenses (
   order_id               BIGINT UNSIGNED NOT NULL,
   customer_id            BIGINT UNSIGNED NULL,
   license_key_hash       CHAR(64)        NOT NULL COMMENT 'hash_hmac(sha256, key, APP_KEY) — sole source of truth for lookups',
-  license_key_encrypted  VARCHAR(255)    NULL COMMENT 'AES-256-GCM(key), reversible, for dashboard resend only — see migration 002',
+  license_key_encrypted  VARCHAR(255)    NULL COMMENT 'AES-256-GCM(key), reversible, for owner dashboard and email recovery — see migration 002',
   license_key_prefix     VARCHAR(16)     NOT NULL COMMENT 'First group only, for support lookup',
   customer_email         VARCHAR(190)    NOT NULL,
   status                 ENUM('active','revoked','expired') NOT NULL DEFAULT 'active',
@@ -160,6 +168,40 @@ CREATE TABLE IF NOT EXISTS licenses (
   CONSTRAINT fk_licenses_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Permanent trial eligibility ledger. Retain expired/revoked grants.
+CREATE TABLE IF NOT EXISTS trial_grants (
+  customer_id      BIGINT UNSIGNED NOT NULL,
+  normalized_email VARCHAR(190)    NOT NULL,
+  order_id         BIGINT UNSIGNED NOT NULL,
+  issued_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (normalized_email),
+  UNIQUE KEY uq_trial_grants_customer (customer_id),
+  UNIQUE KEY uq_trial_grants_order (order_id),
+  CONSTRAINT fk_trial_grants_customer FOREIGN KEY (customer_id) REFERENCES customers (id),
+  CONSTRAINT fk_trial_grants_order FOREIGN KEY (order_id) REFERENCES orders (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- apple_transactions — one row per App Store purchase (migration 008). Keyed
+-- by originalTransactionId, which a non-consumable keeps across restores and
+-- devices, so re-verifying a purchase always finds the same order + licence.
+-- The order itself is an ordinary `orders` row with gateway = "apple".
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS apple_transactions (
+  original_transaction_id VARCHAR(64)     NOT NULL,
+  order_id                BIGINT UNSIGNED NOT NULL,
+  product_id              VARCHAR(190)    NOT NULL COMMENT 'App Store product id, e.g. com.diwan.pos.license.starter',
+  environment             VARCHAR(16)     NOT NULL COMMENT 'Production | Sandbox (Sandbox includes App Review)',
+  latest_transaction_id   VARCHAR(64)     NOT NULL,
+  app_account_token       CHAR(36)        NULL,
+  revoked_at              DATETIME        NULL COMMENT 'Set by a REFUND/REVOKE notification',
+  created_at              DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at              DATETIME        NULL,
+  PRIMARY KEY (original_transaction_id),
+  UNIQUE KEY uq_apple_transactions_order (order_id),
+  CONSTRAINT fk_apple_transactions_order FOREIGN KEY (order_id) REFERENCES orders (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- -----------------------------------------------------------------------------
 -- releases — the installer catalogue. storage_path is RELATIVE to
 -- private-storage/releases/ and is validated with realpath() before use.
@@ -167,16 +209,20 @@ CREATE TABLE IF NOT EXISTS licenses (
 CREATE TABLE IF NOT EXISTS releases (
   id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
   platform        ENUM('windows','macos','android') NOT NULL,
+  variant         VARCHAR(32)  NOT NULL DEFAULT '' COMMENT '\'\' = only build; else e.g. apple-silicon / intel',
   version         VARCHAR(32)  NOT NULL,
   filename        VARCHAR(190) NOT NULL COMMENT 'Name shown to the customer',
   storage_path    VARCHAR(255) NOT NULL COMMENT 'Relative to private-storage/releases/',
+  source          ENUM('local','github') NOT NULL DEFAULT 'local' COMMENT 'Where the installer lives',
+  github_tag      VARCHAR(64)  NULL COMMENT 'GitHub release tag, e.g. v1.1.5',
+  github_asset    VARCHAR(255) NULL COMMENT 'Asset file name on that GitHub release',
   checksum_sha256 CHAR(64)     NULL,
   size_bytes      BIGINT UNSIGNED NULL,
   release_notes   TEXT         NULL,
   is_active       TINYINT(1)   NOT NULL DEFAULT 1,
   released_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_releases_platform_version (platform, version),
+  UNIQUE KEY uq_releases_platform_version (platform, version, variant),
   KEY idx_releases_active (platform, is_active, released_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -247,6 +293,26 @@ CREATE TABLE IF NOT EXISTS license_activation_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
+-- contact_messages — contact form submissions (migration 009). Stored before
+-- they are emailed, so a mail failure never loses an enquiry. Also the window
+-- ContactService rate-limits against.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name        VARCHAR(120)    NOT NULL,
+  email       VARCHAR(190)    NOT NULL,
+  topic       ENUM('sales','support','licence','device','refund','privacy','other') NOT NULL,
+  order_ref   VARCHAR(40)     NULL,
+  message     TEXT            NOT NULL,
+  ip          VARCHAR(45)     NOT NULL,
+  email_sent  TINYINT(1)      NOT NULL DEFAULT 0,
+  created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_contact_messages_ip_time (ip, created_at),
+  KEY idx_contact_messages_email_time (email, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
 -- Seed data
 --
 -- These three tiers are the real, sellable catalogue. The descriptions and
@@ -268,3 +334,9 @@ VALUES
    'One-time licence for unlimited terminals across multiple branches. Adds multi-branch sync and priority phone and email support.',
    2500000, 'PKR', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+-- Reserved for TrialService; is_active=0 excludes this SKU from paid checkout.
+INSERT INTO products (sku, name, description, price_paisa, currency, is_active)
+VALUES ('diwan-pos-trial', 'Diwan POS — 30-day free trial',
+        'One trial per account, one device, 30 days from issuance. No payment.', 0, 'PKR', 0)
+ON DUPLICATE KEY UPDATE sku = VALUES(sku);

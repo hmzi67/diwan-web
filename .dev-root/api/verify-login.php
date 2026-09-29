@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/verify-login.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/verify-login.php

@@ -146,6 +146,7 @@ written to be backward-compatible with the currently-live code.
    reviewer on `production`.
 4. Add secrets and variables to each environment.
 5. Push to `staging`, watch it deploy, run the smoke test.
-6. Upload an installer manually, insert its `releases` row, and buy a licence
-   end-to-end on staging with gateway sandbox credentials.
+6. Register the installers from the GitHub release
+   (`php scripts/sync-github-release.php <tag> --sql`, paste into phpMyAdmin),
+   and buy a licence end-to-end on staging with gateway sandbox credentials.
 7. Only then merge to `main`.

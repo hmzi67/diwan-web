@@ -44,7 +44,7 @@ if (LoginAttempts::isRateLimited($ip, $email)) {
 }
 
 $customer = Database::pdo()->prepare(
-    'SELECT id, password_hash, session_epoch FROM customers WHERE email = :email LIMIT 1'
+    'SELECT id, password_hash, session_epoch, apple_sub FROM customers WHERE email = :email LIMIT 1'
 );
 $customer->execute(['email' => $email]);
 $customer = $customer->fetch();
@@ -67,8 +67,13 @@ if ($customer['password_hash'] === null) {
     LoginAttempts::record($ip, $email, 'no_password_set');
     Http::json([
         'status'  => 'password_not_set',
-        'message' => 'Your account was created before we offered passwords. '
-                   . "Choose \"Forgot password?\" and we'll email you a link to set one.",
+        // Apple-created accounts have no password either; point them at the
+        // button they actually used rather than at a reset they don't need.
+        'message' => $customer['apple_sub'] !== null
+            ? 'This account uses Sign in with Apple. Use the "Sign in with Apple" button, '
+              . "or choose \"Forgot password?\" to add a password as well."
+            : 'Your account was created before we offered passwords. '
+              . "Choose \"Forgot password?\" and we'll email you a link to set one.",
     ], 409);
 }
 

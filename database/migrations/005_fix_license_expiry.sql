@@ -21,6 +21,7 @@
 -- first, any licence issued in between gets a fresh 30-day expiry and you have
 -- to run it again.
 --
+-- Trial orders are excluded from diagnostics and repairs (migration 007).
 -- Safe to re-run: every statement is idempotent.
 -- =============================================================================
 
@@ -39,7 +40,8 @@ SELECT
   SUM(expires_at IS NOT NULL AND expires_at >  NOW())         AS will_expire_but_still_working,
   SUM(expires_at IS NOT NULL AND expires_at <= NOW()
       AND activation_status = 'activated')                    AS locked_out_and_already_installed
-FROM licenses;
+FROM licenses l JOIN orders o ON o.id = l.order_id
+WHERE o.gateway <> 'trial';
 
 -- 1b. WHO is affected. This is the list to contact.
 --     `days_dead` = how long they have already been locked out.
@@ -57,7 +59,8 @@ SELECT
   DATEDIFF(NOW(), l.expires_at) AS days_dead
 FROM licenses l
 JOIN orders o ON o.id = l.order_id
-WHERE l.expires_at IS NOT NULL
+WHERE o.gateway <> 'trial'
+  AND l.expires_at IS NOT NULL
   AND l.expires_at <= NOW()
 ORDER BY l.expires_at ASC;
 
@@ -69,7 +72,8 @@ SELECT
   id, customer_email, created_at, expires_at,
   DATEDIFF(expires_at, created_at) AS validity_days_granted
 FROM licenses
-WHERE expires_at IS NOT NULL
+WHERE order_id IN (SELECT id FROM orders WHERE gateway <> 'trial')
+  AND expires_at IS NOT NULL
   AND DATEDIFF(expires_at, created_at) NOT IN (30)
 ORDER BY created_at;
 
@@ -89,7 +93,8 @@ ORDER BY created_at;
 
 UPDATE licenses
    SET expires_at = NULL
- WHERE expires_at IS NOT NULL
+ WHERE order_id IN (SELECT id FROM orders WHERE gateway <> 'trial')
+   AND expires_at IS NOT NULL
    AND DATEDIFF(expires_at, created_at) = 30
    AND status <> 'revoked';
 
@@ -100,7 +105,8 @@ UPDATE licenses
 
 SELECT id, customer_email, created_at, expires_at
 FROM licenses
-WHERE expires_at IS NOT NULL
+WHERE order_id IN (SELECT id FROM orders WHERE gateway <> 'trial')
+  AND expires_at IS NOT NULL
   AND expires_at <= NOW()
   AND status <> 'revoked';
 

@@ -86,6 +86,27 @@ if (!$checks['private_storage']) {
     $hints['private_storage'] = 'logs_not_writable';
 }
 
+// Installers: informational only, so a deploy before the first release is
+// registered still reports healthy. Names the platforms with nothing to serve,
+// and flags GitHub-hosted releases that have no token to fetch them with.
+if ($checks['database'] ?? false) {
+    try {
+        $sources = Database::pdo()->query(
+            'SELECT platform, source FROM releases WHERE is_active = 1'
+        )->fetchAll(PDO::FETCH_KEY_PAIR);
+        $missing = array_values(array_diff(['windows', 'macos', 'android'], array_keys($sources)));
+        if ($missing !== []) {
+            $hints['downloads_missing'] = $missing;
+        }
+        if (in_array('github', $sources, true) && Env::get('GITHUB_RELEASES_TOKEN') === null) {
+            $hints['downloads'] = 'github_token_missing';
+        }
+    } catch (Throwable $e) {
+        // Pre-010 schema (no `source` column): say so rather than failing health.
+        $hints['downloads'] = 'migration_010_not_applied';
+    }
+}
+
 $ok = !in_array(false, $checks, true);
 
 $body = [

@@ -1,19 +1,29 @@
 // Behaviour for the /auth/ pages: sign-up, sign-in, forgot-password and
 // reset-password, all wired to the real backend.
 //
-// The `plan` query param rides through the whole flow. Someone who clicked a
-// pricing card lands here as ?plan=diwan-pos-standard, and after a successful
-// sign-in or registration goes straight to that plan's checkout instead of the
-// dashboard — losing it would drop them at a generic page mid-purchase.
+// Preserve the selected platform through sign-in/sign-up. During temporary
+// free-trial onboarding all successful authentication ends at the dashboard.
 const API = '/api';
-
 const params = new URLSearchParams(window.location.search);
-const plan = params.get('plan');
-const planQuery = plan ? `?plan=${encodeURIComponent(plan)}` : '';
+const platform = ['windows', 'macos', 'android'].includes(params.get('platform'))
+  ? params.get('platform') : null;
+const platformQuery = platform ? `?platform=${encodeURIComponent(platform)}` : '';
 
-/** Where to go once authenticated: back to the chosen plan, else the dashboard. */
 function destination() {
-  return plan ? `/checkout.html${planQuery}` : '/dashboard.html';
+  return `/dashboard.html${platformQuery}`;
+}
+
+// Only an explicit platform choice starts a trial for an existing account.
+// A failed response is retryable: server-side issuance is idempotent.
+async function finishSignIn(status) {
+  if (platform) {
+    const { ok, data } = await postJson('/start-trial.php', {});
+    if (!ok) {
+      setStatus(status, data.error || 'Could not start your trial. Please try again.', 'error');
+      return;
+    }
+  }
+  window.location.href = destination();
 }
 
 async function postJson(path, body) {
@@ -140,7 +150,7 @@ wire('signin-form', 'signin-status', async (data, status) => {
   });
 
   if (ok) {
-    window.location.href = destination();
+    await finishSignIn(status);
     return;
   }
   // Account predates password auth: send them to set one rather than leaving
@@ -154,10 +164,89 @@ wire('signin-form', 'signin-status', async (data, status) => {
   setStatus(status, body.error || 'Email or password is incorrect.', 'error');
 });
 
+// --- Sign in with Apple -----------------------------------------------------
+// Apple's popup flow: the server hands out a signed nonce (apple-nonce.php),
+// Apple embeds it in the identity token, and apple-sign-in.php checks both
+// before starting the same session cookie a password sign-in gets. Signing
+// in with an Apple ID we've never seen creates the account and its trial.
+//
+// AppleID.auth.signIn() opens a popup, so it must run synchronously inside
+// the click — no awaits before it, or popup blockers eat it. That's why the
+// nonce is fetched ahead of time and refreshed before it can expire.
+const appleBlock = document.getElementById('apple-block');
+const appleButton = document.getElementById('apple-signin');
+const APPLE_NONCE_REFRESH_MS = 8 * 60 * 1000;   // server nonces live 10 minutes
+let appleNonce = null;
+
+async function prepareAppleSignIn() {
+  const res = await fetch(API + '/apple-nonce.php', { credentials: 'same-origin' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.web || !data.web.enabled || !window.AppleID) return false;
+  window.AppleID.auth.init({
+    clientId: data.web.client_id,
+    scope: 'name email',
+    redirectURI: data.web.redirect_uri,
+    nonce: data.nonce,
+    usePopup: true,
+  });
+  appleNonce = data.nonce;
+  return true;
+}
+
+if (appleBlock && appleButton) {
+  prepareAppleSignIn()
+    .then((enabled) => {
+      if (!enabled) return;
+      appleBlock.hidden = false;
+      setInterval(() => { prepareAppleSignIn().catch(() => {}); }, APPLE_NONCE_REFRESH_MS);
+    })
+    .catch(() => {});   // no Apple button is a fine outcome; the form still works
+
+  appleButton.addEventListener('click', () => {
+    const status = document.getElementById(appleButton.dataset.status);
+    const terms = document.querySelector('input[name="terms"]');
+    if (terms && !terms.checked) {
+      setStatus(status, 'Please accept the terms of use & privacy policy to continue.', 'error');
+      return;
+    }
+    const nonce = appleNonce;
+    const popup = window.AppleID.auth.signIn();   // synchronous: keeps the click's user gesture
+    appleButton.disabled = true;
+    setStatus(status, 'Waiting for Apple…');
+
+    popup
+      .then(async (response) => {
+        const name = response.user && response.user.name
+          ? [response.user.name.firstName, response.user.name.lastName].filter(Boolean).join(' ')
+          : '';
+        setStatus(status, 'Just a moment…');
+        const { ok, data } = await postJson('/apple-sign-in.php', {
+          id_token: response.authorization.id_token,
+          code: response.authorization.code,
+          nonce,
+          name,
+          client: 'web',
+        });
+        if (!ok) {
+          setStatus(status, data.error || 'Apple sign-in failed. Please try again.', 'error');
+          prepareAppleSignIn().catch(() => {});   // that nonce is spent
+          return;
+        }
+        await finishSignIn(status);
+      })
+      .catch((err) => {
+        // Closing the popup is a choice, not an error.
+        const cancelled = err && (err.error === 'popup_closed_by_user' || err.error === 'user_cancelled_authorize');
+        setStatus(status, cancelled ? '' : 'Apple sign-in failed. Please try again.', cancelled ? '' : 'error');
+      })
+      .finally(() => { appleButton.disabled = false; });
+  });
+}
+
 // --- Forgot password --------------------------------------------------------
 wire('forgot-form', 'forgot-status', async (data, status) => {
   const email = data.get('email');
-  const { ok, data: body } = await postJson('/request-password-reset.php', { email });
+  const { ok, data: body } = await postJson('/request-password-reset.php', { email, platform });
 
   if (!ok) {
     setStatus(status, body.error || 'Could not send the link. Please try again.', 'error');
@@ -197,10 +286,9 @@ if (document.getElementById('reset-form') && !resetToken) {
   show('step-invalid');
 }
 
-// Carry the plan through the links between these pages, so it survives a
-// detour via "create an account" or "forgot password".
-if (plan) {
+// Carry only allowlisted platform context, never an arbitrary redirect URL.
+if (platform) {
   document.querySelectorAll('[data-carry-plan]').forEach((link) => {
-    link.href = link.getAttribute('href') + planQuery;
+    link.href = link.getAttribute('href') + platformQuery;
   });
 }

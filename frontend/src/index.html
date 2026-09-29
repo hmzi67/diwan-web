@@ -7,6 +7,9 @@
   <meta name="description" content="Keyboard-first point of sale for retail, restaurants and pharmacies. Offline-first billing, inventory and reporting.">
   <meta name="theme-color" content="#0A0F0D">
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/theme.js"></script>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="apple-touch-icon" href="/assets/logo.png">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -14,7 +17,7 @@
   <header class="nav" id="nav">
     <div class="wrap nav__inner">
       <a class="brand" href="/">
-        <span class="brand__mark" aria-hidden="true">D</span>
+        <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
         Diwan
       </a>
 
@@ -28,7 +31,7 @@
 
       <div class="nav__actions">
         <a class="nav__login" href="/auth/sign-in.html">Log in</a>
-        <a class="btn btn--primary" href="#pricing">Get Started</a>
+        <a class="btn btn--primary" href="#download">Start free trial</a>
         <button class="nav__toggle" id="nav-toggle" type="button"
                 aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -54,10 +57,10 @@
         </p>
 
         <div class="hero__cta">
-          <a class="btn btn--primary btn--lg" href="#pricing">Get Started</a>
+          <a class="btn btn--primary btn--lg" href="#download">Start free trial</a>
           <a class="btn btn--ghost btn--lg" href="#features">See how it works</a>
         </div>
-        <p class="hero__note">One-time licence · Works offline · Windows, macOS &amp; Android</p>
+        <p class="hero__note">30 days free · No payment required · One device</p>
 
         <!-- Product mockup: no image asset, drawn in CSS to keep page weight down -->
         <div class="mockup" role="img"
@@ -99,28 +102,50 @@
       </div>
     </section>
 
-    <!-- =========================================================
-         Sections 4–9 land in the next pass. The download flow below
-         is UNCHANGED and still functional — same form id, same
-         fields, same API call.
+    <section class="platforms" id="download" aria-labelledby="download-title">
+      <div class="wrap">
+        <div class="platforms__head">
+          <p class="eyebrow">Your counter. Your platform.</p>
+          <h2 id="download-title">Try Diwan free for 30 days.</h2>
+          <p>Choose your platform, create an account, and get your licence instantly. No payment required.</p>
+        </div>
+        <div class="platforms__grid">
+          <a class="platform-card" href="/auth/sign-in.html?platform=windows" data-platform="windows">
+            <svg viewBox="0 0 32 32" width="48" height="48" fill="currentColor" aria-hidden="true">
+              <path d="M2 5.7 14.2 4v11H2V5.7Zm14.2-2L30 1.8V15H16.2V3.7ZM2 17h12.2v11L2 26.3V17Zm14.2 0H30v13.2l-13.8-1.9V17Z"/>
+            </svg>
+            <h3>Windows</h3><span>Download for Windows <span aria-hidden="true">↗</span></span>
+            <small>.exe installer</small>
+          </a>
+          <a class="platform-card" href="/auth/sign-in.html?platform=macos" data-platform="macos">
+            <svg viewBox="0 0 32 32" width="48" height="48" fill="currentColor" aria-hidden="true">
+              <path d="M21.5 1c.3 2.3-.7 4.6-2 6-1.4 1.5-3.5 2.3-5.4 2.1-.3-2.2.8-4.5 2.1-5.9C17.7 1.6 19.8.5 21.5 1ZM25.8 24.6c-1.1 2.4-2.6 5.2-4.9 5.3-2 .1-2.6-1.3-5.3-1.3s-3.4 1.3-5.3 1.4c-2.3.1-4-2.5-5.3-4.9C1.4 18.7 2.3 11.2 6.6 9c2.1-1.1 4.4-.8 6.1-.1 1.3.6 2.2.8 2.9.8.8 0 1.9-.5 3.3-1 2.2-.8 5.1-.8 7.2 2-6.3 3.6-5.1 10.2.6 12.5l-.9 1.4Z"/>
+            </svg>
+            <h3>macOS</h3><span>Download for macOS <span aria-hidden="true">↗</span></span>
+            <small>.dmg installer</small>
+          </a>
+          <a class="platform-card" href="/auth/sign-in.html?platform=android" data-platform="android">
+            <svg viewBox="0 0 32 32" width="48" height="48" fill="currentColor" aria-hidden="true">
+              <path d="m8.3 8-2.1-3.6 1.5-.9 2.2 3.7a15 15 0 0 1 12.2 0l2.2-3.7 1.5.9L23.7 8A13 13 0 0 1 29 18H3A13 13 0 0 1 8.3 8ZM3 20h26v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-6Z"/>
+              <circle cx="10" cy="13" r="1.5" fill="var(--surface)"/>
+              <circle cx="22" cy="13" r="1.5" fill="var(--surface)"/>
+            </svg>
+            <h3>Android</h3><span>Download for Android <span aria-hidden="true">↗</span></span>
+            <small>.apk installer</small>
+          </a>
+        </div>
+        <p class="platforms__note">One trial per account. Your 30 days start when your licence is issued.<br>Already have a licence? Sign in to access your downloads.</p>
+        <p id="platform-status" role="status"></p>
+      </div>
+    </section>
 
-         "Get Started" no longer checks out directly: it hands off to
-         /auth/sign-in.html (which links on to sign-up), or straight to
-         checkout.html if already signed in, carrying the chosen plan
-         along either way. See js/main.js.
-
-         Prices and inclusions here are the ones published on
-         products.html and referenced by the refund and terms pages.
-         Change all four together, plus the products table seed in
-         database/schema.sql.
-         ========================================================= -->
     <section class="pricing" id="pricing">
       <div class="wrap">
         <div class="pricing__head">
           <h2>Simple pricing, one licence.</h2>
           <p class="pricing__sub">
             Pick the plan that matches how many counters you run.
-            One-time payment — no subscriptions, no surprise renewals.
+            Paid editions are shown below. Start with a free 30-day trial; no checkout is required.
           </p>
         </div>
 
@@ -134,8 +159,7 @@
               <span class="plan__amount">Rs 8,000</span>
               <span class="plan__period">one-time</span>
             </p>
-            <a class="btn btn--ghost plan__cta" href="auth/sign-in.html?plan=diwan-pos-starter"
-               data-plan="diwan-pos-starter">Get Started</a>
+            <a class="btn btn--ghost plan__cta" href="#download">Start free trial</a>
             <div class="plan__divider"></div>
             <p class="plan__includes">Everything in Starter includes:</p>
             <ul class="plan__features">
@@ -157,8 +181,7 @@
               <span class="plan__amount">Rs 12,000</span>
               <span class="plan__period">one-time</span>
             </p>
-            <a class="btn btn--primary plan__cta" href="auth/sign-in.html?plan=diwan-pos-standard"
-               data-plan="diwan-pos-standard">Get Started</a>
+            <a class="btn btn--primary plan__cta" href="#download">Start free trial</a>
             <div class="plan__divider"></div>
             <p class="plan__includes">Everything in Standard includes:</p>
             <ul class="plan__features">
@@ -179,8 +202,7 @@
               <span class="plan__amount">Rs 25,000</span>
               <span class="plan__period">one-time</span>
             </p>
-            <a class="btn btn--ghost plan__cta" href="auth/sign-in.html?plan=diwan-pos-enterprise"
-               data-plan="diwan-pos-enterprise">Get Started</a>
+            <a class="btn btn--ghost plan__cta" href="#download">Start free trial</a>
             <div class="plan__divider"></div>
             <p class="plan__includes">Everything in Enterprise includes:</p>
             <ul class="plan__features">
@@ -193,23 +215,6 @@
         </div>
 
         <p class="pricing__more"><a href="#features">…and a lot more →</a></p>
-      </div>
-    </section>
-
-    <section class="legacy" id="download">
-      <div class="wrap">
-        <h2>Already purchased?</h2>
-        <p style="color:var(--text-muted)">Paste the licence key from your receipt email to get your installer.</p>
-        <form id="download-form">
-          <label>Licence key <input type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
-          <select name="platform">
-            <option value="windows">Windows (.exe)</option>
-            <option value="macos">macOS (.dmg)</option>
-            <option value="android">Android (.apk)</option>
-          </select>
-          <button class="btn btn--primary" type="submit">Get download link</button>
-        </form>
-        <p id="download-status" role="status"></p>
       </div>
     </section>
 
@@ -226,7 +231,7 @@
       <div class="site-footer__grid">
         <div class="site-footer__brand">
           <a class="brand" href="index.html">
-            <span class="brand__mark" aria-hidden="true">D</span>
+            <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
             Diwan
           </a>
           <p class="site-footer__tagline">

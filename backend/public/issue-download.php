@@ -26,6 +26,11 @@ $ip       = Http::clientIp();
 if (!in_array($platform, ['windows', 'macos', 'android'], true)) {
     Http::fail('Unsupported platform.', 422);
 }
+// Optional build choice for platforms that ship several (macOS: apple-silicon / intel).
+$variant = strtolower(trim((string) ($input['variant'] ?? '')));
+if (!preg_match('/^[a-z0-9-]{0,32}$/', $variant)) {
+    Http::fail('Unsupported build.', 422);
+}
 if ($key === '') {
     Http::fail('Please enter your licence key.', 422);
 }
@@ -65,9 +70,9 @@ if (!$licenses->hasDownloadsLeft($license)) {
 $downloads = new DownloadService();
 
 try {
-    $issued = $downloads->issueToken((int) $license['id'], $platform, $ip);
+    $issued = $downloads->issueToken((int) $license['id'], $platform, $ip, $variant);
 } catch (RuntimeException $e) {
-    Logger::error('No active release', ['platform' => $platform, 'reason' => $e->getMessage()]);
+    Logger::error('No active release', ['platform' => $platform, 'variant' => $variant, 'reason' => $e->getMessage()]);
     Http::fail('That installer is not available yet.', 404);
 }
 

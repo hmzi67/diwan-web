@@ -2,7 +2,7 @@
 /**
  * POST /api/payment-webhook.php  — server-to-server callback from the gateway.
  *
- * This is the ONLY place a licence is created. Three rules, in order:
+ * This is the ONLY place a paid licence is created. Three rules, in order:
  *   1. Verify the signature before trusting a single field.
  *   2. Record the raw event first, so a failure mid-way is replayable.
  *   3. Be idempotent — gateways retry, and a retry must not mint a second licence.

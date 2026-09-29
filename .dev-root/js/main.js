@@ -1,54 +1,42 @@
 // All backend calls go through /api/* — the only web-accessible PHP entrypoints.
 const API = '/api';
 
-async function postJson(path, body) {
-  const res = await fetch(API + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-  return data;
-}
-
 function setStatus(el, message, kind) {
   el.textContent = message;
   el.className = kind || '';
 }
 
-// Pricing cards: "Get Started" needs a session before it can reach checkout.
-// The href on each card already points at /auth/sign-in.html?plan=X, so anyone
-// without JS (or if this fetch fails) still lands somewhere correct — this
-// listener just skips the login hop for someone already signed in.
-document.querySelectorAll('.plan__cta[data-plan]').forEach((link) => {
+// TEMPORARY trial onboarding. Issuance happens only on signup or this explicit
+// user action, never from a dashboard GET. Platform is navigation context only.
+document.querySelectorAll('[data-platform]').forEach((link) => {
   link.addEventListener('click', async (e) => {
     e.preventDefault();
-    const plan = link.dataset.plan;
+    if (link.getAttribute('aria-busy') === 'true') return;
+    link.setAttribute('aria-busy', 'true');
+    const platform = link.dataset.platform;
+    const query = `?platform=${encodeURIComponent(platform)}`;
+    const status = document.getElementById('platform-status');
+    setStatus(status, 'Opening your download…');
     try {
-      const res = await fetch(API + '/dashboard-data.php', { credentials: 'same-origin' });
-      window.location.href = res.ok
-        ? `/checkout.html?plan=${encodeURIComponent(plan)}`
-        : `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
-    } catch {
-      window.location.href = `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
+      const res = await fetch(API + '/start-trial.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (res.status === 401) {
+        window.location.href = `/auth/sign-in.html${query}`;
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not open your download. Please try again.');
+      window.location.href = `/dashboard.html${query}`;
+    } catch (err) {
+      setStatus(status, err.message, 'error');
+    } finally {
+      link.removeAttribute('aria-busy');
     }
   });
-});
-
-const downloadForm = document.getElementById('download-form');
-downloadForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const status = document.getElementById('download-status');
-  setStatus(status, 'Verifying your licence…');
-  try {
-    const payload = Object.fromEntries(new FormData(downloadForm));
-    const { download_url, expires_at } = await postJson('/issue-download.php', payload);
-    setStatus(status, `Licence verified. Your link expires ${expires_at}.`, 'ok');
-    window.location.href = download_url;
-  } catch (err) {
-    setStatus(status, err.message, 'error');
-  }
 });
 
 // --- Nav: mobile menu + stuck-state border. No library, no dependencies. ---

@@ -25,7 +25,8 @@ if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     Http::fail('Please enter a valid email address.', 422);
 }
 
-(new PasswordResetService())->request($email, Http::clientIp());
+$platform = (string) ($input['platform'] ?? '');
+(new PasswordResetService())->request($email, Http::clientIp(), $platform);
 
 Http::json([
     'message' => "If that email has a Diwan account, we've sent a link to set a new password.",

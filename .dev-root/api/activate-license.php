@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/activate-license.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/activate-license.php

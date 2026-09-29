@@ -24,6 +24,7 @@ final class Session
 {
     private const COOKIE_NAME = 'diwan_session';
     private const TTL_DAYS = 30;
+    private const APP_TOKEN_TTL_SECONDS = 3600;
 
     /**
      * Sets the session cookie for this customer. Called right after sign-in.
@@ -78,6 +79,50 @@ final class Session
             return null;   // password was reset after this cookie was issued
         }
         return (int) $id;
+    }
+
+    /**
+     * Short-lived bearer token for the iOS app, which talks to the API from
+     * Rust with no cookie jar. Same shape and epoch check as the cookie, but
+     * signed under a different domain prefix, so neither can ever be
+     * replayed as the other. Held in the app's memory only; the TTL is
+     * short because the app simply signs in with Apple again when needed.
+     */
+    public static function issueAppToken(int $customerId, ?int $epoch = null): string
+    {
+        $expires = time() + self::APP_TOKEN_TTL_SECONDS;
+        $epoch ??= self::epochFor($customerId);
+        $payload = $customerId . '.' . $epoch . '.' . $expires;
+        return $payload . '.' . hash_hmac('sha256', 'app:' . $payload, Env::require('APP_KEY'));
+    }
+
+    /**
+     * The customer behind an app token, or null. The app sends it in the
+     * JSON body (`app_token`), not an Authorization header: shared hosts
+     * running PHP under FastCGI routinely strip that header before PHP
+     * ever sees it.
+     */
+    public static function customerIdFromAppToken(?string $token): ?int
+    {
+        $parts = explode('.', (string) $token);
+        if (count($parts) !== 4) {
+            return null;
+        }
+        [$id, $epoch, $expires, $signature] = $parts;
+        $expected = hash_hmac('sha256', 'app:' . $id . '.' . $epoch . '.' . $expires, Env::require('APP_KEY'));
+        if (!hash_equals($expected, $signature) || (int) $expires < time()) {
+            return null;
+        }
+        if ((int) $epoch !== self::epochFor((int) $id)) {
+            return null;
+        }
+        return (int) $id;
+    }
+
+    /** Website cookie or app token — for endpoints both clients call. */
+    public static function customerIdFromCookieOrAppToken(?string $appToken): ?int
+    {
+        return self::customerId() ?? self::customerIdFromAppToken($appToken);
     }
 
     public static function destroy(): void

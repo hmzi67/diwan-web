@@ -18,6 +18,11 @@ use RuntimeException;
  *
  * The installer path never appears in a URL, so there is nothing to guess,
  * share, or hotlink beyond the token's short lifetime.
+ *
+ * A release is either a file in private-storage (source = local) or an asset
+ * on a private GitHub release (source = github). For GitHub, stream() answers
+ * with a redirect to GitHub's short-lived signed URL instead of piping bytes
+ * through PHP — see GitHubReleases.
  */
 final class DownloadService
 {
@@ -30,9 +35,13 @@ final class DownloadService
      */
     private const TOKEN_TTL_MINUTES = 15;
 
-    public function issueToken(int $licenseId, string $platform, string $ip): array
+    /**
+     * $variant picks one build when a platform ships several (e.g. macOS
+     * 'apple-silicon' / 'intel'). '' means "whatever this platform has".
+     */
+    public function issueToken(int $licenseId, string $platform, string $ip, string $variant = ''): array
     {
-        $release = $this->activeRelease($platform);
+        $release = $this->activeRelease($platform, $variant);
 
         $ttlMinutes = Env::int('DOWNLOAD_LINK_TTL_MINUTES', self::TOKEN_TTL_MINUTES);
         if ($ttlMinutes < 1) {
@@ -71,6 +80,7 @@ final class DownloadService
 
         $stmt = $pdo->prepare(
             'SELECT t.*, r.filename, r.storage_path, r.checksum_sha256, r.version,
+                    r.source, r.github_tag, r.github_asset,
                     l.id AS license_id, l.status AS license_status,
                     l.downloads_used, l.max_downloads, l.expires_at AS license_expires_at
                FROM download_tokens t
@@ -101,7 +111,15 @@ final class DownloadService
             $this->deny('Download limit reached for this licence. Contact support.', 403, ['reason' => 'quota_exceeded']);
         }
 
-        $path = $this->resolvePath((string) $row['storage_path']);
+        // Resolve where the bytes come from BEFORE burning the token, so a
+        // missing file or a GitHub outage does not cost the customer a download.
+        $githubUrl = null;
+        $path = null;
+        if ($row['source'] === 'github') {
+            $githubUrl = $this->githubUrl($row);
+        } else {
+            $path = $this->resolvePath((string) $row['storage_path']);
+        }
 
         // Burn the token and count the download BEFORE streaming, so a client
         // that reconnects mid-transfer cannot farm extra downloads.
@@ -114,22 +132,74 @@ final class DownloadService
             'license_id' => $row['license_id'],
             'file'       => $row['filename'],
             'version'    => $row['version'],
+            'source'     => $row['source'],
             'ip'         => $ip,
         ]);
 
-        $this->send($path, (string) $row['filename']);
+        if ($githubUrl !== null) {
+            $this->redirect($githubUrl);
+        }
+        $this->send((string) $path, (string) $row['filename']);
     }
 
-    /** @return array{id:int,filename:string,storage_path:string,version:string} */
-    private function activeRelease(string $platform): array
+    /** @param array<string,mixed> $row */
+    private function githubUrl(array $row): string
+    {
+        $tag   = (string) ($row['github_tag'] ?? '');
+        $asset = (string) ($row['github_asset'] ?? '');
+        if ($tag === '' || $asset === '') {
+            $this->deny('Installer is temporarily unavailable. Please contact support.', 503, [
+                'reason'     => 'github_release_incomplete',
+                'release_id' => $row['release_id'],
+            ]);
+        }
+        try {
+            return (new GitHubReleases())->signedUrl($tag, $asset);
+        } catch (RuntimeException $e) {
+            $this->deny('Installer is temporarily unavailable. Please try again in a minute.', 503, [
+                'reason' => 'github_unavailable',
+                'tag'    => $tag,
+                'asset'  => $asset,
+                'error'  => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /** Hands the browser GitHub's pre-signed URL; it expires within minutes. */
+    private function redirect(string $url): never
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Cache-Control: no-store, must-revalidate');
+        header('Referrer-Policy: no-referrer');
+        header('Location: ' . $url, true, 302);
+        exit;
+    }
+
+    /**
+     * The newest active release for a platform. With a $variant, that exact
+     * build wins, falling back to the platform's variant-less build (so a
+     * client asking for 'apple-silicon' still gets a single universal build).
+     * Without one, ties break alphabetically — 'apple-silicon' before 'intel'.
+     *
+     * @return array{id:int,filename:string,storage_path:string,version:string}
+     */
+    private function activeRelease(string $platform, string $variant = ''): array
     {
         $stmt = Database::pdo()->prepare(
             'SELECT * FROM releases
               WHERE platform = :platform AND is_active = 1
-              ORDER BY released_at DESC
+                AND (:any = 1 OR variant IN (:variant, \'\'))
+              ORDER BY variant = :preferred DESC, released_at DESC, variant ASC
               LIMIT 1'
         );
-        $stmt->execute(['platform' => $platform]);
+        $stmt->execute([
+            'platform'  => $platform,
+            'any'       => $variant === '' ? 1 : 0,
+            'variant'   => $variant,
+            'preferred' => $variant,
+        ]);
         $release = $stmt->fetch();
 
         if (!$release) {

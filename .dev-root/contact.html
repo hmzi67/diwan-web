@@ -4,9 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contact Diwan — Support &amp; Business Details</title>
-  <meta name="description" content="Contact details for Diwan POS: support email, phone number and registered business address.">
+  <meta name="description" content="Contact Diwan POS: send a message, or find our support email, phone number and business address.">
   <meta name="theme-color" content="#0A0F0D">
-  <link rel="stylesheet" href="/css/styles.css?v=202609062257">
+  <link rel="stylesheet" href="/css/styles.css?v=202609292248">
+  <script src="/js/theme.js?v=202609292248"></script>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="apple-touch-icon" href="/assets/logo.png">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -14,7 +17,7 @@
   <header class="nav" id="nav">
     <div class="wrap nav__inner">
       <a class="brand" href="index.html">
-        <span class="brand__mark" aria-hidden="true">D</span>
+        <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
         Diwan
       </a>
       <nav class="nav__links" aria-label="Primary">
@@ -35,6 +38,92 @@
             Pakistan. Support is handled directly — when you email, you reach the person
             who builds and maintains the software.
           </p>
+        </div>
+
+        <div class="cform" id="message">
+          <div class="cform__intro">
+            <p class="cform__kicker">Send a message</p>
+            <h2>Tell us what you need &mdash; we&rsquo;ll take it from there.</h2>
+            <p>
+              Questions before buying, help with a licence, or anything else. Your
+              message goes straight to the developer&rsquo;s inbox.
+            </p>
+            <ul class="cform__perks">
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span><strong>Reply within 1 business day</strong>Mon&ndash;Sat, 10am&ndash;7pm PKT</span>
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+                <span><strong>A real person, not a bot</strong>You reach the person who builds Diwan</span>
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                <span><strong>Kept private</strong>Used only to answer you &mdash; see our <a href="privacy.html">Privacy Policy</a></span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cform__card">
+            <form id="contact-form" novalidate>
+              <div class="cform__row">
+                <label class="field">
+                  Your name
+                  <input class="input" name="name" autocomplete="name" maxlength="120" required placeholder="Ayesha Khan">
+                </label>
+                <label class="field">
+                  Email
+                  <input class="input" type="email" name="email" autocomplete="email" maxlength="190" required placeholder="you@shop.pk">
+                </label>
+              </div>
+
+              <fieldset class="cform__topics">
+                <legend>What&rsquo;s it about?</legend>
+                <div class="chips">
+                  <label class="chip"><input type="radio" name="topic" value="sales" checked><span>Buying Diwan</span></label>
+                  <label class="chip"><input type="radio" name="topic" value="support"><span>Technical help</span></label>
+                  <label class="chip"><input type="radio" name="topic" value="licence"><span>Licence not received</span></label>
+                  <label class="chip"><input type="radio" name="topic" value="device"><span>Device change</span></label>
+                  <label class="chip"><input type="radio" name="topic" value="refund"><span>Refund</span></label>
+                  <label class="chip"><input type="radio" name="topic" value="privacy"><span>Privacy</span></label>
+                  <label class="chip"><input type="radio" name="topic" value="other"><span>Something else</span></label>
+                </div>
+              </fieldset>
+
+              <label class="field" id="order-ref-field" hidden>
+                <span>Order reference <span class="cform__opt">starts with DW &middot; optional</span></span>
+                <input class="input cform__mono" name="order_ref" maxlength="40" autocomplete="off" spellcheck="false" placeholder="DW-XXXXXXXX">
+              </label>
+
+              <label class="field">
+                Message
+                <textarea class="input cform__msg" name="message" rows="6" minlength="10" maxlength="3000" required placeholder="How can we help?"></textarea>
+                <span class="cform__count" id="message-count" aria-live="polite">0 / 3000</span>
+              </label>
+
+              <!-- Honeypot: hidden from people, filled in by bots. -->
+              <div class="cform__hp" aria-hidden="true">
+                <label>Website <input name="website" tabindex="-1" autocomplete="off"></label>
+              </div>
+
+              <div class="cform__foot">
+                <p id="contact-status" role="status"></p>
+                <button class="btn btn--primary" type="submit">
+                  Send message
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+              </div>
+            </form>
+
+            <div class="cform__sent" id="contact-sent" hidden tabindex="-1">
+              <div class="cform__tick" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+              </div>
+              <h3>Message sent</h3>
+              <p id="contact-sent-text">We&rsquo;ll reply by email within one business day.</p>
+              <button class="btn btn--ghost btn--sm" type="button" id="contact-again">Send another message</button>
+            </div>
+          </div>
         </div>
 
         <div class="contact__grid">
@@ -165,7 +254,7 @@
       <div class="site-footer__grid">
         <div class="site-footer__brand">
           <a class="brand" href="index.html">
-            <span class="brand__mark" aria-hidden="true">D</span>
+            <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
             Diwan
           </a>
           <p class="site-footer__tagline">
@@ -213,5 +302,6 @@
     </div>
   </footer>
 
+  <script src="/js/contact.js?v=202609292248" defer></script>
 </body>
 </html>

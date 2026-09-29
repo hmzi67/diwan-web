@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/logout.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/logout.php

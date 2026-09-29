@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/resend-license-email.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/resend-license-email.php

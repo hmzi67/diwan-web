@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/payment-return.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/payment-return.php

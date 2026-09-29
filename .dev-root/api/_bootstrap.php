@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/_bootstrap.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/_bootstrap.php

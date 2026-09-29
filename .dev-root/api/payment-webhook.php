@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/payment-webhook.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/payment-webhook.php

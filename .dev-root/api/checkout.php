@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/checkout.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/checkout.php

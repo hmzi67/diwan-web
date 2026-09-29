@@ -65,7 +65,7 @@ final class OrderService
         $stmt = $pdo->prepare(
             'UPDATE orders
                 SET status = "paid", gateway_txn_id = :txn, paid_at = NOW()
-              WHERE order_ref = :ref AND status <> "paid"'
+              WHERE order_ref = :ref AND status <> "paid" AND gateway <> "trial"'
         );
         $stmt->execute(['ref' => $orderRef, 'txn' => $transactionId]);
 

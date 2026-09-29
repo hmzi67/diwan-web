@@ -26,17 +26,31 @@ use RuntimeException;
  */
 final class Mailer
 {
-    public static function send(string $to, string $subject, string $body, string $fromHeader): bool
-    {
+    /**
+     * $replyTo must already be a validated address (FILTER_VALIDATE_EMAIL
+     * rejects CR/LF, so it cannot inject extra headers).
+     */
+    public static function send(
+        string $to,
+        string $subject,
+        string $body,
+        string $fromHeader,
+        ?string $replyTo = null
+    ): bool {
         $driver = strtolower(Env::get('MAIL_DRIVER', 'sendmail') ?? 'sendmail');
 
         return $driver === 'smtp'
-            ? self::sendSmtp($to, $subject, $body, $fromHeader)
-            : mail($to, $subject, $body, $fromHeader);
+            ? self::sendSmtp($to, $subject, $body, $fromHeader, $replyTo)
+            : mail($to, $subject, $body, $fromHeader . ($replyTo !== null ? "\r\nReply-To: <{$replyTo}>" : ''));
     }
 
-    private static function sendSmtp(string $to, string $subject, string $body, string $fromHeader): bool
-    {
+    private static function sendSmtp(
+        string $to,
+        string $subject,
+        string $body,
+        string $fromHeader,
+        ?string $replyTo
+    ): bool {
         $host = Env::get('MAIL_HOST', '127.0.0.1');
         $port = Env::int('MAIL_PORT', 1025);
         $user = Env::get('MAIL_USERNAME');
@@ -75,6 +89,7 @@ final class Mailer
 
             $headers = "From: {$fromHeader}\r\n"
                 . "To: <{$to}>\r\n"
+                . ($replyTo !== null ? "Reply-To: <{$replyTo}>\r\n" : '')
                 . "Subject: {$subject}\r\n"
                 . "MIME-Version: 1.0\r\n"
                 . "Content-Type: text/plain; charset=UTF-8\r\n";

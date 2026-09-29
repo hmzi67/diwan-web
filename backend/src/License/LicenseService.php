@@ -12,13 +12,33 @@ final class LicenseService
 {
     private const PREFIX = 'DIWAN';
 
-    /**
-     * Issues exactly one licence per order.
-     *
-     * The plaintext key is returned once (to be emailed) and only its hash is
-     * stored, so a database leak does not hand out working licences.
-     */
+    /** Paid issuance only; the paid lifetime remains perpetual by default. */
     public function issueForOrder(PDO $pdo, int $orderId, string $email): array
+    {
+        $this->requireOrderKind($pdo, $orderId, false);
+        return $this->issue($pdo, $orderId, $email, Env::int('LICENSE_VALIDITY_DAYS', 0));
+    }
+
+    /** TEMPORARY no-payment path. Trial duration never reads the paid setting. */
+    public function issueTrialForOrder(PDO $pdo, int $orderId, string $email): array
+    {
+        $this->requireOrderKind($pdo, $orderId, true);
+        return $this->issue($pdo, $orderId, $email, 30);
+    }
+
+    private function requireOrderKind(PDO $pdo, int $orderId, bool $trial): void
+    {
+        $stmt = $pdo->prepare('SELECT gateway, status FROM orders WHERE id = :id');
+        $stmt->execute(['id' => $orderId]);
+        $order = $stmt->fetch();
+        if (!$order || ($order['gateway'] === 'trial') !== $trial
+            || $order['status'] !== ($trial ? 'fulfilled' : 'paid')) {
+            throw new \RuntimeException('Order is not eligible for this licence issuance path.');
+        }
+    }
+
+    /** Shared key storage only: trial eligibility and payments stay separate. */
+    private function issue(PDO $pdo, int $orderId, string $email, int $validityDays): array
     {
         $existing = $pdo->prepare('SELECT id FROM licenses WHERE order_id = :order LIMIT 1');
         $existing->execute(['order' => $orderId]);
@@ -28,20 +48,6 @@ final class LicenseService
         }
 
         $key = $this->generateKey();
-
-        // Licence lifetime is its OWN setting, deliberately unrelated to how
-        // long a download link stays valid (DownloadService::TOKEN_TTL_MINUTES,
-        // configurable via DOWNLOAD_LINK_TTL_MINUTES).
-        //
-        // 0 — the default — means the licence never expires, which is what the
-        // "one-time licence, no subscription" offer on the pricing page
-        // actually promises. Set a positive number only if you deliberately
-        // start selling time-limited licences.
-        //
-        // This previously read DOWNLOAD_TOKEN_TTL_DAYS, which made every
-        // licence expire 30 days after purchase. See migration 005, which
-        // repairs licences issued while that was live.
-        $validityDays = Env::int('LICENSE_VALIDITY_DAYS', 0);
 
         // customer_id is copied from the order rather than looked up by email:
         // checkout.php sets it from the authenticated session, so it is already
@@ -245,7 +251,7 @@ final class LicenseService
     }
 
     /**
-     * Reversible copy of the key, for the dashboard's "resend my key" only.
+     * Reversible key for the authenticated owner's dashboard and email recovery.
      * Never used for lookup/authentication — hash() remains the sole source
      * of truth there. See migration 002 for the trade-off this accepts.
      */

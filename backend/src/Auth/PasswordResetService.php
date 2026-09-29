@@ -30,7 +30,7 @@ final class PasswordResetService
     private const MAX_PER_IP_PER_HOUR      = 10;
     private const MAX_PER_CUSTOMER_PER_HOUR = 5;
 
-    public function request(string $email, string $ip): void
+    public function request(string $email, string $ip, string $platform = ''): void
     {
         $email = strtolower(trim($email));
         $pdo = Database::pdo();
@@ -90,6 +90,9 @@ final class PasswordResetService
         // has to type a new password, so there is nothing to redeem yet.
         $link = rtrim((string) Env::require('APP_URL'), '/')
             . '/auth/reset-password.html?token=' . $token;
+        if (in_array($platform, ['windows', 'macos', 'android'], true)) {
+            $link .= '&platform=' . $platform;
+        }
 
         $sent = $isFirstPassword
             ? Mailer::send(

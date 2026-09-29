@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/request-password-reset.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/request-password-reset.php

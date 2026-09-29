@@ -181,6 +181,7 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
           LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          TRIAL_SIGNUP_ENABLED=${{ vars.TRIAL_SIGNUP_ENABLED || 'true' }}
           LICENSE_SIGNING_KEY_ID=${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
           LICENSE_SIGNING_PRIVATE_KEY=${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
           LICENSE_MAX_OFFLINE_DAYS=${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
@@ -195,8 +196,18 @@ jobs:
           EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
           SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
           SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          APPLE_BUNDLE_ID=${{ vars.APPLE_BUNDLE_ID || 'com.diwan.pos' }}
+          APPLE_APP_ID=${{ vars.APPLE_APP_ID }}
+          APPLE_IAP_ALLOW_SANDBOX=${{ vars.APPLE_IAP_ALLOW_SANDBOX || 'true' }}
+          APPLE_SIGN_IN_SERVICES_ID=${{ vars.APPLE_SIGN_IN_SERVICES_ID }}
+          APPLE_TEAM_ID=${{ vars.APPLE_TEAM_ID }}
+          APPLE_SIGN_IN_KEY_ID=${{ vars.APPLE_SIGN_IN_KEY_ID }}
+          APPLE_SIGN_IN_PRIVATE_KEY=${{ secrets.APPLE_SIGN_IN_PRIVATE_KEY }}
           MAIL_FROM=${{ vars.MAIL_FROM }}
           MAIL_FROM_NAME=Diwan POS
+          CONTACT_EMAIL=${{ vars.CONTACT_EMAIL }}
+          GITHUB_RELEASES_REPO=${{ vars.POS_RELEASES_REPO || 'hmzi67/point-of-sale' }}
+          GITHUB_RELEASES_TOKEN=${{ secrets.POS_RELEASES_TOKEN }}
           EOF
           # Prove the file exists and is populated, without printing any value.
           # Keys only: a missing secret shows up as a key with an empty value.
@@ -573,6 +584,7 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
           LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          TRIAL_SIGNUP_ENABLED=${{ vars.TRIAL_SIGNUP_ENABLED || 'true' }}
           LICENSE_SIGNING_KEY_ID=${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
           LICENSE_SIGNING_PRIVATE_KEY=${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
           LICENSE_MAX_OFFLINE_DAYS=${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
@@ -587,8 +599,18 @@ jobs:
           EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
           SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
           SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          APPLE_BUNDLE_ID=${{ vars.APPLE_BUNDLE_ID || 'com.diwan.pos' }}
+          APPLE_APP_ID=${{ vars.APPLE_APP_ID }}
+          APPLE_IAP_ALLOW_SANDBOX=${{ vars.APPLE_IAP_ALLOW_SANDBOX || 'true' }}
+          APPLE_SIGN_IN_SERVICES_ID=${{ vars.APPLE_SIGN_IN_SERVICES_ID }}
+          APPLE_TEAM_ID=${{ vars.APPLE_TEAM_ID }}
+          APPLE_SIGN_IN_KEY_ID=${{ vars.APPLE_SIGN_IN_KEY_ID }}
+          APPLE_SIGN_IN_PRIVATE_KEY=${{ secrets.APPLE_SIGN_IN_PRIVATE_KEY }}
           MAIL_FROM=${{ vars.MAIL_FROM }}
           MAIL_FROM_NAME=Diwan POS
+          CONTACT_EMAIL=${{ vars.CONTACT_EMAIL }}
+          GITHUB_RELEASES_REPO=${{ vars.POS_RELEASES_REPO || 'hmzi67/point-of-sale' }}
+          GITHUB_RELEASES_TOKEN=${{ secrets.POS_RELEASES_TOKEN }}
           EOF
           # Prove the file exists and is populated, without printing any value.
           # Keys only: a missing secret shows up as a key with an empty value.

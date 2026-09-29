@@ -6,7 +6,10 @@
   <title>Sign in — Diwan POS</title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0A0F0D">
-  <link rel="stylesheet" href="/css/styles.css?v=202609062257">
+  <link rel="stylesheet" href="/css/styles.css?v=202609292248">
+  <script src="/js/theme.js?v=202609292248"></script>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="apple-touch-icon" href="/assets/logo.png">
 </head>
 <!--
   Wired to POST /api/sign-in.php. Sets the same signed session cookie every
@@ -21,7 +24,7 @@
       <div class="auth-split__rays" aria-hidden="true"></div>
 
       <a class="brand auth-split__brand" href="/">
-        <span class="brand__mark" aria-hidden="true">D</span>
+        <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
         Diwan
       </a>
 
@@ -37,6 +40,17 @@
         <div id="step-form">
           <h1>Sign in</h1>
           <p class="sub">Manage your licences, downloads and receipts.</p>
+
+          <!-- Hidden until apple-nonce.php reports web sign-in as configured. -->
+          <div class="auth-apple" id="apple-block" hidden>
+            <button class="btn btn--apple" type="button" id="apple-signin" data-status="signin-status">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+              Sign in with Apple
+            </button>
+            <p class="auth-apple__note">New to Diwan? Continuing with Apple creates your account and trial, and accepts our
+              <a href="/terms.html" target="_blank" rel="noopener">terms</a> &amp; <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>.</p>
+            <div class="auth-divider"><span>or use your email</span></div>
+          </div>
 
           <form class="auth__form" id="signin-form" novalidate>
             <label class="field" for="si-email">
@@ -69,6 +83,9 @@
     </div>
   </main>
 
-  <script src="/js/auth-ui.js?v=202609062257"></script>
+  <!-- Apple's JS for the "Sign in with Apple" popup. Loaded before auth-ui.js
+       (not deferred) so window.AppleID exists when that script runs. -->
+  <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+  <script src="/js/auth-ui.js?v=202609292248"></script>
 </body>
 </html>

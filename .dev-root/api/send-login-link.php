@@ -1,1 +1,1 @@
-/Users/hmzi/mine/Diwan/backend/public/send-login-link.php
+/Users/Projects/mine/Diwan/diwan-web/backend/public/send-login-link.php
