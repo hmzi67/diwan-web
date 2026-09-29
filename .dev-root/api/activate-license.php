@@ -1,1 +1,0 @@
-/Users/Projects/mine/Diwan/diwan-web/backend/public/activate-license.php

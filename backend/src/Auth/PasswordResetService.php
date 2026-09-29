@@ -12,16 +12,14 @@ use PDO;
 /**
  * "Reset your password" and "set your first password" — one mechanism.
  *
- * Structurally identical to LoginService: request() mints a short-lived,
- * single-use token and stores only its HMAC; reset() redeems it exactly once.
+ * request() mints a short-lived, single-use token and stores only its HMAC;
+ * reset() redeems it exactly once. Both cases differ only in the email's
+ * wording: an account that has never had a password (password_hash IS NULL)
+ * gets "set your password" copy instead of "reset it", so nobody is asked to
+ * reset something they never set. Same mechanism either way — no separate
+ * first-password system to build, test and secure.
  *
- * The two cases differ only in the email's wording. A customer created during
- * the magic-link era has password_hash IS NULL and has never had a password —
- * sending them down a "reset" path they never set would be confusing, so the
- * copy adapts. The mechanism, tokens and expiry are the same, which is the
- * whole point: no separate first-password system to build, test and secure.
- *
- * Like requestLink() before it, this is deliberately silent about whether an
+ * Like EmailVerificationService, this is deliberately silent about whether an
  * email has an account — the caller returns an identical response either way.
  */
 final class PasswordResetService
@@ -45,9 +43,8 @@ final class PasswordResetService
             return;
         }
 
-        // Unlike the magic-link flow, this does NOT create an account: a reset
-        // request for an unknown address is a dead end, not a sign-up. Sign-up
-        // is register.php and requires a password.
+        // Unlike email verification, this does NOT create an account: a reset
+        // request for an unknown address is a dead end, not a sign-up.
         $customer = $pdo->prepare(
             'SELECT id, password_hash FROM customers WHERE email = :email LIMIT 1'
         );
@@ -161,8 +158,16 @@ final class PasswordResetService
             $pdo->prepare('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = :id')
                 ->execute(['id' => $token['id']]);
 
+            // Setting a password here proves control of the mailbox exactly as
+            // much as the verification link does — so the reset counts as
+            // verification too. Without it, an owner who reset their password
+            // would still be locked out of sign-in for not having clicked a
+            // separate link about it.
             $pdo->prepare(
-                'UPDATE customers SET password_hash = :hash, password_set_at = NOW() WHERE id = :id'
+                'UPDATE customers
+                    SET password_hash = :hash, password_set_at = NOW(),
+                        email_verified_at = COALESCE(email_verified_at, NOW())
+                  WHERE id = :id'
             )->execute(['hash' => $newHash, 'id' => $customerId]);
 
             // Anyone holding an older reset link for this account loses it —

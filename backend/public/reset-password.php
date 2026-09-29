@@ -24,7 +24,7 @@ $input    = Http::input();
 $token    = (string) ($input['token'] ?? '');
 $password = (string) ($input['password'] ?? '');
 
-// Same shape check as verify-login.php: reject junk before it reaches the DB.
+// Same shape check as verify-email.php: reject junk before it reaches the DB.
 if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
     Http::fail('That reset link is not valid. Please request a new one.', 400);
 }

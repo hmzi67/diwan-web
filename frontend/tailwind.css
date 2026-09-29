@@ -1,0 +1,274 @@
+/* ponytail: remote Google Fonts import — extra RTT before render, ties the
+   build to a third party; self-host the three woff2 files as local @font-face
+   if latency/offline matters. */
+/* @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Manrope:wght@400..800&family=Source+Sans+3:wght@400..700&display=swap"); */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import "tailwindcss";
+@import "./components.css";
+@source "./src";
+
+/* ==========================================================================
+   Design tokens. Every colour, radius and easing value lives here; the markup
+   consumes them as utilities (bg-accent, rounded-lg, ...).
+   ========================================================================== */
+@theme {
+  --font-sans: "inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-secondary: var(--font-sans);
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    Consolas, monospace;
+
+  /* Surfaces — each step is slightly lighter than the last */
+  --color-canvas: #0a0f0d;
+  --color-elevated: #0f1613;
+  --color-surface: #121a17;
+  --color-surface-hi: #18221e;
+
+  /* Hairlines */
+  --color-line: #1e2a25;
+  --color-line-hi: #2a3a33;
+
+  /* Accent */
+  --color-accent: #00e5a0;
+  --color-accent-hi: #5cffc6;
+  --color-accent-dim: #00b67f;
+  --color-accent-ink: #04120c;
+  --color-glow: rgb(0 229 160 / 0.16);
+  --color-glow-soft: rgb(0 229 160 / 0.06);
+
+  /* Ink */
+  --color-ink: #f2f6f4;
+  --color-muted: #93a39b;
+  --color-faint: #64726b;
+  --color-danger: #ff7a7a;
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  --ease-diwan: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --breakpoint-xs: 520px;
+}
+
+/* ==========================================================================
+   Light theme. js/theme.js sets data-theme on <html> before first paint —
+   from the visitor's saved choice, else their device setting. Utilities read
+   these variables, so overriding them re-colours the whole site. Greens are
+   darker than in dark mode so text and fills keep AA contrast on white.
+   ========================================================================== */
+:root[data-theme="light"] {
+  --color-canvas: #f5f8f6;
+  --color-elevated: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-hi: #eef3f0;
+
+  --color-line: #e0e7e3;
+  --color-line-hi: #c9d5ce;
+
+  --color-accent: #00875f;
+  --color-accent-hi: #00a374;
+  --color-accent-dim: #00704f;
+  --color-accent-ink: #ffffff;
+  --color-glow: rgb(0 150 105 / 0.16);
+  --color-glow-soft: rgb(0 150 105 / 0.07);
+
+  --color-ink: #0b1511;
+  --color-muted: #4a5a52;
+  --color-faint: #66756d;
+  --color-danger: #c93636;
+
+  color-scheme: light;
+}
+:root { color-scheme: dark; }
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    @media (prefers-reduced-motion: reduce) {
+      scroll-behavior: auto;
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  }
+
+  body {
+    @apply bg-canvas text-ink antialiased overflow-x-hidden;
+    /* glows must never create a scrollbar */
+  }
+
+  /* Author rule beats the UA stylesheet's [hidden], so it works even on
+     elements whose own class sets display:flex/grid elsewhere. */
+  [hidden] {
+    display: none !important;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+/* ==========================================================================
+   Background artwork — gradients and grid masks too awkward to express as
+   markup utilities, so they hang off a marker class the element already
+   carries. Pure CSS, no image assets, no JS.
+   ========================================================================== */
+
+/* Hero: radial glow + faint grid fading out downward */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 620px;
+  z-index: -1;
+  background:
+    radial-gradient(48% 52% at 50% 32%, var(--color-glow) 0%, transparent 70%),
+    radial-gradient(70% 60% at 50% 0%, var(--color-glow-soft) 0%, transparent 75%);
+  pointer-events: none;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 560px;
+  z-index: -2;
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(60% 55% at 50% 20%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(60% 55% at 50% 20%, #000 0%, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Auth / signup side panels: radiating lines, deliberately faint — background
+   texture, not artwork. */
+.rays-auth {
+  position: absolute;
+  inset: -25% -15% -15% -25%;
+  z-index: -1;
+  background: repeating-conic-gradient(
+    from 0deg at 24% 78%,
+    var(--color-glow-soft) 0deg 1.1deg,
+    transparent 1.1deg 9deg
+  );
+  -webkit-mask-image: radial-gradient(50% 50% at 24% 78%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(50% 50% at 24% 78%, #000 0%, transparent 72%);
+  opacity: 0.5;
+}
+.rays-signup {
+  position: absolute;
+  inset: -25% -15% -15% -25%;
+  z-index: -1;
+  background: repeating-conic-gradient(
+    from 0deg at 28% 72%,
+    var(--color-glow) 0deg 0.9deg,
+    transparent 0.9deg 6deg
+  );
+  -webkit-mask-image: radial-gradient(55% 55% at 28% 72%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(55% 55% at 28% 72%, #000 0%, transparent 78%);
+  opacity: 0.8;
+}
+
+/* Soft radial wash behind the panel content */
+.glow-auth::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(65% 55% at 22% 80%, var(--color-glow-soft) 0%, transparent 72%);
+}
+.glow-signup::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(60% 50% at 25% 75%, var(--color-glow-soft) 0%, transparent 70%);
+}
+
+/* Tick bullets on pricing feature lists (.checks) */
+.checks li::before {
+  content: "✓";
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  margin-top: 0.05rem;
+  border-radius: 50%;
+  background: var(--color-glow-soft);
+  border: 1px solid var(--color-accent-dim);
+  color: var(--color-accent);
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+/* Middle-dot bullets on catalogue spec lists (.dots) */
+.dots li::before {
+  content: "·";
+  flex: none;
+  color: var(--color-accent-dim);
+  font-weight: 700;
+}
+
+/* Numbered steps on the sign-up panel (.steps) — CSS counters, which no
+   utility can express */
+.steps {
+  counter-reset: step;
+}
+.steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-glow-soft);
+  border: 1px solid var(--color-accent-dim);
+  color: var(--color-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Long-form prose (privacy, terms, refund, service delivery, support).
+   Descendant styling of a reading column — utilities would have to be
+   repeated on every paragraph. Kept in the components layer so a utility
+   set directly on an element (a table cell, a TOC link) still wins.
+   ========================================================================== */
+@layer components {
+  .doc p,
+  .doc li {
+    @apply text-muted text-[0.94rem] leading-[1.75];
+  }
+  .doc p {
+    margin-bottom: 1rem;
+  }
+  .doc strong {
+    @apply text-ink font-semibold;
+  }
+  .doc a {
+    @apply text-accent;
+  }
+  .doc ul,
+  .doc ol {
+    margin-bottom: 1rem;
+    padding-left: 1.25rem;
+  }
+  .doc li {
+    margin-bottom: 0.5rem;
+  }
+  .doc li::marker {
+    color: var(--color-accent-dim);
+  }
+}

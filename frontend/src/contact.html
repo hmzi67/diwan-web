@@ -12,35 +12,49 @@
   <link rel="apple-touch-icon" href="/assets/logo.png">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="absolute -left-[9999px] z-[100] rounded-sm bg-accent px-[1.1rem] py-[.7rem] text-accent-ink focus:left-[clamp(1.25rem,4vw,2rem)] focus:top-3" href="#main">Skip to content</a>
 
-  <header class="nav" id="nav">
-    <div class="wrap nav__inner">
-      <a class="brand" href="index.html">
+    <header class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line" id="nav">
+    <div class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]">
+      <a class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
         <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
         Diwan
       </a>
-      <nav class="nav__links" aria-label="Primary">
-        <a href="products.html">Products</a>
-        <a href="index.html#pricing">Pricing</a>
-        <a href="contact.html">Contact</a>
+
+      <nav class="flex items-center gap-1 rounded-full border border-line bg-surface p-[.3rem] max-[860px]:absolute max-[860px]:inset-x-[clamp(1.25rem,4vw,2rem)] max-[860px]:top-[calc(100%_+_0.5rem)] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[.15rem] max-[860px]:rounded-md max-[860px]:bg-elevated max-[860px]:p-2 max-[860px]:shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]" id="nav-links" aria-label="Primary">
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="features.html">Features</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="products.html">Products</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="pricing.html">Pricing</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="support.html">Docs &amp; Support</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="contact.html" aria-current="page">Contact</a>
       </nav>
+
+      <div class="flex items-center gap-2">
+        <a class="px-3 py-2 text-[.92rem] text-muted hover:text-ink max-[860px]:hidden" href="/auth/login.html">Log in</a>
+        <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" href="pricing.html">Get Started</a>
+        <button class="hidden size-10 cursor-pointer place-items-center rounded-sm border border-line bg-surface p-0 text-ink max-[860px]:inline-grid" id="nav-toggle" type="button"
+                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </header>
 
   <main id="main">
-    <section class="contact">
-      <div class="wrap">
-        <div class="catalogue__head">
-          <h1>Contact us</h1>
-          <p>
+    <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]">
+      <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+        <div class="mb-12 max-w-[640px]">
+          <h1 class="mb-3 text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">Contact us</h1>
+          <p class="text-[1rem] leading-[1.7] text-muted">
             Diwan is operated by Hamza Waheed, an individual sole proprietor based in
             Pakistan. Support is handled directly — when you email, you reach the person
             who builds and maintains the software.
           </p>
         </div>
 
-        <div class="cform" id="message">
+        <div class="cform mb-16" id="message">
           <div class="cform__intro">
             <p class="cform__kicker">Send a message</p>
             <h2>Tell us what you need &mdash; we&rsquo;ll take it from there.</h2>
@@ -126,20 +140,20 @@
           </div>
         </div>
 
-        <div class="contact__grid">
-          <div class="contact__card">
-            <h2>Business details</h2>
-            <p><strong>Hamza Waheed</strong></p>
-            <p>Sole proprietor, trading as &ldquo;Diwan&rdquo;</p>
+        <div class="mt-10 grid grid-cols-[repeat(auto-fit,minmax(270px,1fr))] gap-5">
+          <div class="rounded-md border border-line bg-surface p-[1.6rem] [&_a]:text-accent [&_h2]:mb-[.9rem] [&_h2]:text-[.8rem] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-[.07em] [&_h2]:text-muted [&_p]:mb-2 [&_p]:text-[.95rem] [&_p]:leading-[1.65] [&_p]:text-ink [&_p:last-child]:mb-0 [&_small]:mt-[.6rem] [&_small]:block [&_small]:text-[.82rem] [&_small]:leading-[1.6] [&_small]:text-faint">
+            <h2 class="text-[1.3rem] tracking-[-.02em]">Business details</h2>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted"><strong>Hamza Waheed</strong></p>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">Sole proprietor, trading as &ldquo;Diwan&rdquo;</p>
             <small>
               Diwan is an individual sole proprietorship, not a registered company.
               Your contract for any purchase is with Hamza Waheed personally.
             </small>
           </div>
 
-          <div class="contact__card">
-            <h2>Office address</h2>
-            <p>
+          <div class="rounded-md border border-line bg-surface p-[1.6rem] [&_a]:text-accent [&_h2]:mb-[.9rem] [&_h2]:text-[.8rem] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-[.07em] [&_h2]:text-muted [&_p]:mb-2 [&_p]:text-[.95rem] [&_p]:leading-[1.65] [&_p]:text-ink [&_p:last-child]:mb-0 [&_small]:mt-[.6rem] [&_small]:block [&_small]:text-[.82rem] [&_small]:leading-[1.6] [&_small]:text-faint">
+            <h2 class="text-[1.3rem] tracking-[-.02em]">Office address</h2>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
               I-10/2<br>
               Islamabad 44000<br>
               Islamabad Capital Territory<br>
@@ -148,9 +162,9 @@
             <small>This is a visitable office. Please email or call to arrange a time before visiting.</small>
           </div>
 
-          <div class="contact__card">
-            <h2>Phone</h2>
-            <p><a href="tel:+923143288112">0314 3288112</a></p>
+          <div class="rounded-md border border-line bg-surface p-[1.6rem] [&_a]:text-accent [&_h2]:mb-[.9rem] [&_h2]:text-[.8rem] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-[.07em] [&_h2]:text-muted [&_p]:mb-2 [&_p]:text-[.95rem] [&_p]:leading-[1.65] [&_p]:text-ink [&_p:last-child]:mb-0 [&_small]:mt-[.6rem] [&_small]:block [&_small]:text-[.82rem] [&_small]:leading-[1.6] [&_small]:text-faint">
+            <h2 class="text-[1.3rem] tracking-[-.02em]">Phone</h2>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted"><a href="tel:+923143288112">0314 3288112</a></p>
             <small>
               International format: +92 314 3288112. Phone support is included with
               Enterprise licences; all other enquiries are best sent by email so we
@@ -158,9 +172,9 @@
             </small>
           </div>
 
-          <div class="contact__card">
-            <h2>Email</h2>
-            <p><a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a></p>
+          <div class="rounded-md border border-line bg-surface p-[1.6rem] [&_a]:text-accent [&_h2]:mb-[.9rem] [&_h2]:text-[.8rem] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-[.07em] [&_h2]:text-muted [&_p]:mb-2 [&_p]:text-[.95rem] [&_p]:leading-[1.65] [&_p]:text-ink [&_p:last-child]:mb-0 [&_small]:mt-[.6rem] [&_small]:block [&_small]:text-[.82rem] [&_small]:leading-[1.6] [&_small]:text-faint">
+            <h2 class="text-[1.3rem] tracking-[-.02em]">Email</h2>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted"><a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a></p>
             <small>
               The fastest way to reach us, for support, sales, refunds and privacy
               enquiries alike. Please include your order reference — it begins with
@@ -168,77 +182,77 @@
             </small>
           </div>
 
-          <div class="contact__card">
-            <h2>Business hours</h2>
-            <p>Monday &ndash; Saturday<br>10:00am &ndash; 7:00pm PKT (UTC+5)</p>
-            <p>Closed on Sundays and public holidays.</p>
+          <div class="rounded-md border border-line bg-surface p-[1.6rem] [&_a]:text-accent [&_h2]:mb-[.9rem] [&_h2]:text-[.8rem] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-[.07em] [&_h2]:text-muted [&_p]:mb-2 [&_p]:text-[.95rem] [&_p]:leading-[1.65] [&_p]:text-ink [&_p:last-child]:mb-0 [&_small]:mt-[.6rem] [&_small]:block [&_small]:text-[.82rem] [&_small]:leading-[1.6] [&_small]:text-faint">
+            <h2 class="text-[1.3rem] tracking-[-.02em]">Business hours</h2>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">Monday &ndash; Saturday<br>10:00am &ndash; 7:00pm PKT (UTC+5)</p>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">Closed on Sundays and public holidays.</p>
             <small>
               Email received outside these hours is answered the next working day.
             </small>
           </div>
 
-          <div class="contact__card">
-            <h2>Response times</h2>
-            <p>Support enquiries: within 1 business day</p>
-            <p>Refund requests: acknowledged within 2 business days</p>
-            <p>Privacy requests: within 30 days</p>
-            <p>Device change requests: within 1 business day</p>
+          <div class="rounded-md border border-line bg-surface p-[1.6rem] [&_a]:text-accent [&_h2]:mb-[.9rem] [&_h2]:text-[.8rem] [&_h2]:font-semibold [&_h2]:uppercase [&_h2]:tracking-[.07em] [&_h2]:text-muted [&_p]:mb-2 [&_p]:text-[.95rem] [&_p]:leading-[1.65] [&_p]:text-ink [&_p:last-child]:mb-0 [&_small]:mt-[.6rem] [&_small]:block [&_small]:text-[.82rem] [&_small]:leading-[1.6] [&_small]:text-faint">
+            <h2 class="text-[1.3rem] tracking-[-.02em]">Response times</h2>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">Support enquiries: within 1 business day</p>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">Refund requests: acknowledged within 2 business days</p>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">Privacy requests: within 30 days</p>
+            <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">Device change requests: within 1 business day</p>
           </div>
         </div>
 
-        <div class="catgroup">
-          <div class="catgroup__head">
-            <h2>What to contact us about</h2>
+        <div class="mt-14">
+          <div class="mb-2 flex flex-wrap items-baseline gap-[.9rem]">
+            <h2 class="text-[1.3rem] tracking-[-.02em]">What to contact us about</h2>
           </div>
-          <p class="catgroup__note">
+          <p class="mb-7 max-w-[62ch] text-[.9rem] leading-[1.7] text-muted">
             Use the same email address for all of the following — we route it
             internally. Adding the suggested subject line helps us prioritise.
           </p>
-          <div class="catgrid">
-            <div class="item">
-              <h3>My licence email didn&rsquo;t arrive</h3>
-              <p>
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
+            <div class="flex flex-col rounded-md border border-line bg-surface p-6">
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">My licence email didn&rsquo;t arrive</h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
                 Check your dashboard first — your key is always available there. If your
                 order isn&rsquo;t showing at all, email us with the date, amount and last
                 four digits of the card.
               </p>
-              <ul class="item__spec">
+              <ul class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted">
                 <li>Subject: &ldquo;Licence not received&rdquo;</li>
                 <li>Include your order reference</li>
               </ul>
             </div>
 
-            <div class="item">
-              <h3>I need to move to a new device</h3>
-              <p>
+            <div class="flex flex-col rounded-md border border-line bg-surface p-6">
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">I need to move to a new device</h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
                 Licences bind to one device. We move them manually on request, usually
                 within a business day, after verifying the purchase.
               </p>
-              <ul class="item__spec">
+              <ul class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted">
                 <li>Subject: &ldquo;Device change&rdquo;</li>
                 <li>Include your order reference</li>
               </ul>
             </div>
 
-            <div class="item">
-              <h3>I want a refund</h3>
-              <p>
+            <div class="flex flex-col rounded-md border border-line bg-surface p-6">
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">I want a refund</h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
                 Full refund within 14 days if your key isn&rsquo;t activated. See the
                 <a href="refund-policy.html">Refund Policy</a> for the full terms.
               </p>
-              <ul class="item__spec">
+              <ul class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted">
                 <li>Subject: &ldquo;Refund request&rdquo;</li>
                 <li>Email from your account address</li>
               </ul>
             </div>
 
-            <div class="item">
-              <h3>A privacy or data request</h3>
-              <p>
+            <div class="flex flex-col rounded-md border border-line bg-surface p-6">
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">A privacy or data request</h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
                 Access, correction or deletion of your personal data, as described in
                 our <a href="privacy.html">Privacy Policy</a>.
               </p>
-              <ul class="item__spec">
+              <ul class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted">
                 <li>Subject: &ldquo;Privacy request&rdquo;</li>
                 <li>Email from your account address</li>
               </ul>
@@ -247,61 +261,281 @@
         </div>
       </div>
     </section>
+    <section class="border-y border-line bg-elevated">
+      <div class="mx-auto grid w-full max-w-[1180px] grid-cols-4 gap-8 px-[clamp(1.25rem,4vw,2rem)] py-10 max-[760px]:grid-cols-2 max-[760px]:gap-y-7">
+        <div>
+          <p class="text-[1.5rem] font-bold tracking-[-.02em]">One-time</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Pay once in Rupees. No subscription, no automatic renewal.</p>
+        </div>
+        <div>
+          <p class="text-[1.5rem] font-bold tracking-[-.02em]">3 platforms</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Windows, macOS and Android, unlocked by one licence key.</p>
+        </div>
+        <div>
+          <p class="text-[1.5rem] font-bold tracking-[-.02em]">Offline-first</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">The till keeps selling when the internet drops.</p>
+        </div>
+        <div>
+          <p class="text-[1.5rem] font-bold tracking-[-.02em]">1 business day</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Typical support reply. Monday to Saturday, 10:00am &ndash; 7:00pm PKT.</p>
+        </div>
+      </div>
+    </section>
+    <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]" id="pricing">
+      <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+        <div class="mx-auto mb-14 max-w-[620px] text-center">
+          <p class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent">Pricing</p>
+          <h2 class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]">Simple pricing, one licence.</h2>
+          <p class="text-[1.02rem] text-muted">
+            Pick the plan that matches how many counters you run.
+            One-time payment — no subscriptions, no surprise renewals.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-3 items-start gap-6 max-[900px]:mx-auto max-[900px]:grid-cols-1 max-[900px]:max-w-[420px]">
+          <article class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8">
+            <div>
+              <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Starter</h3>
+              <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">For a single counter just getting started.</p>
+            </div>
+            <p class="mb-6 flex items-baseline gap-2">
+              <span class="text-[2.2rem] font-bold tracking-[-.03em]">Rs 8,000</span>
+              <span class="text-[.85rem] text-faint">one-time</span>
+            </p>
+            <a class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi" href="auth/login.html?plan=diwan-pos-starter"
+               data-plan="diwan-pos-starter">Get Started</a>
+            <div class="mt-7 mb-5 h-px bg-line"></div>
+            <p class="mb-4 text-[.82rem] font-semibold text-muted">Everything in Starter includes:</p>
+            <ul class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]">
+              <li>1 terminal licence</li>
+              <li>Core billing &amp; inventory</li>
+              <li>Offline-first sync</li>
+              <li>Email support</li>
+              <li>Free software updates</li>
+            </ul>
+          </article>
+
+          <article class="relative flex flex-col rounded-lg border border-accent-dim bg-elevated px-7 py-8 shadow-[0_0_0_1px_var(--color-accent-dim),0_30px_60px_-30px_rgba(0,0,0,.8),0_0_60px_-20px_var(--color-glow)] max-[900px]:translate-y-0 max-[900px]:shadow-none -translate-y-4">
+            <p class="absolute -top-[.85rem] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-[.9rem] py-[.35rem] text-[.72rem] font-bold uppercase tracking-[.03em] text-accent-ink shadow-[0_8px_20px_-6px_var(--color-accent)]">Most popular</p>
+            <div>
+              <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Standard</h3>
+              <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">For growing shops running a few counters.</p>
+            </div>
+            <p class="mb-6 flex items-baseline gap-2">
+              <span class="text-[2.2rem] font-bold tracking-[-.03em]">Rs 12,000</span>
+              <span class="text-[.85rem] text-faint">one-time</span>
+            </p>
+            <a class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" href="auth/login.html?plan=diwan-pos-standard"
+               data-plan="diwan-pos-standard">Get Started</a>
+            <div class="mt-7 mb-5 h-px bg-line"></div>
+            <p class="mb-4 text-[.82rem] font-semibold text-muted">Everything in Standard includes:</p>
+            <ul class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]">
+              <li>Up to 3 terminals, 1 branch</li>
+              <li>All core modules + reporting</li>
+              <li>Receipt &amp; kitchen printer support</li>
+              <li>Priority email support</li>
+              <li>Free software updates</li>
+            </ul>
+          </article>
+
+          <article class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8">
+            <div>
+              <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Enterprise</h3>
+              <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">For multi-branch chains.</p>
+            </div>
+            <p class="mb-6 flex items-baseline gap-2">
+              <span class="text-[2.2rem] font-bold tracking-[-.03em]">Rs 25,000</span>
+              <span class="text-[.85rem] text-faint">one-time</span>
+            </p>
+            <a class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi" href="auth/login.html?plan=diwan-pos-enterprise"
+               data-plan="diwan-pos-enterprise">Get Started</a>
+            <div class="mt-7 mb-5 h-px bg-line"></div>
+            <p class="mb-4 text-[.82rem] font-semibold text-muted">Everything in Enterprise includes:</p>
+            <ul class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]">
+              <li>Unlimited terminals, multi-branch</li>
+              <li>All modules + multi-branch sync</li>
+              <li>Priority phone &amp; email support</li>
+              <li>Free software updates</li>
+            </ul>
+          </article>
+        </div>
+
+        <p class="mt-11 text-center"><a class="text-[.9rem] text-muted hover:text-accent" href="features.html">…and a lot more →</a></p>
+      </div>
+    </section>
+    <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]" id="faq">
+      <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+        <div class="mx-auto mb-11 max-w-[620px] text-center">
+          <p class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent">FAQ</p>
+          <h2 class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]">Questions, answered.</h2>
+          <p class="text-[1.02rem] text-muted">The short version. The full detail lives in the docs.</p>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">Is there a subscription?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              No. Diwan is a one-time purchase — Rs 8,000, Rs 12,000 or Rs 25,000
+              depending on the edition — with no automatic renewal. Updates are
+              downloaded later with the key you already own, at no extra cost.
+            </p>
+          </details>
+
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">Does it need the internet to sell?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              No. The network is required once, for activation. After that the till
+              bills, tracks stock and prints without a connection, and sync resumes
+              by itself when the line returns.
+            </p>
+          </details>
+
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">How do I get it after paying?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              Your licence key and installer link are emailed within about a minute
+              of confirmed payment, and both stay in your dashboard. There is no
+              physical product and nothing to ship.
+            </p>
+          </details>
+
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">What if the licence email never arrives?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              Check spam and promotions first — receipt mail from a sole
+              proprietorship often lands there. If it is not there, confirm the
+              payment completed with your bank, then email your order reference and
+              we will resend it.
+            </p>
+          </details>
+
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">Can I move my licence to a new computer?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              Yes. A key binds to one device at a time, and moves are done by us
+              rather than a self-service button — that is deliberate, so a leaked
+              key cannot be moved by a stranger. Email support with your key or
+              order reference; moves normally complete within one business day.
+            </p>
+          </details>
+
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">What if it does not work for my shop?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              Ask for a full refund within 14 days of purchase, as long as the key
+              has not been activated. You may download and inspect the software
+              first — only activation closes the window, and no reason is required.
+            </p>
+          </details>
+
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">Do you see my sales data?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              No. Diwan is offline-first: your sales, stock and customers stay on
+              your own machine and are never uploaded to us. We keep only the
+              account, order and licence records needed to sell and support the
+              software — detailed in the
+              <a class="text-accent hover:underline" href="privacy.html">Privacy Policy</a>.
+            </p>
+          </details>
+        </div>
+
+        <p class="mt-9 text-center"><a class="text-[.9rem] text-muted hover:text-accent" href="support.html">More answers in Docs &amp; Support →</a></p>
+      </div>
+    </section>
+    <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]" id="download">
+      <div class="mx-auto grid w-full max-w-[1180px] grid-cols-[1.1fr_1fr] items-start gap-12 px-[clamp(1.25rem,4vw,2rem)] max-[860px]:grid-cols-1">
+        <div>
+          <p class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent">Get started</p>
+          <h2 class="mb-4 max-w-[16ch] text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">Run your counter at the speed of typing.</h2>
+          <p class="mb-7 max-w-[52ch] text-[1rem] leading-[1.7] text-muted">
+            Pick a plan, pay once, and your licence key lands in your inbox with
+            the installer. First bill usually takes minutes, not days.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-7 py-[.95rem] text-[1rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" href="pricing.html">See plans &amp; pricing</a>
+            <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-7 py-[.95rem] text-[1rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi" href="contact.html">Talk to us</a>
+          </div>
+          <p class="mt-6 text-[.84rem] text-faint">
+            Support Monday to Saturday, 10:00am &ndash; 7:00pm PKT ·
+            <a class="hover:text-accent" href="tel:+923143288112">0314 3288112</a>
+          </p>
+        </div>
+
+        <div class="rounded-lg border border-line bg-surface p-7 max-[860px]:mt-2">
+          <h3 class="mb-1 text-[1.15rem] tracking-[-.01em]">Already purchased?</h3>
+          <p class="mb-5 text-[.9rem] text-muted">Paste your licence key to get a single-use installer link. No sign-in required.</p>
+          <form class="flex flex-col gap-3" id="download-form">
+            <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted">Licence key <input class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
+            <select class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" name="platform">
+              <option value="windows">Windows (.exe)</option>
+              <option value="macos">macOS (.dmg)</option>
+              <option value="android">Android (.apk)</option>
+            </select>
+            <button class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" type="submit">Get download link</button>
+          </form>
+          <p class="min-h-6 text-[.9rem] text-muted" id="download-status" role="status"></p>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="wrap">
-      <div class="site-footer__grid">
-        <div class="site-footer__brand">
-          <a class="brand" href="index.html">
+  <script src="/js/main.js"></script>
+  <script src="/js/contact.js"></script>
+
+  <footer class="border-t border-line bg-elevated py-14 pb-8">
+    <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+      <div class="grid gap-10 grid-cols-[1.4fr_1fr_1fr_1.3fr] max-[860px]:grid-cols-2 max-[860px]:gap-8 max-xs:grid-cols-1">
+        <div class="max-[860px]:col-span-2">
+          <a class="mb-[.9rem] inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="index.html">
             <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
             Diwan
           </a>
-          <p class="site-footer__tagline">
+          <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">
             Keyboard-first point of sale for retail, restaurants and pharmacies.
             One-time licence, works offline.
           </p>
         </div>
 
         <div>
-          <h2>Product</h2>
-          <ul>
-            <li><a href="products.html">Products &amp; Editions</a></li>
-            <li><a href="index.html#pricing">Pricing</a></li>
-            <li><a href="index.html#features">Features</a></li>
-            <li><a href="index.html#download">Download</a></li>
+          <h2 class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint">Product</h2>
+          <ul class="flex flex-col gap-[.6rem]">
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="products.html">Products &amp; Editions</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="pricing.html">Pricing</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="features.html">Features</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="support.html">Docs &amp; Support</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="index.html#download">Download</a></li>
           </ul>
         </div>
 
         <div>
-          <h2>Legal</h2>
-          <ul>
-            <li><a href="privacy.html">Privacy Policy</a></li>
-            <li><a href="refund-policy.html">Refund Policy</a></li>
-            <li><a href="service-delivery.html">Service Delivery</a></li>
-            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+          <h2 class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint">Legal</h2>
+          <ul class="flex flex-col gap-[.6rem]">
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="privacy.html">Privacy Policy</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="refund-policy.html">Refund Policy</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="service-delivery.html">Service Delivery</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="terms.html">Terms &amp; Conditions</a></li>
           </ul>
         </div>
 
         <div>
-          <h2>Contact</h2>
-          <address>
+          <h2 class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint">Contact</h2>
+          <address class="not-italic text-[.88rem] leading-[1.75] text-muted [&_a]:inline">
             Diwan — operated by Hamza Waheed<br>
             I-10/2, Islamabad 44000<br>
             Islamabad Capital Territory, Pakistan<br>
-            <a href="tel:+923143288112">0314 3288112</a><br>
-            <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
+            <a class="hover:text-accent" href="tel:+923143288112">0314 3288112</a><br>
+            <a class="hover:text-accent" href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
           </address>
         </div>
       </div>
 
-      <div class="site-footer__bottom">
-        <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
-        <p><a href="contact.html">Contact</a></p>
+      <div class="mt-8 flex flex-wrap justify-between gap-4 border-t border-line pt-6 text-[.82rem] text-faint">
+        <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
+        <p class="mb-4 text-[.88rem] leading-[1.65] text-muted"><a class="hover:text-accent" href="contact.html">Contact</a></p>
       </div>
     </div>
   </footer>
 
-  <script src="/js/contact.js" defer></script>
 </body>
 </html>

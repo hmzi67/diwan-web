@@ -12,43 +12,63 @@
   <link rel="apple-touch-icon" href="/assets/logo.png">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="absolute -left-[9999px] z-[100] rounded-sm bg-accent px-[1.1rem] py-[.7rem] text-accent-ink focus:left-[clamp(1.25rem,4vw,2rem)] focus:top-3" href="#main">Skip to content</a>
 
-  <header class="nav" id="nav">
-    <div class="wrap nav__inner">
-      <a class="brand" href="/">
+    <header class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line" id="nav">
+    <div class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]">
+      <a class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
         <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
         Diwan
       </a>
+
+      <nav class="flex items-center gap-1 rounded-full border border-line bg-surface p-[.3rem] max-[860px]:absolute max-[860px]:inset-x-[clamp(1.25rem,4vw,2rem)] max-[860px]:top-[calc(100%_+_0.5rem)] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[.15rem] max-[860px]:rounded-md max-[860px]:bg-elevated max-[860px]:p-2 max-[860px]:shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]" id="nav-links" aria-label="Primary">
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="features.html">Features</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="products.html">Products</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="pricing.html">Pricing</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="support.html">Docs &amp; Support</a>
+        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="contact.html">Contact</a>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <a class="px-3 py-2 text-[.92rem] text-muted hover:text-ink max-[860px]:hidden" href="/auth/login.html">Log in</a>
+        <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" href="pricing.html">Get Started</a>
+        <button class="hidden size-10 cursor-pointer place-items-center rounded-sm border border-line bg-surface p-0 text-ink max-[860px]:inline-grid" id="nav-toggle" type="button"
+                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </header>
 
   <main id="main">
-    <section class="auth">
-      <div class="auth__card">
-        <div class="auth__mark" aria-hidden="true">D</div>
-        <h1 id="checkout-title">Checkout</h1>
-        <p class="sub" id="checkout-summary">Loading your plan…</p>
+    <section class="flex min-h-[calc(100vh-78px)] items-center justify-center px-[clamp(1.25rem,4vw,2rem)] py-[clamp(4.5rem,9vw,8rem)]">
+      <div class="w-full max-w-[420px] rounded-lg border border-line bg-surface px-8 py-9 text-center">
+        <div class="mx-auto mb-5 grid size-12 place-items-center rounded-[14px] bg-[linear-gradient(145deg,var(--color-accent),var(--color-accent-dim))] text-[1.3rem] font-extrabold text-accent-ink shadow-[0_0_24px_-6px_var(--color-accent)]" aria-hidden="true">D</div>
+        <h1 class="mb-2 text-[1.5rem] tracking-[-.02em]" id="checkout-title">Checkout</h1>
+        <p class="mb-7 text-[.92rem] text-muted" id="checkout-summary">Loading your plan…</p>
 
-        <form class="auth__form" id="checkout-form" hidden>
-          <label class="field">
+        <form class="flex flex-col gap-[.9rem] text-left" id="checkout-form" hidden>
+          <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted">
             Email
-            <span class="input" id="checkout-email" style="color:var(--text-muted)"></span>
+            <span class="w-full rounded-sm border border-line bg-elevated px-4 py-[.8rem] text-[.95rem] text-muted focus:border-accent-dim focus:outline-none"" id="checkout-email"></span>
           </label>
-          <label class="field">
+          <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted">
             Phone
-            <input class="input" type="tel" name="phone" required
+            <input class="w-full rounded-sm border border-line bg-elevated px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" type="tel" name="phone" required
                    placeholder="03001234567" autocomplete="tel">
           </label>
-          <button class="btn btn--primary" type="submit">Pay with JazzCash</button>
+          <button class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" type="submit">Pay with JazzCash</button>
         </form>
-        <p id="checkout-status" role="status"></p>
+        <p id="checkout-status" class="min-h-6 text-[.9rem] text-muted" role="status"></p>
 
-        <a class="auth__back" href="index.html#pricing">← Choose a different plan</a>
+        <a class="mt-6 inline-block text-[.85rem] text-muted hover:text-ink" href="pricing.html">← Choose a different plan</a>
       </div>
     </section>
   </main>
 
+  <script src="/js/main.js"></script>
   <script src="/js/checkout.js"></script>
 </body>
 </html>

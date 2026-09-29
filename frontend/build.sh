@@ -27,6 +27,22 @@ find "$DIST" -name '.DS_Store' -delete
 find "$DIST" -name '*.map' -delete
 rm -rf "$DIST/.git" "$DIST/node_modules"
 
+# ---------------------------------------------------------------------------
+# CSS: Tailwind v4 compiles tailwind.css -> dist/css/styles.css, scanning
+# src/**/*.html and src/js/*.js for the classes actually in use. Needs Node;
+# `npm ci` runs once (network) if node_modules is absent, so CI and a fresh
+# clone both work from this single entrypoint.
+# ---------------------------------------------------------------------------
+echo "==> Building CSS (Tailwind v4)"
+[[ -f "$ROOT/tailwind.css" ]] || { echo "::error::frontend/tailwind.css is missing"; exit 1; }
+[[ -d "$ROOT/node_modules" ]] || (cd "$ROOT" && npm ci --no-fund --no-audit)
+mkdir -p "$DIST/css"
+"$ROOT/node_modules/.bin/tailwindcss" \
+  -i "$ROOT/tailwind.css" \
+  -o "$DIST/css/styles.css" \
+  --minify
+[[ -s "$DIST/css/styles.css" ]] || { echo "::error::Tailwind produced an empty stylesheet"; exit 1; }
+
 echo "==> Validating HTML entrypoints reference existing assets"
 fail=0
 while IFS= read -r -d '' html; do

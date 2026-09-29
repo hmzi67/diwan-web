@@ -31,7 +31,9 @@ async function postJson(path, body) {
 
 function setStatus(el, message, kind) {
   el.textContent = message;
-  el.className = kind || '';
+  el.className = kind === 'ok' ? 'min-h-6 text-[.9rem] text-accent'
+    : kind === 'error' ? 'min-h-6 text-[.9rem] text-danger'
+    : 'min-h-6 text-[.9rem] text-muted';
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -51,7 +53,7 @@ const status  = document.getElementById('checkout-status');
 (async () => {
   const { ok, data } = await getJson('/dashboard-data.php');
   if (!ok) {
-    window.location.href = `/auth/sign-in.html?plan=${encodeURIComponent(plan)}`;
+    window.location.href = `/auth/login.html?plan=${encodeURIComponent(plan)}`;
     return;
   }
   title.textContent = `Checkout — ${planInfo.name}`;

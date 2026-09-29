@@ -16,13 +16,16 @@ use RuntimeException;
  *    configured, so production needs zero extra setup.
  *
  *  - "smtp": talks SMTP directly over a socket (no Composer, no PHPMailer —
- *    this project stays dependency-free for FTP-only deploys). Point it at
- *    a local dev mail catcher, e.g. Mailpit (`brew install mailpit &&
- *    mailpit`, then MAIL_HOST=127.0.0.1 MAIL_PORT=1025) or a Mailtrap
- *    sandbox inbox — either way you get a real inbox to inspect without a
- *    working outbound MTA. This is the fix for "mail() silently does
- *    nothing on my laptop": macOS ships a sendmail binary but no running
- *    Postfix, so mail() has nothing to hand off to.
+ *    this project stays dependency-free for FTP-only deploys). Works against
+ *    Hostinger (MAIL_HOST=smtp.hostinger.com, MAIL_PORT=587 = STARTTLS or 465
+ *    = implicit TLS, MAIL_USERNAME = the full mailbox address) and against a
+ *    local dev mail
+ *    catcher, e.g. Mailpit (`brew install mailpit && mailpit`, then
+ *    MAIL_HOST=127.0.0.1 MAIL_PORT=1025) or a Mailtrap sandbox inbox — either
+ *    way you get a real inbox to inspect without a working outbound MTA. This
+ *    is the fix for "mail() silently does nothing on my laptop": macOS ships a
+ *    sendmail binary but no running Postfix, so mail() has nothing to hand off
+ *    to.
  */
 final class Mailer
 {
@@ -58,7 +61,11 @@ final class Mailer
         $from = self::extractAddress($fromHeader) ?? Env::get('MAIL_FROM', 'no-reply@localhost');
 
         try {
-            $socket = @fsockopen($host, $port, $errno, $errstr, 5);
+            // Port 465 is implicit TLS (SMTPS): the connection is encrypted
+            // before the server even sends its banner. Port 587 stays plain
+            // and upgrades mid-session via STARTTLS below.
+            $smtps = $port === 465;
+            $socket = @fsockopen(($smtps ? 'ssl://' : '') . $host, $port, $errno, $errstr, 5);
             if ($socket === false) {
                 throw new RuntimeException("Could not reach SMTP server {$host}:{$port} ({$errstr})");
             }
@@ -68,7 +75,7 @@ final class Mailer
 
             // Gmail (and most real providers) refuse AUTH on port 587 until
             // the connection is upgraded to TLS.
-            if ($port === 587) {
+            if (!$smtps && $port === 587) {
                 self::command($socket, 'STARTTLS', 220);
                 if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
                     throw new RuntimeException('STARTTLS negotiation failed');

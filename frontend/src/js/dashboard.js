@@ -179,9 +179,9 @@ function ring(fraction) {
   const c = 2 * Math.PI * r;
   const f = Math.min(1, Math.max(0, fraction));
   return `
-    <svg class="ring" width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
-      <circle cx="26" cy="26" r="${r}" class="ring__track"/>
-      <circle cx="26" cy="26" r="${r}" class="ring__bar" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - f)}"/>
+    <svg class="dash-ring" width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
+      <circle cx="26" cy="26" r="${r}" class="dash-ring__track"/>
+      <circle cx="26" cy="26" r="${r}" class="dash-ring__bar" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - f)}"/>
     </svg>`;
 }
 
@@ -440,7 +440,7 @@ function renderCurrent(primary) {
         <h3>No licence yet</h3>
         <p>Start a free 30-day trial, or buy a lifetime licence.</p>
         <div class="dash-empty__cta">
-          <a class="btn btn--primary btn--sm" href="/#download">Start free trial</a>
+          <button class="btn btn--primary btn--sm" type="button" data-start-trial>Start free trial</button>
           <a class="btn btn--ghost btn--sm" href="#pricing">See pricing</a>
         </div>
       </div>`;
@@ -499,7 +499,7 @@ function renderSetup(primary) {
   const activateEl = document.getElementById('activate-status');
 
   if (!primary) {
-    keyEl.innerHTML = `<div class="dash-empty dash-empty--compact"><p>You don&rsquo;t have a licence yet.</p><div class="dash-empty__cta"><a class="btn btn--primary btn--sm" href="/#download">Start free trial</a><a class="btn btn--ghost btn--sm" href="#pricing">Buy a licence</a></div></div>`;
+    keyEl.innerHTML = `<div class="dash-empty dash-empty--compact"><p>You don&rsquo;t have a licence yet.</p><div class="dash-empty__cta"><button class="btn btn--primary btn--sm" type="button" data-start-trial>Start free trial</button><a class="btn btn--ghost btn--sm" href="#pricing">Buy a licence</a></div></div>`;
     dlEl.innerHTML = '<p class="guide__note">Downloads unlock once you have a licence key.</p>';
     activateEl.textContent = '';
     return;
@@ -636,7 +636,7 @@ async function load() {
     showView(currentView(), { focus: false });
   } catch (err) {
     if (err.status === 401) {
-      window.location.href = `/auth/sign-in.html${platformQuery}`;
+      window.location.href = `/auth/login.html${platformQuery}`;
       return;
     }
     loading.hidden = true;
@@ -676,6 +676,27 @@ document.addEventListener('click', async (e) => {
       toast(err.message || 'Could not send the email. Please try again.', 'error');
     } finally {
       resendBtn.disabled = false;
+    }
+    return;
+  }
+
+  const trialBtn = e.target.closest('[data-start-trial]');
+  if (trialBtn) {
+    if (trialBtn.disabled) return;
+    trialBtn.disabled = true;
+    try {
+      const { status } = await apiPost('/start-trial.php');
+      if (status === 'issued' || status === 'existing_trial' || status === 'paid_license') {
+        window.location.reload();   // the new licence renders on the next load
+        return;
+      }
+      toast(status === 'disabled'
+        ? 'Free trials are paused right now — see Pricing for a lifetime licence.'
+        : 'Could not start your trial. Please contact support.', 'error');
+    } catch (err) {
+      toast(err.message || 'Could not start your trial. Please try again.', 'error');
+    } finally {
+      trialBtn.disabled = false;
     }
     return;
   }
@@ -734,7 +755,7 @@ document.addEventListener('submit', async (e) => {
 document.querySelectorAll('[data-logout]').forEach((btn) => {
   btn.addEventListener('click', async () => {
     try { await apiPost('/logout.php'); } catch { /* clearing client-side regardless */ }
-    window.location.href = '/auth/sign-in.html';
+    window.location.href = '/auth/login.html';
   });
 });
 

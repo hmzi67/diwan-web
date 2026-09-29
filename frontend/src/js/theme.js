@@ -66,8 +66,7 @@
 
   // Where the toggle goes depends on the page layout:
   //   [data-theme-slot]  explicit placement (dashboard sidebar and top bar)
-  //   .nav__actions      marketing header with actions (before the menu button)
-  //   .nav__inner        simple header (after the links)
+  //   #nav-toggle        the site header: just before the mobile menu button
   //   otherwise          a floating button (auth pages have no header)
   function mount() {
     const slots = document.querySelectorAll('[data-theme-slot]');
@@ -75,14 +74,9 @@
       slots.forEach((slot) => slot.appendChild(makeButton()));
       return;
     }
-    const actions = document.querySelector('.nav__actions');
-    if (actions) {
-      actions.insertBefore(makeButton(), actions.querySelector('.nav__toggle'));
-      return;
-    }
-    const inner = document.querySelector('.nav__inner');
-    if (inner) {
-      inner.appendChild(makeButton());
+    const menuButton = document.getElementById('nav-toggle');
+    if (menuButton && menuButton.parentElement) {
+      menuButton.parentElement.insertBefore(makeButton(), menuButton);
       return;
     }
     document.body.appendChild(makeButton('theme-toggle--floating'));

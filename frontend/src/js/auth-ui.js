@@ -1,29 +1,30 @@
-// Behaviour for the /auth/ pages: sign-up, sign-in, forgot-password and
-// reset-password, all wired to the real backend.
+// Behaviour for the five auth pages: login, signup, forgot-password,
+// reset-password and verify-email, all wired to the real backend.
 //
-// Preserve the selected platform through sign-in/sign-up. During temporary
-// free-trial onboarding all successful authentication ends at the dashboard.
+// The flow these pages implement, end to end:
+//
+//   signup  -> POST /register.php: account created (unverified), verification
+//              email sent, identical response whether or not the address
+//              already had an account. No session yet.
+//   verify  -> the emailed link lands on verify-email.html?token=..., which
+//              POSTs it to /api/verify-email.php; success starts the session.
+//   login   -> POST /api/sign-in.php. Closed until the account is verified:
+//              the server answers status:'email_not_verified' only after the
+//              password checks out, and this page swaps in the resend panel.
+//
+// The `plan` query param rides through the whole flow. Someone who clicked a
+// pricing card lands here as ?plan=diwan-pos-standard, and after verifying or
+// signing in goes straight to that plan's checkout instead of the dashboard —
+// losing it would drop them at a generic page mid-purchase.
 const API = '/api';
+
 const params = new URLSearchParams(window.location.search);
-const platform = ['windows', 'macos', 'android'].includes(params.get('platform'))
-  ? params.get('platform') : null;
-const platformQuery = platform ? `?platform=${encodeURIComponent(platform)}` : '';
+const plan = params.get('plan');
+const planQuery = plan ? `?plan=${encodeURIComponent(plan)}` : '';
 
+/** Where to go once authenticated: back to the chosen plan, else the dashboard. */
 function destination() {
-  return `/dashboard.html${platformQuery}`;
-}
-
-// Only an explicit platform choice starts a trial for an existing account.
-// A failed response is retryable: server-side issuance is idempotent.
-async function finishSignIn(status) {
-  if (platform) {
-    const { ok, data } = await postJson('/start-trial.php', {});
-    if (!ok) {
-      setStatus(status, data.error || 'Could not start your trial. Please try again.', 'error');
-      return;
-    }
-  }
-  window.location.href = destination();
+  return plan ? `/checkout.html${planQuery}` : '/dashboard.html';
 }
 
 async function postJson(path, body) {
@@ -40,15 +41,22 @@ async function postJson(path, body) {
 function setStatus(el, message, kind) {
   if (!el) return;
   el.textContent = message;
-  el.className = kind || '';
+  el.className = kind === 'ok' ? 'min-h-6 text-[.9rem] text-accent'
+    : kind === 'error' ? 'min-h-6 text-[.9rem] text-danger'
+    : 'min-h-6 text-[.9rem] text-muted';
 }
 
 function show(id) {
-  ['step-form', 'step-sent', 'step-done', 'step-invalid'].forEach((name) => {
+  ['step-form', 'step-sent', 'step-done', 'step-invalid', 'step-unverified'].forEach((name) => {
     const el = document.getElementById(name);
     if (el) el.hidden = (name !== id);
   });
 }
+
+// The email the login attempt used — carried over to the unverified panel so
+// the resend button knows where to send the link, and set again when signup
+// succeeds so its confirmation panel can resend too.
+let authEmail = '';
 
 // --- Password show/hide -----------------------------------------------------
 document.querySelectorAll('[data-pw-toggle]').forEach((button) => {
@@ -124,22 +132,23 @@ function wire(formId, statusId, submit) {
 
 // --- Sign up ----------------------------------------------------------------
 wire('signup-form', 'signup-status', async (data, status) => {
+  const email = data.get('email');
   const { ok, data: body } = await postJson('/register.php', {
-    email: data.get('email'),
+    email,
     password: data.get('password'),
+    plan,
   });
 
   if (!ok) {
     setStatus(status, body.error || 'Could not create your account.', 'error');
     return;
   }
-  // The email already had an account — register.php deliberately does not say
-  // so via an error, and never touches the existing password.
-  if (body.status === 'exists') {
-    setStatus(status, body.message, 'error');
-    return;
-  }
-  window.location.href = destination();   // registration signs you straight in
+  // Same response whether or not the address already existed — the page says
+  // "check your email" either way; the mailbox decides what they actually read.
+  authEmail = email;
+  const sent = document.getElementById('sent-email');
+  if (sent) sent.textContent = email;
+  show('step-sent');
 });
 
 // --- Sign in ----------------------------------------------------------------
@@ -150,7 +159,7 @@ wire('signin-form', 'signin-status', async (data, status) => {
   });
 
   if (ok) {
-    await finishSignIn(status);
+    window.location.href = destination();
     return;
   }
   // Account predates password auth: send them to set one rather than leaving
@@ -161,97 +170,47 @@ wire('signin-form', 'signin-status', async (data, status) => {
     if (link) link.textContent = 'Set your password →';
     return;
   }
+  // Password checked out, mailbox not verified. Swap the form for the panel
+  // that offers the link again — the server only reveals this state to
+  // someone who already knows the password.
+  if (body.status === 'email_not_verified') {
+    authEmail = data.get('email');
+    const shown = document.getElementById('unverified-email');
+    if (shown) shown.textContent = authEmail;
+    show('step-unverified');
+    return;
+  }
   setStatus(status, body.error || 'Email or password is incorrect.', 'error');
 });
 
-// --- Sign in with Apple -----------------------------------------------------
-// Apple's popup flow: the server hands out a signed nonce (apple-nonce.php),
-// Apple embeds it in the identity token, and apple-sign-in.php checks both
-// before starting the same session cookie a password sign-in gets. Signing
-// in with an Apple ID we've never seen creates the account and its trial.
-//
-// AppleID.auth.signIn() opens a popup, so it must run synchronously inside
-// the click — no awaits before it, or popup blockers eat it. That's why the
-// nonce is fetched ahead of time and refreshed before it can expire.
-const appleBlock = document.getElementById('apple-block');
-const appleButton = document.getElementById('apple-signin');
-const APPLE_NONCE_REFRESH_MS = 8 * 60 * 1000;   // server nonces live 10 minutes
-let appleNonce = null;
-
-async function prepareAppleSignIn() {
-  const res = await fetch(API + '/apple-nonce.php', { credentials: 'same-origin' });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.web || !data.web.enabled || !window.AppleID) return false;
-  window.AppleID.auth.init({
-    clientId: data.web.client_id,
-    scope: 'name email',
-    redirectURI: data.web.redirect_uri,
-    nonce: data.nonce,
-    usePopup: true,
-  });
-  appleNonce = data.nonce;
-  return true;
-}
-
-if (appleBlock && appleButton) {
-  prepareAppleSignIn()
-    .then((enabled) => {
-      if (!enabled) return;
-      appleBlock.hidden = false;
-      setInterval(() => { prepareAppleSignIn().catch(() => {}); }, APPLE_NONCE_REFRESH_MS);
-    })
-    .catch(() => {});   // no Apple button is a fine outcome; the form still works
-
-  appleButton.addEventListener('click', () => {
-    const status = document.getElementById(appleButton.dataset.status);
-    const terms = document.querySelector('input[name="terms"]');
-    if (terms && !terms.checked) {
-      setStatus(status, 'Please accept the terms of use & privacy policy to continue.', 'error');
-      return;
-    }
-    const nonce = appleNonce;
-    const popup = window.AppleID.auth.signIn();   // synchronous: keeps the click's user gesture
-    appleButton.disabled = true;
-    setStatus(status, 'Waiting for Apple…');
-
-    popup
-      .then(async (response) => {
-        const name = response.user && response.user.name
-          ? [response.user.name.firstName, response.user.name.lastName].filter(Boolean).join(' ')
-          : '';
-        setStatus(status, 'Just a moment…');
-        const { ok, data } = await postJson('/apple-sign-in.php', {
-          id_token: response.authorization.id_token,
-          code: response.authorization.code,
-          nonce,
-          name,
-          client: 'web',
-        });
-        if (!ok) {
-          setStatus(status, data.error || 'Apple sign-in failed. Please try again.', 'error');
-          prepareAppleSignIn().catch(() => {});   // that nonce is spent
-          return;
-        }
-        await finishSignIn(status);
-      })
-      .catch((err) => {
-        // Closing the popup is a choice, not an error.
-        const cancelled = err && (err.error === 'popup_closed_by_user' || err.error === 'user_cancelled_authorize');
-        setStatus(status, cancelled ? '' : 'Apple sign-in failed. Please try again.', cancelled ? '' : 'error');
-      })
-      .finally(() => { appleButton.disabled = false; });
-  });
-}
+// --- Resend verification ----------------------------------------------------
+// One handler, used by the login page's unverified panel and signup's
+// confirmation panel (whichever is on screen has the address stashed above).
+document.getElementById('resend-btn')?.addEventListener('click', async (e) => {
+  const button = e.currentTarget;
+  const status = document.getElementById('resend-status');
+  button.disabled = true;
+  setStatus(status, 'Sending…');
+  try {
+    const { ok, data: body } = await postJson('/resend-verification.php', { email: authEmail });
+    setStatus(status, ok ? body.message : (body.error || 'Could not send the link. Try again.'), ok ? 'ok' : 'error');
+  } catch {
+    setStatus(status, 'Could not reach the server. Please try again.', 'error');
+  } finally {
+    button.disabled = false;
+  }
+});
 
 // --- Forgot password --------------------------------------------------------
 wire('forgot-form', 'forgot-status', async (data, status) => {
   const email = data.get('email');
-  const { ok, data: body } = await postJson('/request-password-reset.php', { email, platform });
+  const { ok, data: body } = await postJson('/request-password-reset.php', { email });
 
   if (!ok) {
     setStatus(status, body.error || 'Could not send the link. Please try again.', 'error');
     return;
   }
+  authEmail = email;
   const sent = document.getElementById('sent-email');
   if (sent) sent.textContent = email;
   show('step-sent');
@@ -286,9 +245,39 @@ if (document.getElementById('reset-form') && !resetToken) {
   show('step-invalid');
 }
 
-// Carry only allowlisted platform context, never an arbitrary redirect URL.
-if (platform) {
+// --- Verify email -----------------------------------------------------------
+// Reached from the emailed link with the token in the query string. Redeems
+// it immediately — nobody clicks a verification link to look at a button —
+// and on success the backend has already started the session, so we just walk
+// on to the dashboard (or the plan checkout they started from).
+if (document.getElementById('verify-panel')) {
+  const token = params.get('token');
+  const status = document.getElementById('verify-status');
+
+  if (!token) {
+    show('step-invalid');
+  } else {
+    postJson('/verify-email.php', { token })
+      .then(({ ok }) => {
+        if (ok) {
+          const cont = document.getElementById('verify-continue');
+          if (cont) cont.href = destination();
+          show('step-done');
+          setTimeout(() => { window.location.href = destination(); }, 1400);
+        } else {
+          show('step-invalid');
+        }
+      })
+      // Network trouble, not a dead link — say so rather than blaming the
+      // link, which may be perfectly fine.
+      .catch(() => setStatus(status, 'Could not reach the server. Refresh to try again.', 'error'));
+  }
+}
+
+// Carry the plan through the links between these pages, so it survives a
+// detour via "create an account" or "forgot password".
+if (plan) {
   document.querySelectorAll('[data-carry-plan]').forEach((link) => {
-    link.href = link.getAttribute('href') + platformQuery;
+    link.href = link.getAttribute('href') + planQuery;
   });
 }

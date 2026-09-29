@@ -26,8 +26,9 @@ CREATE TABLE IF NOT EXISTS products (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- customers — one row per email that has ever checked out or logged in.
--- Signs in with a password, or with Apple (apple_sub; password_hash NULL).
+-- customers — one row per email that has ever checked out or signed up.
+-- Signs in with a password (email_verified_at gates the session, see 011) or
+-- with Apple (apple_sub; password_hash NULL; Apple has verified the address).
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS customers (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS customers (
   password_hash   VARCHAR(255)    NULL COMMENT 'password_hash() output. NULL = predates password auth, must set one via the reset flow.',
   password_set_at DATETIME        NULL COMMENT 'When the current password was set. Support/audit only.',
   session_epoch   INT UNSIGNED    NOT NULL DEFAULT 0 COMMENT 'Bumped on password reset; signed into the session cookie to revoke older ones.',
+  email_verified_at DATETIME      NULL COMMENT 'When the owner proved control of the mailbox. NULL = signup pending verification.',
   apple_sub       VARCHAR(255)    NULL COMMENT 'Sign in with Apple subject. Stable per Apple ID + team.',
   apple_refresh_token_encrypted VARCHAR(1024) NULL COMMENT 'AES-256-GCM; only used to revoke at Apple on account deletion',
   apple_token_client_id VARCHAR(190) NULL COMMENT 'Bundle id or Services ID the refresh token was issued to',
@@ -49,9 +51,9 @@ CREATE TABLE IF NOT EXISTS customers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- password_reset_tokens — single-use reset links, hash-only like login_tokens
--- and download_tokens. Also serves as the "set your first password" path for
--- accounts created during the magic-link era (password_hash IS NULL).
+-- password_reset_tokens — single-use reset links, hash-only like
+-- download_tokens. Also serves as the "set your first password" path for
+-- accounts created before passwords existed (password_hash IS NULL).
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
   id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -78,7 +80,7 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   ip           VARCHAR(45)     NOT NULL,
   email_hash   CHAR(64)        NULL COMMENT 'hash_hmac(sha256, lowercased email, APP_KEY)',
-  result       ENUM('ok','bad_password','unknown_email','rate_limited','no_password_set') NOT NULL,
+  result       ENUM('ok','bad_password','unknown_email','rate_limited','no_password_set','register') NOT NULL,
   attempted_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_login_attempts_ip_time (ip, attempted_at),
@@ -86,10 +88,11 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- login_tokens — single-use magic links. Same shape as download_tokens: only
--- the hash is stored, so a DB leak alone cannot forge a session.
+-- email_verification_tokens — single-use signup-verification links, hash-only
+-- like download_tokens. Redeeming one sets customers.email_verified_at and
+-- starts a session; see EmailVerificationService.
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS login_tokens (
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
   id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   token_hash   CHAR(64)        NOT NULL,
   customer_id  BIGINT UNSIGNED NOT NULL,
@@ -98,9 +101,11 @@ CREATE TABLE IF NOT EXISTS login_tokens (
   expires_at   DATETIME        NOT NULL,
   created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_login_tokens_hash (token_hash),
-  KEY idx_login_tokens_expiry (expires_at),
-  CONSTRAINT fk_login_tokens_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
+  UNIQUE KEY uq_email_verification_tokens_hash (token_hash),
+  KEY idx_email_verification_tokens_expiry (expires_at),
+  KEY idx_email_verification_tokens_customer (customer_id),
+  CONSTRAINT fk_email_verification_tokens_customer
+    FOREIGN KEY (customer_id) REFERENCES customers (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------

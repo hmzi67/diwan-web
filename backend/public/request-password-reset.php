@@ -2,12 +2,13 @@
 /**
  * POST /api/request-password-reset.php  { email }
  *
- * Emails a single-use link to set a new password. Doubles as the "set your
- * first password" path for accounts created during the magic-link era —
+ * Emails a single-use link to set a new password. Also doubles as the "set
+ * your first password" path for accounts that predate password auth —
  * PasswordResetService picks the wording; the mechanism is the same.
  *
  * Always responds identically, whether or not the email has an account, for
- * the same reason send-login-link.php does.
+ * the same reason resend-verification.php does: this must not become an
+ * account-enumeration oracle.
  */
 declare(strict_types=1);
 

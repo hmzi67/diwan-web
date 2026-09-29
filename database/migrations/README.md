@@ -44,3 +44,10 @@ these onto `GITHUB_RELEASES_TOKEN` / `GITHUB_RELEASES_REPO` in the server
 
 The host has no shell, so run the script locally with a `.env` holding the
 token; `--sql` needs no database connection.
+
+## 011 — Email verification (and magic links removed)
+
+Apply `011_email_verification_and_drop_magic_links.sql` before deploying the
+login / signup / verify-email pages. It backfills every existing account as
+verified and drops `login_tokens`. (Written as 007 on its own branch and
+renumbered when merged; 007 was already `007_free_trial.sql`.)

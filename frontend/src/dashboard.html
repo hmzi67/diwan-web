@@ -143,10 +143,10 @@
               <aside class="dash-side">
                 <section class="panel" aria-labelledby="progress-title">
                   <h2 id="progress-title">Your progress</h2>
-                  <ol class="steps" data-steps>
-                    <li data-step="key"><span class="steps__dot" aria-hidden="true"></span><div><strong>Get your licence key</strong><small>Start a trial or buy a licence</small></div></li>
-                    <li data-step="download"><span class="steps__dot" aria-hidden="true"></span><div><strong>Download &amp; install</strong><small>Windows, macOS or Android</small></div></li>
-                    <li data-step="activate"><span class="steps__dot" aria-hidden="true"></span><div><strong>Activate on your device</strong><small>Paste your key when Diwan asks</small></div></li>
+                  <ol class="dash-steps" data-steps>
+                    <li data-step="key"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Get your licence key</strong><small>Start a trial or buy a licence</small></div></li>
+                    <li data-step="download"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Download &amp; install</strong><small>Windows, macOS or Android</small></div></li>
+                    <li data-step="activate"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Activate on your device</strong><small>Paste your key when Diwan asks</small></div></li>
                   </ol>
                   <a class="btn btn--ghost btn--sm panel__btn" href="#setup">Open setup guide</a>
                 </section>
@@ -178,7 +178,7 @@
               <h3>No licences yet</h3>
               <p>Start a free 30-day trial or pick a lifetime licence — your key will appear here.</p>
               <div class="dash-empty__cta">
-                <a class="btn btn--primary btn--sm" href="/#download">Start free trial</a>
+                <button class="btn btn--primary btn--sm" type="button" data-start-trial>Start free trial</button>
                 <a class="btn btn--ghost btn--sm" href="#pricing">See pricing</a>
               </div>
             </div>

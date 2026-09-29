@@ -1,283 +1,1423 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Diwan POS — Point of Sale for Pakistani Retail</title>
-  <meta name="description" content="Keyboard-first point of sale for retail, restaurants and pharmacies. Offline-first billing, inventory and reporting.">
-  <meta name="theme-color" content="#0A0F0D">
-  <link rel="stylesheet" href="/css/styles.css">
-  <script src="/js/theme.js"></script>
-  <link rel="icon" type="image/png" href="/assets/logo.png">
-  <link rel="apple-touch-icon" href="/assets/logo.png">
-</head>
-<body>
-  <a class="skip" href="#main">Skip to content</a>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Diwan POS — Point of Sale for Pakistani Retail</title>
+    <meta
+      name="description"
+      content="Keyboard-first point of sale for retail, restaurants and pharmacies. Offline-first billing, inventory and reporting."
+    />
+    <meta name="theme-color" content="#0A0F0D" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script src="/js/theme.js"></script>
+    <link rel="icon" type="image/png" href="/assets/logo.png" />
+    <link rel="apple-touch-icon" href="/assets/logo.png" />
+  </head>
+  <body>
+    <a
+      class="absolute -left-[9999px] z-[100] rounded-sm bg-accent px-[1.1rem] py-[.7rem] text-accent-ink focus:left-[clamp(1.25rem,4vw,2rem)] focus:top-3"
+      href="#main"
+      >Skip to content</a
+    >
 
-  <header class="nav" id="nav">
-    <div class="wrap nav__inner">
-      <a class="brand" href="/">
-        <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
-        Diwan
-      </a>
+    <header
+      class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line"
+      id="nav"
+    >
+      <div
+        class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]"
+      >
+        <a
+          class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]"
+          href="/"
+        >
+          <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28" />
+          Diwan
+        </a>
 
-      <nav class="nav__links" id="nav-links" aria-label="Primary">
-        <a href="#features">Features</a>
-        <a href="products.html">Products</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#support">Docs &amp; Support</a>
-        <a href="contact.html">Contact</a>
-      </nav>
+        <nav
+          class="flex items-center gap-1 rounded-full border border-line bg-surface p-[.3rem] max-[860px]:absolute max-[860px]:inset-x-[clamp(1.25rem,4vw,2rem)] max-[860px]:top-[calc(100%_+_0.5rem)] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[.15rem] max-[860px]:rounded-md max-[860px]:bg-elevated max-[860px]:p-2 max-[860px]:shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]"
+          id="nav-links"
+          aria-label="Primary"
+        >
+          <a
+            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
+            href="features.html"
+            >Features</a
+          >
+          <a
+            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
+            href="products.html"
+            >Products</a
+          >
+          <a
+            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
+            href="pricing.html"
+            >Pricing</a
+          >
+          <a
+            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
+            href="support.html"
+            >Docs &amp; Support</a
+          >
+          <a
+            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
+            href="contact.html"
+            >Contact</a
+          >
+        </nav>
 
-      <div class="nav__actions">
-        <a class="nav__login" href="/auth/sign-in.html">Log in</a>
-        <a class="btn btn--primary" href="#download">Start free trial</a>
-        <button class="nav__toggle" id="nav-toggle" type="button"
-                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main id="main">
-    <!-- ================= HERO ================= -->
-    <section class="hero">
-      <div class="wrap">
-        <p class="eyebrow"><b>New</b> Shift reconciliation in v1.4</p>
-
-        <h1>Run your counter at <em>the speed of typing.</em></h1>
-
-        <p class="hero__sub">
-          Diwan is a keyboard-first point of sale for retail, restaurants and
-          pharmacies. Bill without touching a mouse, print tokens instantly, and
-          keep selling when the internet drops.
-        </p>
-
-        <div class="hero__cta">
-          <a class="btn btn--primary btn--lg" href="#download">Start free trial</a>
-          <a class="btn btn--ghost btn--lg" href="#features">See how it works</a>
+        <div class="flex items-center gap-2">
+          <a
+            class="px-3 py-2 text-[.92rem] text-muted hover:text-ink max-[860px]:hidden"
+            href="/auth/login.html"
+            >Log in</a
+          >
+          <a
+            class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
+            href="pricing.html"
+            >Get Started</a
+          >
+          <button
+            class="hidden size-10 cursor-pointer place-items-center rounded-sm border border-line bg-surface p-0 text-ink max-[860px]:inline-grid"
+            id="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="nav-links"
+            aria-label="Menu"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M2 5h14M2 9h14M2 13h14"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
         </div>
-        <p class="hero__note">30 days free · No payment required · One device</p>
+      </div>
+    </header>
 
-        <!-- Product mockup: no image asset, drawn in CSS to keep page weight down -->
-        <div class="mockup" role="img"
-             aria-label="Diwan billing screen: a product grid on the left and a running bill totalling Rs 2,480 on the right.">
-          <div class="mockup__bar">
-            <div class="mockup__dots" aria-hidden="true"><i></i><i></i><i></i></div>
-            <span class="mockup__url">diwan · counter 1 · shift open</span>
+    <main id="main">
+      <!-- ================= 1. HERO ================= -->
+      <section
+        class="hero relative isolate pb-[clamp(4.5rem,9vw,8rem)] pt-[clamp(3rem,7vw,5.5rem)] text-center"
+      >
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <p
+            class="mb-7 inline-flex items-center gap-2 rounded-full border border-line-hi bg-surface py-[.38rem] pl-[.45rem] pr-[.85rem] text-[.82rem] text-muted"
+          >
+            <b
+              class="rounded-full bg-accent px-[.55rem] py-[.2rem] text-[.72rem] font-bold uppercase tracking-[.04em] text-accent-ink"
+              >New</b
+            >
+            Shift reconciliation in v1.4
+          </p>
+
+          <h1
+            class="mx-auto mb-5 max-w-[15ch] text-[clamp(2.4rem,6.4vw,4.3rem)] font-bold leading-[1.04] tracking-[-.035em]"
+          >
+            Run your counter at
+            <em
+              class="bg-[linear-gradient(120deg,var(--color-accent-hi),var(--color-accent-dim))] bg-clip-text font-normal text-transparent"
+              >the speed of typing.</em
+            >
+          </h1>
+
+          <p
+            class="mx-auto mb-9 max-w-[54ch] text-[clamp(1rem,1.7vw,1.16rem)] text-muted"
+          >
+            Diwan is a keyboard-first point of sale for retail, restaurants and
+            pharmacies. Bill without touching a mouse, print tokens instantly,
+            and keep selling when the internet drops.
+          </p>
+
+          <div class="flex flex-wrap justify-center gap-3">
+            <a
+              class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-8 py-4 text-[1.02rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
+              href="#pricing"
+              >Get Started</a
+            >
+            <a
+              class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-8 py-4 text-[1.02rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
+              href="features.html"
+              >See how it works</a
+            >
           </div>
+          <p class="mt-4 text-[.84rem] text-faint">
+            One-time licence · Works offline · Windows, macOS &amp; Android
+          </p>
 
-          <div class="pos" aria-hidden="true">
-            <div class="pos__main">
-              <p class="pos__label">Quick items — press 1–9</p>
-              <div class="pos__grid">
-                <div class="pos__item pos__item--hot"><span>Chicken Karahi</span>Rs 1,150</div>
-                <div class="pos__item"><span>Naan</span>Rs 30</div>
-                <div class="pos__item"><span>Cold Drink</span>Rs 120</div>
-                <div class="pos__item"><span>Raita</span>Rs 80</div>
-                <div class="pos__item"><span>Biryani</span>Rs 450</div>
-                <div class="pos__item"><span>Kebab Roll</span>Rs 320</div>
-                <div class="pos__item"><span>Tea</span>Rs 60</div>
-                <div class="pos__item"><span>Salad</span>Rs 90</div>
+          <!-- Product mockup: no image asset, drawn in CSS to keep page weight down -->
+          <div
+            class="relative mx-auto mt-[clamp(3rem,6vw,4.5rem)] max-w-[980px] overflow-hidden rounded-lg border border-line-hi bg-elevated text-left shadow-[0_0_0_1px_rgba(0,0,0,.4),0_40px_80px_-30px_rgba(0,0,0,.9),0_0_90px_-30px_var(--color-glow)]"
+            role="img"
+            aria-label="Diwan billing screen: a product grid on the left and a running bill totalling Rs 2,480 on the right."
+          >
+            <div
+              class="flex items-center gap-2 border-b border-line bg-surface px-[.95rem] py-[.7rem]"
+            >
+              <div class="flex gap-[.4rem]" aria-hidden="true">
+                <i class="size-[10px] rounded-full bg-line-hi"></i
+                ><i class="size-[10px] rounded-full bg-line-hi"></i
+                ><i class="size-[10px] rounded-full bg-line-hi"></i>
+              </div>
+              <span
+                class="mx-auto rounded-full border border-line bg-canvas px-[.8rem] py-[.22rem] font-mono text-[.74rem] text-faint"
+                >diwan · counter 1 · shift open</span
+              >
+            </div>
+
+            <div
+              class="grid grid-cols-[1.55fr_1fr] min-h-[380px] max-[860px]:grid-cols-1"
+              aria-hidden="true"
+            >
+              <div
+                class="border-r border-line p-[1.1rem] max-[860px]:border-r-0 max-[860px]:border-b"
+              >
+                <p
+                  class="mb-[.7rem] text-[.68rem] uppercase tracking-[.12em] text-faint"
+                >
+                  Quick items — press 1–9
+                </p>
+                <div
+                  class="grid grid-cols-4 gap-[.55rem] max-[860px]:grid-cols-3 max-xs:grid-cols-2"
+                >
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Chicken Karahi</span>Rs 1,150
+                  </div>
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Naan</span>Rs 30
+                  </div>
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Cold Drink</span>Rs 120
+                  </div>
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Raita</span>Rs 80
+                  </div>
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Biryani</span>Rs 450
+                  </div>
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Kebab Roll</span>Rs 320
+                  </div>
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Tea</span>Rs 60
+                  </div>
+                  <div
+                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
+                  >
+                    <span>Salad</span>Rs 90
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col bg-canvas p-[1.1rem]">
+                <p
+                  class="mb-[.7rem] text-[.68rem] uppercase tracking-[.12em] text-faint"
+                >
+                  Table 4 · Bill #1042
+                </p>
+                <div class="mb-[.8rem] flex flex-1 flex-col gap-2">
+                  <div
+                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
+                  >
+                    <b class="font-semibold text-ink">Chicken Karahi</b
+                    ><span>× 1 · 1,150</span>
+                  </div>
+                  <div
+                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
+                  >
+                    <b class="font-semibold text-ink">Naan</b
+                    ><span>× 6 · 180</span>
+                  </div>
+                  <div
+                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
+                  >
+                    <b class="font-semibold text-ink">Cold Drink</b
+                    ><span>× 4 · 480</span>
+                  </div>
+                  <div
+                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
+                  >
+                    <b class="font-semibold text-ink">Kebab Roll</b
+                    ><span>× 2 · 640</span>
+                  </div>
+                </div>
+                <div
+                  class="flex items-baseline justify-between border-t border-line-hi pt-[.7rem] text-[.8rem] text-muted"
+                >
+                  <span>Total payable</span
+                  ><b class="text-[1.35rem] tracking-[-.02em] text-accent"
+                    >Rs 2,450</b
+                  >
+                </div>
+                <div
+                  class="mt-[.85rem] rounded-sm bg-accent p-[.7rem] text-center text-[.82rem] font-bold text-accent-ink"
+                >
+                  Ctrl + Enter — Place order
+                </div>
+                <p
+                  class="mt-[.6rem] text-center font-mono text-[.68rem] text-faint"
+                >
+                  Ctrl + K print token · T4 switch table
+                </p>
               </div>
             </div>
-
-            <div class="pos__side">
-              <p class="pos__label">Table 4 · Bill #1042</p>
-              <div class="pos__lines">
-                <div class="pos__line"><b>Chicken Karahi</b><span>× 1 · 1,150</span></div>
-                <div class="pos__line"><b>Naan</b><span>× 6 · 180</span></div>
-                <div class="pos__line"><b>Cold Drink</b><span>× 4 · 480</span></div>
-                <div class="pos__line"><b>Kebab Roll</b><span>× 2 · 640</span></div>
-              </div>
-              <div class="pos__total"><span>Total payable</span><b>Rs 2,450</b></div>
-              <div class="pos__pay">Ctrl + Enter — Place order</div>
-              <p class="pos__kbd">Ctrl + K print token · T4 switch table</p>
-            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="platforms" id="download" aria-labelledby="download-title">
-      <div class="wrap">
-        <div class="platforms__head">
-          <p class="eyebrow">Your counter. Your platform.</p>
-          <h2 id="download-title">Try Diwan free for 30 days.</h2>
-          <p>Choose your platform, create an account, and get your licence instantly. No payment required.</p>
+      <!-- ================= 2. FACTS STRIP ================= -->
+      <section class="border-y border-line bg-elevated">
+        <div
+          class="mx-auto grid w-full max-w-[1180px] grid-cols-4 gap-8 px-[clamp(1.25rem,4vw,2rem)] py-10 max-[760px]:grid-cols-2 max-[760px]:gap-y-7"
+        >
+          <div>
+            <p class="text-[1.5rem] font-bold tracking-[-.02em]">One-time</p>
+            <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
+              Pay once in Rupees. No subscription, no automatic renewal.
+            </p>
+          </div>
+          <div>
+            <p class="text-[1.5rem] font-bold tracking-[-.02em]">3 platforms</p>
+            <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
+              Windows, macOS and Android, unlocked by one licence key.
+            </p>
+          </div>
+          <div>
+            <p class="text-[1.5rem] font-bold tracking-[-.02em]">
+              Offline-first
+            </p>
+            <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
+              The till keeps selling when the internet drops.
+            </p>
+          </div>
+          <div>
+            <p class="text-[1.5rem] font-bold tracking-[-.02em]">
+              1 business day
+            </p>
+            <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
+              Typical support reply. Monday to Saturday, 10:00am &ndash; 7:00pm
+              PKT.
+            </p>
+          </div>
         </div>
-        <div class="platforms__grid">
-          <a class="platform-card" href="/auth/sign-in.html?platform=windows" data-platform="windows">
-            <svg viewBox="0 0 32 32" width="48" height="48" fill="currentColor" aria-hidden="true">
-              <path d="M2 5.7 14.2 4v11H2V5.7Zm14.2-2L30 1.8V15H16.2V3.7ZM2 17h12.2v11L2 26.3V17Zm14.2 0H30v13.2l-13.8-1.9V17Z"/>
-            </svg>
-            <h3>Windows</h3><span>Download for Windows <span aria-hidden="true">↗</span></span>
-            <small>.exe installer</small>
-          </a>
-          <a class="platform-card" href="/auth/sign-in.html?platform=macos" data-platform="macos">
-            <svg viewBox="0 0 32 32" width="48" height="48" fill="currentColor" aria-hidden="true">
-              <path d="M21.5 1c.3 2.3-.7 4.6-2 6-1.4 1.5-3.5 2.3-5.4 2.1-.3-2.2.8-4.5 2.1-5.9C17.7 1.6 19.8.5 21.5 1ZM25.8 24.6c-1.1 2.4-2.6 5.2-4.9 5.3-2 .1-2.6-1.3-5.3-1.3s-3.4 1.3-5.3 1.4c-2.3.1-4-2.5-5.3-4.9C1.4 18.7 2.3 11.2 6.6 9c2.1-1.1 4.4-.8 6.1-.1 1.3.6 2.2.8 2.9.8.8 0 1.9-.5 3.3-1 2.2-.8 5.1-.8 7.2 2-6.3 3.6-5.1 10.2.6 12.5l-.9 1.4Z"/>
-            </svg>
-            <h3>macOS</h3><span>Download for macOS <span aria-hidden="true">↗</span></span>
-            <small>.dmg installer</small>
-          </a>
-          <a class="platform-card" href="/auth/sign-in.html?platform=android" data-platform="android">
-            <svg viewBox="0 0 32 32" width="48" height="48" fill="currentColor" aria-hidden="true">
-              <path d="m8.3 8-2.1-3.6 1.5-.9 2.2 3.7a15 15 0 0 1 12.2 0l2.2-3.7 1.5.9L23.7 8A13 13 0 0 1 29 18H3A13 13 0 0 1 8.3 8ZM3 20h26v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-6Z"/>
-              <circle cx="10" cy="13" r="1.5" fill="var(--surface)"/>
-              <circle cx="22" cy="13" r="1.5" fill="var(--surface)"/>
-            </svg>
-            <h3>Android</h3><span>Download for Android <span aria-hidden="true">↗</span></span>
-            <small>.apk installer</small>
-          </a>
-        </div>
-        <p class="platforms__note">One trial per account. Your 30 days start when your licence is issued.<br>Already have a licence? Sign in to access your downloads.</p>
-        <p id="platform-status" role="status"></p>
-      </div>
-    </section>
+      </section>
 
-    <section class="pricing" id="pricing">
-      <div class="wrap">
-        <div class="pricing__head">
-          <h2>Simple pricing, one licence.</h2>
-          <p class="pricing__sub">
-            Pick the plan that matches how many counters you run.
-            Paid editions are shown below. Start with a free 30-day trial; no checkout is required.
+      <!-- ================= 3. WHY DIWAN ================= -->
+      <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]">
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mb-12 max-w-[640px]">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              Why Diwan
+            </p>
+            <h2 class="mb-3 text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">
+              Built for the counter, not the boardroom.
+            </h2>
+            <p class="text-[1rem] leading-[1.7] text-muted">
+              Most POS software is designed around a back office. Diwan is
+              designed around the three seconds between a customer asking and a
+              receipt printing.
+            </p>
+          </div>
+
+          <div
+            class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5"
+          >
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                01
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Typing beats clicking
+              </h3>
+              <p class="text-[.88rem] leading-[1.65] text-muted">
+                Quick items sit on keys 1&ndash;9, orders are placed with a
+                chord and tokens print without a menu — a queue moves at typing
+                speed rather than mouse speed.
+              </p>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                02
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Nothing held hostage to a connection
+              </h3>
+              <p class="text-[.88rem] leading-[1.65] text-muted">
+                The till sells without internet and sync picks up when the line
+                returns. A dropped connection should never stop a sale — the
+                network is needed once, for activation.
+              </p>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                03
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                One payment, then it's yours
+              </h3>
+              <p class="text-[.88rem] leading-[1.65] text-muted">
+                A one-time licence in Rupees, updates downloaded with the same
+                key you already own, and a full refund within 14 days as long as
+                the key is still unactivated.
+              </p>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                04
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Made for Pakistani shops
+              </h3>
+              <p class="text-[.88rem] leading-[1.65] text-muted">
+                Receipt and kitchen printing, Rupees throughout, and support
+                from a person in Islamabad — Monday to Saturday, 10:00am &ndash;
+                7:00pm PKT.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. FEATURES ================= -->
+      <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]">
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mx-auto mb-14 max-w-[640px] text-center">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              Features
+            </p>
+            <h2
+              class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]"
+            >
+              Everything you need at the counter.
+            </h2>
+            <p class="text-[1.02rem] text-muted">
+              Billing, stock and reporting in one screen. No feature gates
+              between editions — only limits on how many terminals and branches
+              you run.
+            </p>
+          </div>
+
+          <div
+            class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5"
+          >
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                Feature 01
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Keyboard-first billing
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Nine quick-item slots, a running bill that updates as you type,
+                and no mouse required to close a sale.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Quick items on keys 1&ndash;9</li>
+                <li><code>Ctrl + Enter</code> places the order</li>
+                <li><code>Ctrl + K</code> prints the token</li>
+              </ul>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                Feature 02
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Tables, tokens &amp; bills
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Open a bill against a table, print a token, and keep several
+                tables in flight at once without losing a running total.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Per-table running bills</li>
+                <li>Instant token printing</li>
+                <li>Switch tables from the keyboard</li>
+              </ul>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                Feature 03
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Receipt &amp; kitchen printers
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Customer receipts and kitchen chits from the same terminal, on
+                USB or network printers. Standard edition and up.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Receipt printer support</li>
+                <li>Kitchen / order chit printing</li>
+                <li>USB and network printers</li>
+              </ul>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                Feature 04
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Billing &amp; inventory
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Every sale decrements stock as it is rung up. Core billing and
+                inventory are in the Starter edition, not an upgrade.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Item and price management</li>
+                <li>Stock decremented per sale</li>
+                <li>The count on the shelf matches the screen</li>
+              </ul>
+            </article>
+          </div>
+
+          <p class="mt-11 text-center">
+            <a
+              class="text-[.9rem] text-muted hover:text-accent"
+              href="features.html"
+              >See the full feature list →</a
+            >
           </p>
         </div>
+      </section>
 
-        <div class="pricing__grid">
-          <article class="plan">
-            <div class="plan__head">
-              <h3>Starter</h3>
-              <p class="plan__desc">For a single counter just getting started.</p>
-            </div>
-            <p class="plan__price">
-              <span class="plan__amount">Rs 8,000</span>
-              <span class="plan__period">one-time</span>
+      <!-- ================= 5. HOW IT WORKS ================= -->
+      <section
+        class="border-t border-line bg-elevated py-[clamp(4.5rem,9vw,8rem)]"
+      >
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mb-12 max-w-[640px]">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              Getting started
             </p>
-            <a class="btn btn--ghost plan__cta" href="#download">Start free trial</a>
-            <div class="plan__divider"></div>
-            <p class="plan__includes">Everything in Starter includes:</p>
-            <ul class="plan__features">
-              <li>1 terminal licence</li>
-              <li>Core billing &amp; inventory</li>
-              <li>Offline-first sync</li>
-              <li>Email support</li>
-              <li>Free software updates</li>
-            </ul>
-          </article>
+            <h2 class="mb-3 text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">
+              From payment to first bill in minutes.
+            </h2>
+            <p class="text-[1rem] leading-[1.7] text-muted">
+              Delivery is automatic. Your licence key and installer are emailed
+              within about a minute of confirmed payment — no shipment, no
+              waiting.
+            </p>
+          </div>
 
-          <article class="plan plan--popular">
-            <p class="plan__badge">Most popular</p>
-            <div class="plan__head">
-              <h3>Standard</h3>
-              <p class="plan__desc">For growing shops running a few counters.</p>
-            </div>
-            <p class="plan__price">
-              <span class="plan__amount">Rs 12,000</span>
-              <span class="plan__period">one-time</span>
-            </p>
-            <a class="btn btn--primary plan__cta" href="#download">Start free trial</a>
-            <div class="plan__divider"></div>
-            <p class="plan__includes">Everything in Standard includes:</p>
-            <ul class="plan__features">
-              <li>Up to 3 terminals, 1 branch</li>
-              <li>All core modules + reporting</li>
-              <li>Receipt &amp; kitchen printer support</li>
-              <li>Priority email support</li>
-              <li>Free software updates</li>
-            </ul>
-          </article>
-
-          <article class="plan">
-            <div class="plan__head">
-              <h3>Enterprise</h3>
-              <p class="plan__desc">For multi-branch chains.</p>
-            </div>
-            <p class="plan__price">
-              <span class="plan__amount">Rs 25,000</span>
-              <span class="plan__period">one-time</span>
-            </p>
-            <a class="btn btn--ghost plan__cta" href="#download">Start free trial</a>
-            <div class="plan__divider"></div>
-            <p class="plan__includes">Everything in Enterprise includes:</p>
-            <ul class="plan__features">
-              <li>Unlimited terminals, multi-branch</li>
-              <li>All modules + multi-branch sync</li>
-              <li>Priority phone &amp; email support</li>
-              <li>Free software updates</li>
-            </ul>
-          </article>
+          <ol
+            class="steps grid grid-cols-4 gap-8 max-[900px]:grid-cols-2 max-xs:grid-cols-1 [&>li]:flex [&>li]:items-start [&>li]:gap-[.85rem] [&_b]:block [&_b]:text-[.95rem] [&_b]:font-semibold [&_span]:text-[.85rem] [&_span]:text-muted [&_span]:leading-[1.6]"
+          >
+            <li>
+              <div>
+                <b>Choose your plan</b
+                ><span
+                  >One-time payment in Rupees at checkout — Starter, Standard or
+                  Enterprise.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>Get your licence key</b
+                ><span
+                  >Emailed with your installer within about a minute, also kept
+                  in your dashboard.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>Download &amp; activate</b
+                ><span
+                  >Enter the key once, online, on first launch. That is the only
+                  time it needs a connection.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>Start billing</b
+                ><span
+                  >Run the counter offline from then on, with updates on the
+                  same key.</span
+                >
+              </div>
+            </li>
+          </ol>
         </div>
+      </section>
 
-        <p class="pricing__more"><a href="#features">…and a lot more →</a></p>
-      </div>
-    </section>
+      <!-- ================= 6. PLATFORMS ================= -->
+      <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]">
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mb-12 max-w-[640px]">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              Platforms
+            </p>
+            <h2 class="mb-3 text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">
+              One key, three builds.
+            </h2>
+            <p class="text-[1rem] leading-[1.7] text-muted">
+              The builds are not sold separately — a single licence key unlocks
+              all three, so Windows can run the counter while a handheld runs
+              Android. The network is required once, for activation; not to
+              sell.
+            </p>
+          </div>
 
-    <section class="legacy" id="features"><div class="wrap"><h2>Features</h2>
-      <p style="color:var(--text-muted)">Redesigned feature grid lands in the next pass.</p></div></section>
-    <section class="legacy" id="support"><div class="wrap"><h2>Docs &amp; Support</h2>
-      <p style="color:var(--text-muted)">Coming with the footer build-out.</p></div></section>
-  </main>
+          <div
+            class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5"
+          >
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                Windows
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Counter terminals &amp; back office
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                The full desktop application, keyboard-first, for the machines
+                that ring up sales all day.
+              </p>
+              <ul
+                class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Windows 10 or later, 64-bit</li>
+                <li>Delivered as an <code>.exe</code> installer</li>
+                <li>USB and network printer support</li>
+              </ul>
+              <a
+                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi mt-auto"
+                href="#download"
+                >Download</a
+              >
+            </article>
 
-  <script src="/js/main.js"></script>
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                macOS
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                The same app on Mac hardware
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Identical behaviour on Intel and Apple Silicon machines, for
+                shops that already run on Mac.
+              </p>
+              <ul
+                class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>macOS 11 (Big Sur) or later</li>
+                <li>Delivered as a <code>.dmg</code> installer</li>
+                <li>Universal — Intel and Apple Silicon</li>
+              </ul>
+              <a
+                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi mt-auto"
+                href="#download"
+                >Download</a
+              >
+            </article>
 
-  <footer class="site-footer">
-    <div class="wrap">
-      <div class="site-footer__grid">
-        <div class="site-footer__brand">
-          <a class="brand" href="index.html">
-            <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
-            Diwan
-          </a>
-          <p class="site-footer__tagline">
-            Keyboard-first point of sale for retail, restaurants and pharmacies.
-            One-time licence, works offline.
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <p
+                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              >
+                Android
+              </p>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Handhelds &amp; mobile counters
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                For order-taking at the table, stock checks in the aisle and
+                counters that move around.
+              </p>
+              <ul
+                class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Android 8.0 or later</li>
+                <li>Delivered as an <code>.apk</code> installer</li>
+                <li>Bluetooth and network printer support</li>
+              </ul>
+              <a
+                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi mt-auto"
+                href="#download"
+                >Download</a
+              >
+            </article>
+          </div>
+
+          <p class="mt-11 text-center">
+            <a
+              class="text-[.9rem] text-muted hover:text-accent"
+              href="products.html"
+              >Editions, builds and what's included →</a
+            >
           </p>
         </div>
+      </section>
 
-        <div>
-          <h2>Product</h2>
-          <ul>
-            <li><a href="products.html">Products &amp; Editions</a></li>
-            <li><a href="index.html#pricing">Pricing</a></li>
-            <li><a href="index.html#features">Features</a></li>
-            <li><a href="index.html#download">Download</a></li>
-          </ul>
+      <!-- =========================================================
+         Pricing and download below are UNCHANGED in behaviour —
+         same form id, same fields, same API call, same data-plan
+         links. See js/main.js.
+
+         "Get Started" no longer checks out directly: it hands off to
+         /auth/login.html (which links on to signup), or straight to
+         checkout.html if already signed in, carrying the chosen plan
+         along either way.
+
+         Prices and inclusions here are duplicated on pricing.html and
+         products.html and quoted in terms.html. Change all four
+         together, plus the products table seed in database/schema.sql.
+         ========================================================= -->
+
+      <!-- ================= 7. PRICING ================= -->
+      <section
+        class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]"
+        id="pricing"
+      >
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mx-auto mb-14 max-w-[620px] text-center">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              Pricing
+            </p>
+            <h2
+              class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]"
+            >
+              Simple pricing, one licence.
+            </h2>
+            <p class="text-[1.02rem] text-muted">
+              Pick the plan that matches how many counters you run. One-time
+              payment — no subscriptions, no surprise renewals.
+            </p>
+          </div>
+
+          <div
+            class="grid grid-cols-3 items-start gap-6 max-[900px]:mx-auto max-[900px]:grid-cols-1 max-[900px]:max-w-[420px]"
+          >
+            <article
+              class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8"
+            >
+              <div>
+                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Starter</h3>
+                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
+                  For a single counter just getting started.
+                </p>
+              </div>
+              <p class="mb-6 flex items-baseline gap-2">
+                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
+                  >Rs 8,000</span
+                >
+                <span class="text-[.85rem] text-faint">one-time</span>
+              </p>
+              <a
+                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
+                href="auth/login.html?plan=diwan-pos-starter"
+                data-plan="diwan-pos-starter"
+                >Get Started</a
+              >
+              <div class="mt-7 mb-5 h-px bg-line"></div>
+              <p class="mb-4 text-[.82rem] font-semibold text-muted">
+                Everything in Starter includes:
+              </p>
+              <ul
+                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
+              >
+                <li>1 terminal licence</li>
+                <li>Core billing &amp; inventory</li>
+                <li>Offline-first sync</li>
+                <li>Email support</li>
+                <li>Free software updates</li>
+              </ul>
+            </article>
+
+            <article
+              class="relative flex flex-col rounded-lg border border-accent-dim bg-elevated px-7 py-8 shadow-[0_0_0_1px_var(--color-accent-dim),0_30px_60px_-30px_rgba(0,0,0,.8),0_0_60px_-20px_var(--color-glow)] max-[900px]:translate-y-0 max-[900px]:shadow-none -translate-y-4"
+            >
+              <p
+                class="absolute -top-[.85rem] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-[.9rem] py-[.35rem] text-[.72rem] font-bold uppercase tracking-[.03em] text-accent-ink shadow-[0_8px_20px_-6px_var(--color-accent)]"
+              >
+                Most popular
+              </p>
+              <div>
+                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Standard</h3>
+                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
+                  For growing shops running a few counters.
+                </p>
+              </div>
+              <p class="mb-6 flex items-baseline gap-2">
+                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
+                  >Rs 12,000</span
+                >
+                <span class="text-[.85rem] text-faint">one-time</span>
+              </p>
+              <a
+                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
+                href="auth/login.html?plan=diwan-pos-standard"
+                data-plan="diwan-pos-standard"
+                >Get Started</a
+              >
+              <div class="mt-7 mb-5 h-px bg-line"></div>
+              <p class="mb-4 text-[.82rem] font-semibold text-muted">
+                Everything in Standard includes:
+              </p>
+              <ul
+                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
+              >
+                <li>Up to 3 terminals, 1 branch</li>
+                <li>All core modules + reporting</li>
+                <li>Receipt &amp; kitchen printer support</li>
+                <li>Priority email support</li>
+                <li>Free software updates</li>
+              </ul>
+            </article>
+
+            <article
+              class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8"
+            >
+              <div>
+                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Enterprise</h3>
+                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
+                  For multi-branch chains.
+                </p>
+              </div>
+              <p class="mb-6 flex items-baseline gap-2">
+                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
+                  >Rs 25,000</span
+                >
+                <span class="text-[.85rem] text-faint">one-time</span>
+              </p>
+              <a
+                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
+                href="auth/login.html?plan=diwan-pos-enterprise"
+                data-plan="diwan-pos-enterprise"
+                >Get Started</a
+              >
+              <div class="mt-7 mb-5 h-px bg-line"></div>
+              <p class="mb-4 text-[.82rem] font-semibold text-muted">
+                Everything in Enterprise includes:
+              </p>
+              <ul
+                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
+              >
+                <li>Unlimited terminals, multi-branch</li>
+                <li>All modules + multi-branch sync</li>
+                <li>Priority phone &amp; email support</li>
+                <li>Free software updates</li>
+              </ul>
+            </article>
+          </div>
+
+          <p class="mt-11 text-center">
+            <a
+              class="text-[.9rem] text-muted hover:text-accent"
+              href="features.html"
+              >…and a lot more →</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <!-- ================= 8. WHAT'S INCLUDED ================= -->
+      <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]">
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mb-9 max-w-[640px]">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              Included with every licence
+            </p>
+            <h2 class="mb-3 text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">
+              What you get besides the software.
+            </h2>
+            <p class="text-[1rem] leading-[1.7] text-muted">
+              These come with every purchase at no additional charge — they are
+              not separately priced add-ons.
+            </p>
+          </div>
+
+          <div
+            class="mb-9 rounded-md border border-accent-dim bg-glow-soft p-5 [&_p]:mb-0 [&_p]:text-ink"
+          >
+            <p>
+              <strong>Your licence key is the only credential you need.</strong>
+              It arrives by email with your installer, and the same key
+              downloads every future version. Nothing here asks for a password —
+              if a page ever does, it is not ours.
+            </p>
+          </div>
+
+          <div
+            class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5"
+          >
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Activation &amp; device moves
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Your key is activated once, online, on first launch; after that
+                Diwan runs entirely offline. Replace a machine and we move the
+                licence for you, usually within one business day.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>One-time online activation</li>
+                <li>One device per licence key</li>
+                <li>Manual transfers on request</li>
+              </ul>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Updates &amp; maintenance
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                New versions ship as updated installers, downloaded with the
+                same key you already own. No repurchase, no renewal, no
+                subscription to maintain.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Downloaded with your existing key</li>
+                <li>Free software updates</li>
+                <li>One-time payment, no renewal</li>
+              </ul>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                Support from Islamabad
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Installation, activation and software defects are covered on
+                every edition. Include your order reference and we reply within
+                one business day.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>Email support — all editions</li>
+                <li>Priority email — Standard and up</li>
+                <li>Phone support — Enterprise</li>
+              </ul>
+            </article>
+
+            <article
+              class="flex flex-col rounded-md border border-line bg-surface p-6"
+            >
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
+                14-day refund window
+              </h3>
+              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
+                Full refund within 14 days of purchase, as long as the key has
+                not been activated. Downloading and inspecting the software does
+                not affect your right to one.
+              </p>
+              <ul
+                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
+              >
+                <li>14 calendar days</li>
+                <li>Before activation only</li>
+                <li>No reason required</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 9. FAQ ================= -->
+      <section
+        class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]"
+        id="faq"
+      >
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mx-auto mb-11 max-w-[620px] text-center">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              FAQ
+            </p>
+            <h2
+              class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]"
+            >
+              Questions, answered.
+            </h2>
+            <p class="text-[1.02rem] text-muted">
+              The short version. The full detail lives in the docs.
+            </p>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            <details class="group rounded-md border border-line bg-surface">
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
+              >
+                Is there a subscription?<span
+                  aria-hidden="true"
+                  class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
+                  >+</span
+                >
+              </summary>
+              <p
+                class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
+              >
+                No. Diwan is a one-time purchase — Rs 8,000, Rs 12,000 or Rs
+                25,000 depending on the edition — with no automatic renewal.
+                Updates are downloaded later with the key you already own, at no
+                extra cost.
+              </p>
+            </details>
+
+            <details class="group rounded-md border border-line bg-surface">
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
+              >
+                Does it need the internet to sell?<span
+                  aria-hidden="true"
+                  class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
+                  >+</span
+                >
+              </summary>
+              <p
+                class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
+              >
+                No. The network is required once, for activation. After that the
+                till bills, tracks stock and prints without a connection, and
+                sync resumes by itself when the line returns.
+              </p>
+            </details>
+
+            <details class="group rounded-md border border-line bg-surface">
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
+              >
+                How do I get it after paying?<span
+                  aria-hidden="true"
+                  class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
+                  >+</span
+                >
+              </summary>
+              <p
+                class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
+              >
+                Your licence key and installer link are emailed within about a
+                minute of confirmed payment, and both stay in your dashboard.
+                There is no physical product and nothing to ship.
+              </p>
+            </details>
+
+            <details class="group rounded-md border border-line bg-surface">
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
+              >
+                What if the licence email never arrives?<span
+                  aria-hidden="true"
+                  class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
+                  >+</span
+                >
+              </summary>
+              <p
+                class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
+              >
+                Check spam and promotions first — receipt mail from a sole
+                proprietorship often lands there. If it is not there, confirm
+                the payment completed with your bank, then email your order
+                reference and we will resend it.
+              </p>
+            </details>
+
+            <details class="group rounded-md border border-line bg-surface">
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
+              >
+                Can I move my licence to a new computer?<span
+                  aria-hidden="true"
+                  class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
+                  >+</span
+                >
+              </summary>
+              <p
+                class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
+              >
+                Yes. A key binds to one device at a time, and moves are done by
+                us rather than a self-service button — that is deliberate, so a
+                leaked key cannot be moved by a stranger. Email support with
+                your key or order reference; moves normally complete within one
+                business day.
+              </p>
+            </details>
+
+            <details class="group rounded-md border border-line bg-surface">
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
+              >
+                What if it does not work for my shop?<span
+                  aria-hidden="true"
+                  class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
+                  >+</span
+                >
+              </summary>
+              <p
+                class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
+              >
+                Ask for a full refund within 14 days of purchase, as long as the
+                key has not been activated. You may download and inspect the
+                software first — only activation closes the window, and no
+                reason is required.
+              </p>
+            </details>
+
+            <details class="group rounded-md border border-line bg-surface">
+              <summary
+                class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
+              >
+                Do you see my sales data?<span
+                  aria-hidden="true"
+                  class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
+                  >+</span
+                >
+              </summary>
+              <p
+                class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
+              >
+                No. Diwan is offline-first: your sales, stock and customers stay
+                on your own machine and are never uploaded to us. We keep only
+                the account, order and licence records needed to sell and
+                support the software — detailed in the
+                <a class="text-accent hover:underline" href="privacy.html"
+                  >Privacy Policy</a
+                >.
+              </p>
+            </details>
+          </div>
+
+          <p class="mt-9 text-center">
+            <a
+              class="text-[.9rem] text-muted hover:text-accent"
+              href="support.html"
+              >More answers in Docs &amp; Support →</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <!-- ================= 10. GET STARTED + DOWNLOAD ================= -->
+      <section
+        class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]"
+        id="download"
+      >
+        <div
+          class="mx-auto grid w-full max-w-[1180px] grid-cols-[1.1fr_1fr] items-start gap-12 px-[clamp(1.25rem,4vw,2rem)] max-[860px]:grid-cols-1"
+        >
+          <div>
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              Get started
+            </p>
+            <h2
+              class="mb-4 max-w-[16ch] text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]"
+            >
+              Run your counter at the speed of typing.
+            </h2>
+            <p class="mb-7 max-w-[52ch] text-[1rem] leading-[1.7] text-muted">
+              Pick a plan, pay once, and your licence key lands in your inbox
+              with the installer. First bill usually takes minutes, not days.
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <a
+                class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-7 py-[.95rem] text-[1rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
+                href="#pricing"
+                >See plans &amp; pricing</a
+              >
+              <a
+                class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-7 py-[.95rem] text-[1rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
+                href="contact.html"
+                >Talk to us</a
+              >
+            </div>
+            <p class="mt-6 text-[.84rem] text-faint">
+              Support Monday to Saturday, 10:00am &ndash; 7:00pm PKT ·
+              <a class="hover:text-accent" href="tel:+923143288112"
+                >0314 3288112</a
+              >
+            </p>
+          </div>
+
+          <div
+            class="rounded-lg border border-line bg-surface p-7 max-[860px]:mt-2"
+          >
+            <h3 class="mb-1 text-[1.15rem] tracking-[-.01em]">
+              Already purchased?
+            </h3>
+            <p class="mb-5 text-[.9rem] text-muted">
+              Paste your licence key to get a single-use installer link. No
+              sign-in required.
+            </p>
+            <form class="flex flex-col gap-3" id="download-form">
+              <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted"
+                >Licence key
+                <input
+                  class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none"
+                  type="text"
+                  name="license_key"
+                  required
+                  placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"
+              /></label>
+              <select
+                class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none"
+                name="platform"
+              >
+                <option value="windows">Windows (.exe)</option>
+                <option value="macos">macOS (.dmg)</option>
+                <option value="android">Android (.apk)</option>
+              </select>
+              <button
+                class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
+                type="submit"
+              >
+                Get download link
+              </button>
+            </form>
+            <p
+              class="min-h-6 text-[.9rem] text-muted"
+              id="download-status"
+              role="status"
+            ></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/js/main.js"></script>
+
+    <footer class="border-t border-line bg-elevated py-14 pb-8">
+      <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+        <div
+          class="grid gap-10 grid-cols-[1.4fr_1fr_1fr_1.3fr] max-[860px]:grid-cols-2 max-[860px]:gap-8 max-xs:grid-cols-1"
+        >
+          <div class="max-[860px]:col-span-2">
+            <a
+              class="mb-[.9rem] inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]"
+              href="index.html"
+            >
+              <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28" />
+              Diwan
+            </a>
+            <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">
+              Keyboard-first point of sale for retail, restaurants and
+              pharmacies. One-time licence, works offline.
+            </p>
+          </div>
+
+          <div>
+            <h2
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint"
+            >
+              Product
+            </h2>
+            <ul class="flex flex-col gap-[.6rem]">
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="products.html"
+                  >Products &amp; Editions</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="pricing.html"
+                  >Pricing</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="features.html"
+                  >Features</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="support.html"
+                  >Docs &amp; Support</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="index.html#download"
+                  >Download</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint"
+            >
+              Legal
+            </h2>
+            <ul class="flex flex-col gap-[.6rem]">
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="privacy.html"
+                  >Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="refund-policy.html"
+                  >Refund Policy</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="service-delivery.html"
+                  >Service Delivery</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-[.88rem] text-muted hover:text-accent"
+                  href="terms.html"
+                  >Terms &amp; Conditions</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.08em] text-faint"
+            >
+              Contact
+            </h2>
+            <address
+              class="not-italic text-[.88rem] leading-[1.75] text-muted [&_a]:inline"
+            >
+              Diwan — operated by Hamza Waheed<br />
+              I-10/2, Islamabad 44000<br />
+              Islamabad Capital Territory, Pakistan<br />
+              <a class="hover:text-accent" href="tel:+923143288112"
+                >0314 3288112</a
+              ><br />
+              <a
+                class="hover:text-accent"
+                href="mailto:hamzawaheed057@gmail.com"
+                >hamzawaheed057@gmail.com</a
+              >
+            </address>
+          </div>
         </div>
 
-        <div>
-          <h2>Legal</h2>
-          <ul>
-            <li><a href="privacy.html">Privacy Policy</a></li>
-            <li><a href="refund-policy.html">Refund Policy</a></li>
-            <li><a href="service-delivery.html">Service Delivery</a></li>
-            <li><a href="terms.html">Terms &amp; Conditions</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h2>Contact</h2>
-          <address>
-            Diwan — operated by Hamza Waheed<br>
-            I-10/2, Islamabad 44000<br>
-            Islamabad Capital Territory, Pakistan<br>
-            <a href="tel:+923143288112">0314 3288112</a><br>
-            <a href="mailto:hamzawaheed057@gmail.com">hamzawaheed057@gmail.com</a>
-          </address>
+        <div
+          class="mt-8 flex flex-wrap justify-between gap-4 border-t border-line pt-6 text-[.82rem] text-faint"
+        >
+          <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
+          <p><a class="hover:text-accent" href="contact.html">Contact</a></p>
         </div>
       </div>
-
-      <div class="site-footer__bottom">
-        <p>&copy; 2026 Diwan. Operated by Hamza Waheed, sole proprietor.</p>
-        <p><a href="contact.html">Contact</a></p>
-      </div>
-    </div>
-  </footer>
-
-</body>
+    </footer>
+  </body>
 </html>

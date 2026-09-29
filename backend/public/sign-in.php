@@ -44,7 +44,7 @@ if (LoginAttempts::isRateLimited($ip, $email)) {
 }
 
 $customer = Database::pdo()->prepare(
-    'SELECT id, password_hash, session_epoch, apple_sub FROM customers WHERE email = :email LIMIT 1'
+    'SELECT id, password_hash, session_epoch, email_verified_at, apple_sub FROM customers WHERE email = :email LIMIT 1'
 );
 $customer->execute(['email' => $email]);
 $customer = $customer->fetch();
@@ -94,6 +94,20 @@ if (PasswordService::needsRehash((string) $customer['password_hash'])) {
 
 LoginAttempts::record($ip, $email, 'ok');
 LoginAttempts::clearFor($email);
+
+// Verification gate — deliberately AFTER the password check, never before it.
+// Answering "not verified" to someone who has not proven the password would
+// hand out account status for free; the only people who ever see this are
+// those who already know the password for the address, who learned nothing
+// they could not learn by just succeeding.
+if ($customer['email_verified_at'] === null) {
+    Logger::info('Sign-in blocked: email not verified', ['customer_id' => $customerId]);
+    Http::json([
+        'status'  => 'email_not_verified',
+        'message' => 'Your email address hasn\'t been verified yet. Check your inbox for the '
+                   . 'verification link, or resend it below.',
+    ], 403);
+}
 
 // Epoch comes from the row already read above, so starting the session costs
 // no extra query.

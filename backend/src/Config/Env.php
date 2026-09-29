@@ -37,11 +37,16 @@ final class Env
             }
             [$key, $value] = explode('=', $line, 2);
             $value = trim($value);
-            // Strip inline comments on unquoted values, then surrounding quotes.
-            if ($value !== '' && $value[0] !== '"' && $value[0] !== "'") {
+            // Quoted value: everything up to the matching closing quote is
+            // the value; a trailing comment after the quote is ignored.
+            // Unquoted: strip an inline comment (whitespace + #).
+            if ($value !== '' && ($value[0] === '"' || $value[0] === "'")) {
+                $quote = $value[0];
+                $end = strpos($value, $quote, 1);
+                $value = $end === false ? substr($value, 1) : substr($value, 1, $end - 1);
+            } else {
                 $value = trim(preg_replace('/\s+#.*$/', '', $value));
             }
-            $value = trim($value, "\"'");
             self::$values[trim($key)] = $value;
         }
         self::$loaded = true;

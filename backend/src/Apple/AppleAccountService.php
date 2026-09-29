@@ -39,7 +39,8 @@ final class AppleAccountService
 
             if (!$customer && $claims['email'] !== null && $claims['email_verified']) {
                 $byEmail = $pdo->prepare(
-                    'SELECT id, session_epoch, name, apple_sub FROM customers WHERE email = :email LIMIT 1 FOR UPDATE'
+                    'SELECT id, session_epoch, name, apple_sub, email_verified_at
+                       FROM customers WHERE email = :email LIMIT 1 FOR UPDATE'
                 );
                 $byEmail->execute(['email' => $claims['email']]);
                 $customer = $byEmail->fetch();
@@ -48,7 +49,22 @@ final class AppleAccountService
                     // account from one Apple ID to another.
                     throw new RuntimeException('That email address is already linked to a different Apple ID.');
                 }
-                if ($customer) {
+                if ($customer && $customer['email_verified_at'] === null) {
+                    // An unverified row means nobody has proved they own this
+                    // mailbox — anyone can register someone else's address and
+                    // pick its password. Apple has just proved ownership, so the
+                    // account becomes this person's: drop the unproven password
+                    // and end any sessions, or its author would share the account.
+                    $pdo->prepare(
+                        'UPDATE customers
+                            SET apple_sub = :sub, email_verified_at = NOW(),
+                                password_hash = NULL, password_set_at = NULL,
+                                session_epoch = session_epoch + 1
+                          WHERE id = :id'
+                    )->execute(['sub' => $claims['sub'], 'id' => $customer['id']]);
+                    $customer['session_epoch'] = (int) $customer['session_epoch'] + 1;
+                    Logger::info('Apple ID claimed unverified account', ['customer_id' => (int) $customer['id']]);
+                } elseif ($customer) {
                     $pdo->prepare('UPDATE customers SET apple_sub = :sub WHERE id = :id')
                         ->execute(['sub' => $claims['sub'], 'id' => $customer['id']]);
                     Logger::info('Apple ID linked to existing account', ['customer_id' => (int) $customer['id']]);
@@ -64,8 +80,14 @@ final class AppleAccountService
                     );
                 }
                 $pdo->prepare(
-                    'INSERT INTO customers (email, name, apple_sub, created_at) VALUES (:email, :name, :sub, NOW())'
-                )->execute(['email' => $claims['email'], 'name' => $name, 'sub' => $claims['sub']]);
+                    'INSERT INTO customers (email, name, apple_sub, email_verified_at, created_at)
+                     VALUES (:email, :name, :sub, IF(:verified = 1, NOW(), NULL), NOW())'
+                )->execute([
+                    'email'    => $claims['email'],
+                    'name'     => $name,
+                    'sub'      => $claims['sub'],
+                    'verified' => $claims['email_verified'] ? 1 : 0,   // Apple checked the mailbox
+                ]);
                 $id = (int) $pdo->lastInsertId();
                 (new TrialService())->ensureForCustomer($pdo, $id);
                 $customer = ['id' => $id, 'session_epoch' => 0, 'name' => $name];
@@ -158,7 +180,7 @@ final class AppleAccountService
                 ->execute(['id' => $customerId]);
             $pdo->prepare('UPDATE licenses SET customer_email = "" WHERE customer_id = :id')
                 ->execute(['id' => $customerId]);
-            $pdo->prepare('DELETE FROM login_tokens WHERE customer_id = :id')->execute(['id' => $customerId]);
+            $pdo->prepare('DELETE FROM email_verification_tokens WHERE customer_id = :id')->execute(['id' => $customerId]);
             $pdo->prepare('DELETE FROM password_reset_tokens WHERE customer_id = :id')->execute(['id' => $customerId]);
 
             $token = $this->decrypt($row['apple_refresh_token_encrypted']);
