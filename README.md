@@ -180,3 +180,39 @@ deploy.
 Installers are **never** in git and **never** in the pipeline. Upload once by
 FTP to `~/app/private-storage/releases/`, then insert a row in `releases`. Full
 instructions in `backend/private-storage/README.md`.
+
+## License
+
+The source code in this repository is released under the [MIT License](LICENSE).
+Copyright © 2026 hmzi67.
+
+Bundled third-party code keeps its own license — notably
+`backend/src/ThirdParty/sodium_compat/` (ISC). See the respective `LICENSE`
+files.
+
+## Trademarks
+
+**Diwan**, the Diwan logo, and all related names, logos, icons, and brand
+assets are trademarks of hmzi67. The MIT License applies to the source code
+only; it does **not** grant permission to use the Diwan name or branding.
+
+You may not use these trademarks to name, endorse, or promote a fork,
+derivative work, product, or service, or in any way that suggests affiliation
+with or approval by the owner, without prior written permission. Plain,
+accurate references to the original project (e.g. "based on Diwan") are fine.
+
+If you fork this project, remove the Diwan name and branding and use your own.
+
+## Ownership
+
+Diwan, including its design, content, and brand, is the property of hmzi67.
+All rights not expressly granted by the MIT License are reserved.
+
+Website content that is not source code — product copy, screenshots,
+illustrations, logos, and other media under `frontend/src/assets/` — is
+**not** covered by the MIT License and may not be reused without permission.
+
+The official Diwan storefront, payment processing, licence keys, and
+installers are operated solely by the owner. A licence purchased through the
+official site applies only to the official Diwan software; running a copy of
+this code does not create or validate genuine Diwan licences.
