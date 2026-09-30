@@ -26,6 +26,9 @@ use RuntimeException;
  */
 final class DownloadService
 {
+    /** Every platform an installer can be issued for; mirrors releases.platform. */
+    public const PLATFORMS = ['windows', 'macos', 'linux', 'android'];
+
     /**
      * How long a single download LINK stays valid, in minutes. This governs the
      * link only — it has nothing to do with how long the customer's licence
@@ -36,8 +39,9 @@ final class DownloadService
     private const TOKEN_TTL_MINUTES = 15;
 
     /**
-     * $variant picks one build when a platform ships several (e.g. macOS
-     * 'apple-silicon' / 'intel'). '' means "whatever this platform has".
+     * $variant picks one build when a platform ships several (macOS
+     * 'apple-silicon' / 'intel', Windows 'x64' / 'x86', Linux 'appimage' /
+     * 'deb' / 'rpm'). '' means "whatever this platform has".
      */
     public function issueToken(int $licenseId, string $platform, string $ip, string $variant = ''): array
     {

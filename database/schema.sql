@@ -213,8 +213,8 @@ CREATE TABLE IF NOT EXISTS apple_transactions (
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS releases (
   id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  platform        ENUM('windows','macos','android') NOT NULL,
-  variant         VARCHAR(32)  NOT NULL DEFAULT '' COMMENT '\'\' = only build; else e.g. apple-silicon / intel',
+  platform        ENUM('windows','macos','android','linux') NOT NULL,
+  variant         VARCHAR(32)  NOT NULL DEFAULT '' COMMENT '\'\' = only build; else e.g. apple-silicon / intel, x64 / x86, appimage / deb / rpm',
   version         VARCHAR(32)  NOT NULL,
   filename        VARCHAR(190) NOT NULL COMMENT 'Name shown to the customer',
   storage_path    VARCHAR(255) NOT NULL COMMENT 'Relative to private-storage/releases/',

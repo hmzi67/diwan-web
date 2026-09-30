@@ -5,6 +5,7 @@ namespace Diwan\Auth;
 
 use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Download\DownloadService;
 use Diwan\Support\Logger;
 use Diwan\Support\Mailer;
 use PDO;
@@ -87,7 +88,7 @@ final class PasswordResetService
         // has to type a new password, so there is nothing to redeem yet.
         $link = rtrim((string) Env::require('APP_URL'), '/')
             . '/auth/reset-password.html?token=' . $token;
-        if (in_array($platform, ['windows', 'macos', 'android'], true)) {
+        if (in_array($platform, DownloadService::PLATFORMS, true)) {
             $link .= '&platform=' . $platform;
         }
 

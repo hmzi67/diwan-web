@@ -10,12 +10,15 @@
  *   ... --asset=macos:intel=Diwan_x64.dmg                 # override one variant
  *
  * Picking, per platform (anything else — .blockmap, .yml, .zip, .deb,
- * checksums — is ignored):
- *   windows  one build: 64-bit over 32-bit, then a "-setup.exe" over any other
- *            .exe, then .msi
+ * .tar.gz, checksums — is ignored):
+ *   windows  a "-setup.exe" over any other .exe, then .msi; if the release has
+ *            both a 64-bit and a 32-bit build, BOTH are registered (variants
+ *            x64 / x86) and the customer chooses; otherwise one build, variant ''
  *   macos    .dmg over .pkg; if the release has both an Apple Silicon and an
  *            Intel build, BOTH are registered (variants apple-silicon / intel)
  *            and the customer chooses; otherwise one build, variant ''
+ *   linux    every package format present, one variant each: appimage, deb,
+ *            rpm (a 64-bit build over any other within a format)
  *   android  a "universal" .apk if there is one, else the largest
  *
  * Every chosen asset is upserted into `releases` as source = github. The
@@ -28,6 +31,7 @@ require dirname(__DIR__) . '/backend/src/bootstrap-autoload.php';
 
 use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Download\DownloadService;
 use Diwan\Download\GitHubReleases;
 
 if (PHP_SAPI !== 'cli') {
@@ -46,7 +50,7 @@ foreach (array_slice($argv, 1) as $arg) {
         $mode = 'dry';
     } elseif (str_starts_with($arg, '--env=')) {
         $envPath = substr($arg, 6);
-    } elseif (preg_match('/^--asset=(windows|macos|android)(?::([a-z0-9-]{1,32}))?=(.+)$/', $arg, $m)) {
+    } elseif (preg_match('/^--asset=(windows|macos|linux|android)(?::([a-z0-9-]{1,32}))?=(.+)$/', $arg, $m)) {
         $overrides[$m[1] . ':' . $m[2]] = $m[3];
     } elseif (!str_starts_with($arg, '--') && $tag === null) {
         $tag = $arg;
@@ -70,6 +74,7 @@ $log = static function (string $line) use ($mode): void {
 const EXTENSIONS = [
     'exe' => 'windows', 'msi' => 'windows',
     'dmg' => 'macos',   'pkg' => 'macos',
+    'appimage' => 'linux', 'deb' => 'linux', 'rpm' => 'linux',
     'apk' => 'android',
 ];
 
@@ -131,10 +136,29 @@ foreach ($assets as $asset) {
 
 // Chosen builds: platform => [variant => asset].
 $chosen = [];
-foreach (['windows', 'macos', 'android'] as $platform) {
+foreach (DownloadService::PLATFORMS as $platform) {
     $candidates = $byPlatform[$platform] ?? [];
     if (!$candidates) {
         continue;
+    }
+    if ($platform === 'linux') {
+        // Formats are not interchangeable (a .deb will not install on Fedora),
+        // so each one present is its own build.
+        $byFormat = [];
+        foreach ($candidates as $asset) {
+            $byFormat[strtolower(pathinfo($asset['name'], PATHINFO_EXTENSION))][] = $asset;
+        }
+        ksort($byFormat);
+        $chosen['linux'] = array_map('best', $byFormat);
+        continue;
+    }
+    if ($platform === 'windows') {
+        $x64 = array_values(array_filter($candidates, static fn ($a) => archOf($a['name']) === 'x64'));
+        $x86 = array_values(array_filter($candidates, static fn ($a) => archOf($a['name']) === 'x86'));
+        if ($x64 && $x86) {
+            $chosen['windows'] = ['x64' => best($x64), 'x86' => best($x86)];
+            continue;
+        }
     }
     if ($platform === 'macos') {
         $arm   = array_values(array_filter($candidates, static fn ($a) => archOf($a['name']) === 'arm64'));
@@ -164,7 +188,7 @@ foreach ($overrides as $slot => $name) {
 
 $version = ltrim($tag, 'vV');
 $log("\n");
-foreach (['windows', 'macos', 'android'] as $platform) {
+foreach (DownloadService::PLATFORMS as $platform) {
     if (empty($chosen[$platform])) {
         $log("  MISSING   no {$platform} installer on {$tag}\n");
         continue;
@@ -198,7 +222,7 @@ if ($mode === 'sql') {
     // Values come from GitHub asset names; quote them the way MySQL expects.
     $q = static fn (string $v): string => "'" . str_replace(['\\', "'"], ['\\\\', "\\'"], $v) . "'";
     echo "-- Diwan: register GitHub release {$tag} as the active downloads.\n";
-    echo "-- Paste into phpMyAdmin (SQL tab) on the production database. Needs migration 010.\n";
+    echo "-- Paste into phpMyAdmin (SQL tab) on the production database. Needs migration 010 (and 012 for Linux).\n";
     echo "START TRANSACTION;\n";
     foreach ($chosen as $platform => $builds) {
         echo sprintf($deactivate, $q($platform)) . ";\n";

@@ -9,6 +9,7 @@ require __DIR__ . '/_bootstrap.php';
 
 use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Download\DownloadService;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
 
@@ -94,7 +95,7 @@ if ($checks['database'] ?? false) {
         $sources = Database::pdo()->query(
             'SELECT platform, source FROM releases WHERE is_active = 1'
         )->fetchAll(PDO::FETCH_KEY_PAIR);
-        $missing = array_values(array_diff(['windows', 'macos', 'android'], array_keys($sources)));
+        $missing = array_values(array_diff(DownloadService::PLATFORMS, array_keys($sources)));
         if ($missing !== []) {
             $hints['downloads_missing'] = $missing;
         }

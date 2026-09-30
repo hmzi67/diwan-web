@@ -145,7 +145,7 @@
                   <h2 id="progress-title">Your progress</h2>
                   <ol class="dash-steps" data-steps>
                     <li data-step="key"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Get your licence key</strong><small>Start a trial or buy a licence</small></div></li>
-                    <li data-step="download"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Download &amp; install</strong><small>Windows, macOS or Android</small></div></li>
+                    <li data-step="download"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Download &amp; install</strong><small>Windows, macOS, Linux or Android</small></div></li>
                     <li data-step="activate"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Activate on your device</strong><small>Paste your key when Diwan asks</small></div></li>
                   </ol>
                   <a class="btn btn--ghost btn--sm panel__btn" href="#setup">Open setup guide</a>
@@ -219,6 +219,7 @@
                     <div class="seg howto__tabs" role="tablist" aria-label="Activation instructions for">
                       <button class="howto__tab" type="button" role="tab" data-howto="windows" aria-selected="true">Windows</button>
                       <button class="howto__tab" type="button" role="tab" data-howto="macos" aria-selected="false">macOS</button>
+                      <button class="howto__tab" type="button" role="tab" data-howto="linux" aria-selected="false">Linux</button>
                       <button class="howto__tab" type="button" role="tab" data-howto="android" aria-selected="false">Android</button>
                     </div>
                     <ol class="howto__list" data-howto-panel="windows" role="tabpanel">
@@ -229,6 +230,11 @@
                     <ol class="howto__list" data-howto-panel="macos" role="tabpanel" hidden>
                       <li>Open the downloaded <code>.dmg</code> and drag Diwan into <strong>Applications</strong>.</li>
                       <li>First launch: right-click Diwan and choose <strong>Open</strong>.</li>
+                      <li>Paste your licence key when asked and click <strong>Activate</strong>.</li>
+                    </ol>
+                    <ol class="howto__list" data-howto-panel="linux" role="tabpanel" hidden>
+                      <li><strong>AppImage:</strong> make it executable (<code>chmod +x Diwan_*.AppImage</code>) and run it. <strong>.deb / .rpm:</strong> install with <code>sudo apt install ./Diwan_*.deb</code> or <code>sudo dnf install ./Diwan-*.rpm</code>.</li>
+                      <li>Launch <strong>Diwan POS</strong> from your applications menu.</li>
                       <li>Paste your licence key when asked and click <strong>Activate</strong>.</li>
                     </ol>
                     <ol class="howto__list" data-howto-panel="android" role="tabpanel" hidden>
@@ -309,7 +315,7 @@
                 <article class="item">
                   <h3>Windows</h3>
                   <ul class="item__spec">
-                    <li>Windows 10 or later, 64-bit</li>
+                    <li>Windows 10 or later, 64-bit or 32-bit</li>
                     <li>Delivered as an <code>.exe</code> installer</li>
                     <li>USB and network printer support</li>
                   </ul>
@@ -323,6 +329,15 @@
                     <li>Separate Apple Silicon and Intel builds</li>
                   </ul>
                   <a class="btn btn--ghost item__cta" href="#setup" data-pick-platform="macos">Download for macOS</a>
+                </article>
+                <article class="item">
+                  <h3>Linux</h3>
+                  <ul class="item__spec">
+                    <li>64-bit (x86_64) distributions</li>
+                    <li>Delivered as <code>.AppImage</code>, <code>.deb</code> or <code>.rpm</code></li>
+                    <li>AppImage runs on any distribution</li>
+                  </ul>
+                  <a class="btn btn--ghost item__cta" href="#setup" data-pick-platform="linux">Download for Linux</a>
                 </article>
                 <article class="item">
                   <h3>Android</h3>
@@ -435,7 +450,7 @@
             <ul class="assure">
               <li><strong>One-time payment</strong><span>No subscription or renewal fees</span></li>
               <li><strong>14-day refund</strong><span>Full refund if your key isn&rsquo;t activated</span></li>
-              <li><strong>Every platform</strong><span>Windows, macOS and Android included</span></li>
+              <li><strong>Every platform</strong><span>Windows, macOS, Linux and Android included</span></li>
               <li><strong>Free updates</strong><span>Downloaded with your existing key</span></li>
             </ul>
           </section>

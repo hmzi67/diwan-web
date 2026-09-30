@@ -5,15 +5,33 @@
 // Pricing, Help) switched by the URL hash, so every sidebar/tab link stays
 // inside the dashboard and the browser back button still works.
 const API = '/api';
-const platforms = { windows: 'Windows', macos: 'macOS', android: 'Android' };
+const platforms = { windows: 'Windows', macos: 'macOS', linux: 'Linux', android: 'Android' };
 const requestedPlatform = new URLSearchParams(window.location.search).get('platform');
 let platform = Object.hasOwn(platforms, requestedPlatform) ? requestedPlatform : 'windows';
 const platformQuery = `?platform=${encodeURIComponent(platform)}`;
-// macOS ships separate Apple Silicon and Intel builds. Apple Silicon is the
-// default (every Mac sold since 2020); detectMacVariant() corrects it where the
-// browser can tell (Chromium reports the CPU architecture; Safari does not).
-const MAC_VARIANTS = { 'apple-silicon': 'Apple Silicon (M1–M4)', intel: 'Intel' };
-let macVariant = 'apple-silicon';
+// Platforms that ship more than one build, and the choice each one offers.
+// The first option is the default: 64-bit Windows, Apple Silicon (every Mac
+// sold since 2020), and AppImage (runs on any distribution). detectVariants()
+// corrects Windows and macOS where the browser can tell — Chromium reports the
+// CPU architecture and bitness; Safari and Firefox do not.
+const VARIANTS = {
+  windows: {
+    label: 'Windows version',
+    options: { x64: '64-bit', x86: '32-bit' },
+    hint: 'Not sure? Settings → System → About: <b>System type</b> says 64-bit or 32-bit.',
+  },
+  macos: {
+    label: "Your Mac's chip",
+    options: { 'apple-silicon': 'Apple Silicon (M1–M4)', intel: 'Intel' },
+    hint: 'Not sure? Apple menu → <b>About This Mac</b>: “Chip” means Apple Silicon, “Processor” means Intel.',
+  },
+  linux: {
+    label: 'Package format',
+    options: { appimage: 'AppImage', deb: '.deb', rpm: '.rpm' },
+    hint: '<b>AppImage</b> runs on any distribution. <b>.deb</b> for Ubuntu/Debian, <b>.rpm</b> for Fedora/RHEL.',
+  },
+};
+const selectedVariant = Object.fromEntries(Object.entries(VARIANTS).map(([p, v]) => [p, Object.keys(v.options)[0]]));
 const TRIAL_DAYS = 30;
 const DAY_MS = 86400000;
 
@@ -41,6 +59,7 @@ const ICONS = {
   check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
   windows: '<path d="M3 5.5 10 4.5v7H3zM12 4.2 21 3v8.5h-9zM3 12.5h7v7L3 18.5zM12 12.5h9V21l-9-1.2z"/>',
   macos: '<path d="M16 3c-1 .1-2.2.8-2.9 1.6-.6.7-1.1 1.8-.9 2.8 1.1 0 2.2-.6 2.9-1.4.6-.8 1-1.9.9-3zM19.5 16.6c-.5 1.2-.8 1.7-1.5 2.7-.9 1.4-2.2 3.1-3.8 3.1-1.4 0-1.8-.9-3.7-.9s-2.3.9-3.7.9c-1.6 0-2.8-1.6-3.7-3C.6 15.5.3 11 1.9 8.6 3 6.9 4.8 5.9 6.5 5.9c1.7 0 2.8.9 4.2.9 1.4 0 2.2-.9 4.2-.9 1.5 0 3.1.8 4.2 2.2-3.7 2-3.1 7.3.4 8.5z"/>',
+  linux: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M12 15h5"/>',
   android: '<path d="M5 10v6M19 10v6M7 9h10v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1zM9 18v3M15 18v3M8 9a4 4 0 0 1 8 0M8 4l1.5 2M16 4l-1.5 2"/>',
 };
 
@@ -378,16 +397,17 @@ function downloadPanel(order, { title = true } = {}) {
           </label>`).join('')}
       </div>
       <button class="btn btn--primary dl__btn" type="submit">${icon('download', 16)}<span data-dl-label>Download for ${platforms[platform]}</span></button>
-      <div class="dl__variant" data-mac-variant ${platform === 'macos' ? '' : 'hidden'}>
-        <div class="seg seg--sm" role="radiogroup" aria-label="Your Mac's chip">
-          ${Object.entries(MAC_VARIANTS).map(([value, label]) => `
-            <label class="seg__opt">
-              <input type="radio" name="variant" value="${value}" ${value === macVariant ? 'checked' : ''}>
-              <span>${label}</span>
-            </label>`).join('')}
-        </div>
-        <small>Not sure? Apple menu → <b>About This Mac</b>: “Chip” means Apple Silicon, “Processor” means Intel.</small>
-      </div>
+      ${Object.entries(VARIANTS).map(([name, { label, options, hint }]) => `
+        <div class="dl__variant" data-variant-for="${name}" ${platform === name ? '' : 'hidden'}>
+          <div class="seg seg--sm" role="radiogroup" aria-label="${label}">
+            ${Object.entries(options).map(([value, text]) => `
+              <label class="seg__opt">
+                <input type="radio" name="variant_${name}" value="${value}" ${value === selectedVariant[name] ? 'checked' : ''}>
+                <span>${text}</span>
+              </label>`).join('')}
+          </div>
+          <small>${hint}</small>
+        </div>`).join('')}
       <p role="status" class="download-status"></p>
     </form>`;
 }
@@ -473,7 +493,7 @@ function renderQuick(primary) {
     ? `<a class="qa" href="${href}" ${attrs}><span class="qa__icon">${icon(iconName, 20)}</span><span class="qa__text"><strong>${title}</strong><small>${sub}</small></span></a>`
     : `<button class="qa" type="button" ${attrs}><span class="qa__icon">${icon(iconName, 20)}</span><span class="qa__text"><strong>${title}</strong><small>${sub}</small></span></button>`;
 
-  tiles.push(tile({ iconName: 'download', title: 'Download Diwan', sub: 'Windows, macOS or Android', href: '#setup' }));
+  tiles.push(tile({ iconName: 'download', title: 'Download Diwan', sub: 'Windows, macOS, Linux or Android', href: '#setup' }));
 
   if (primary && primary.license_key) {
     tiles.push(tile({ iconName: 'copy', title: 'Copy licence key', sub: 'Paste it into Diwan to activate', attrs: `data-copy="${escapeHtml(primary.license_key)}"` }));
@@ -538,29 +558,34 @@ function choosePlatform(name) {
     if (radio) radio.checked = true;
     const label = form.querySelector('[data-dl-label]');
     if (label) label.textContent = `Download for ${platforms[name]}`;
-    const variants = form.querySelector('[data-mac-variant]');
-    if (variants) variants.hidden = name !== 'macos';
+    form.querySelectorAll('[data-variant-for]').forEach((group) => {
+      group.hidden = group.dataset.variantFor !== name;
+    });
   });
   selectHowto(name);
 }
 
-function chooseMacVariant(value) {
-  if (!Object.hasOwn(MAC_VARIANTS, value)) return;
-  macVariant = value;
-  document.querySelectorAll(`[data-download] input[name="variant"][value="${value}"]`).forEach((radio) => {
+function chooseVariant(name, value) {
+  if (!Object.hasOwn(VARIANTS, name) || !Object.hasOwn(VARIANTS[name].options, value)) return;
+  selectedVariant[name] = value;
+  document.querySelectorAll(`[data-download] input[name="variant_${name}"][value="${value}"]`).forEach((radio) => {
     radio.checked = true;
   });
 }
 
-async function detectMacVariant() {
+async function detectVariants() {
   try {
     const ua = navigator.userAgentData;
-    if (!ua || ua.platform !== 'macOS' || !ua.getHighEntropyValues) return;
-    const { architecture } = await ua.getHighEntropyValues(['architecture']);
-    if (architecture === 'x86') chooseMacVariant('intel');
-    else if (architecture === 'arm') chooseMacVariant('apple-silicon');
+    if (!ua || !ua.getHighEntropyValues) return;
+    const { architecture, bitness } = await ua.getHighEntropyValues(['architecture', 'bitness']);
+    if (ua.platform === 'macOS') {
+      if (architecture === 'x86') chooseVariant('macos', 'intel');
+      else if (architecture === 'arm') chooseVariant('macos', 'apple-silicon');
+    } else if (ua.platform === 'Windows' && architecture === 'x86' && bitness === '32') {
+      chooseVariant('windows', 'x86');
+    }
   } catch {
-    // Hint unavailable — keep the Apple Silicon default.
+    // Hint unavailable — keep the defaults.
   }
 }
 
@@ -613,7 +638,7 @@ async function load() {
     renderPlans(licensed);
     prefillContact(data, primary);
     selectHowto(platform);
-    detectMacVariant();
+    detectVariants();
 
     document.querySelectorAll('[data-upgrade]').forEach((el) => {
       el.hidden = !(primary && primary.gateway === 'trial')
@@ -721,8 +746,8 @@ document.addEventListener('change', (e) => {
   if (e.target.name === 'platform' && e.target.closest('[data-download]')) {
     choosePlatform(e.target.value);
   }
-  if (e.target.name === 'variant' && e.target.closest('[data-download]')) {
-    chooseMacVariant(e.target.value);
+  if (e.target.name.startsWith('variant_') && e.target.closest('[data-download]')) {
+    chooseVariant(e.target.name.slice('variant_'.length), e.target.value);
   }
 });
 
@@ -737,9 +762,10 @@ document.addEventListener('submit', async (e) => {
   status.className = 'download-status';
   status.textContent = 'Verifying your licence…';
   try {
-    const payload = Object.fromEntries(new FormData(form));
-    // Only macOS has more than one build; don't send a Mac chip for Windows.
-    if (payload.platform !== 'macos') delete payload.variant;
+    const { license_key, platform: chosen } = Object.fromEntries(new FormData(form));
+    const payload = { license_key, platform: chosen };
+    // Send only the chosen platform's build, never e.g. a Mac chip for Windows.
+    if (Object.hasOwn(VARIANTS, chosen)) payload.variant = selectedVariant[chosen];
     const { download_url, expires_at } = await apiPost('/issue-download.php', payload);
     status.textContent = `Licence verified. Your link expires ${expires_at}.`;
     status.className = 'download-status ok';

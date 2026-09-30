@@ -712,6 +712,10 @@ a.stat:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, var(--c
   .dl { grid-template-columns: minmax(0, 1fr); }
   .dl__btn { width: 100%; }
   .seg__opt span { padding-inline: .4rem; font-size: .8rem; }
+  /* Four platforms don't fit one row on a phone: 2 × 2 instead. */
+  .dl > .seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius-md); }
+  .dl > .seg .seg__opt span { border-radius: calc(var(--radius-md) - .25rem); }
+  .howto__tab { padding-inline: .5rem; }
   .keybox__row { flex-direction: column; align-items: stretch; }
   .copy-btn { justify-content: center; }
 }

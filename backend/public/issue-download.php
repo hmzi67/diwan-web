@@ -23,10 +23,11 @@ $key      = trim((string) ($input['license_key'] ?? ''));
 $platform = strtolower(trim((string) ($input['platform'] ?? 'windows')));
 $ip       = Http::clientIp();
 
-if (!in_array($platform, ['windows', 'macos', 'android'], true)) {
+if (!in_array($platform, DownloadService::PLATFORMS, true)) {
     Http::fail('Unsupported platform.', 422);
 }
-// Optional build choice for platforms that ship several (macOS: apple-silicon / intel).
+// Optional build choice for platforms that ship several (macOS: apple-silicon /
+// intel; Windows: x64 / x86; Linux: appimage / deb / rpm).
 $variant = strtolower(trim((string) ($input['variant'] ?? '')));
 if (!preg_match('/^[a-z0-9-]{0,32}$/', $variant)) {
     Http::fail('Unsupported build.', 422);

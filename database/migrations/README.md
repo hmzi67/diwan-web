@@ -51,3 +51,10 @@ Apply `011_email_verification_and_drop_magic_links.sql` before deploying the
 login / signup / verify-email pages. It backfills every existing account as
 verified and drops `login_tokens`. (Written as 007 on its own branch and
 renumbered when merged; 007 was already `007_free_trial.sql`.)
+
+## 012 — Linux downloads and Windows 32-bit
+
+Apply `012_linux_platform.sql` before deploying the dashboard's Linux option,
+then re-run `scripts/sync-github-release.php <tag> --sql` and import its output:
+it now registers Linux (`appimage` / `deb` / `rpm`) and both Windows builds
+(`x64` / `x86`).
