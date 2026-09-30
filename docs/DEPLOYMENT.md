@@ -6,6 +6,20 @@
 |---|---|---|
 | `staging` | `staging.diwan.com` → `~/staging` + `~/app-staging` | none — deploys immediately |
 | `main` | `diwan.com` → `~/public_html` + `~/app` | **required reviewer** on the `production` environment |
+| tag `v1.2.3` | production, same as `main` | same dry run + required reviewer |
+| tag `v1.2.3-rc.1` | staging, same as `staging` | none — deploys immediately |
+
+Any `v*` tag containing a `-` is a pre-release and goes to staging; any other
+`v*` tag goes to production. A production tag must point at a commit that is
+already on `main`, or the build fails before anything connects to the server.
+
+```bash
+git tag -a v1.4.0 -m "v1.4.0" && git push origin v1.4.0          # production
+git tag -a v1.4.0-rc.1 -m "v1.4.0-rc.1" && git push origin v1.4.0-rc.1  # staging
+```
+
+If the `production` environment restricts **Deployment branches and tags**,
+add a tag rule for `v*` there too, or GitHub will refuse to run the job for a tag.
 
 Anything else runs `ci.yml` only (lint, build, schema check) and deploys nowhere.
 

@@ -3,11 +3,15 @@ name: Deploy
 # ---------------------------------------------------------------------------
 # push to `staging` -> staging site (automatic)
 # push to `main`    -> production   (requires manual approval, see README)
+# push tag `v1.2.3`        -> production (same dry run + approval; the tagged
+#                             commit must already be on `main`)
+# push tag `v1.2.3-rc.1`   -> staging    (any tag with a `-` suffix)
 # workflow_dispatch -> either, with an optional dry run
 # ---------------------------------------------------------------------------
 on:
   push:
     branches: [main, staging]
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       target:
@@ -48,6 +52,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }   # the tag guard below walks main's history
+
+      # A stable tag deploys to production, so it must not be able to ship a
+      # commit that never went through `main`. Pre-release tags go to staging
+      # and may point anywhere.
+      - name: Guard — stable release tags must be on main
+        if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --quiet origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "::error::Tag ${GITHUB_REF_NAME} points at ${GITHUB_SHA}, which is not on main. Merge to main first, then tag."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} is on main."
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -123,6 +142,7 @@ jobs:
     needs: build
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/staging') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-')) ||
       (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
     runs-on: ubuntu-latest
     environment:
@@ -413,6 +433,7 @@ jobs:
     needs: build
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')) ||
       (github.event_name == 'workflow_dispatch' && inputs.target == 'production')
     runs-on: ubuntu-latest
     # No `environment:` here on purpose — the dry run needs no approval, so you
@@ -528,6 +549,7 @@ jobs:
     if: |
       github.event.inputs.dry_run != 'true' && (
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')) ||
         (github.event_name == 'workflow_dispatch' && inputs.target == 'production')
       )
     runs-on: ubuntu-latest

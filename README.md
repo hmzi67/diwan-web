@@ -256,7 +256,9 @@ no working licences.
 ## Deploying
 
 Push to `staging` → deploys automatically. Push to `main` → runs a dry run you
-can read, then waits for approval before touching production. See
+can read, then waits for approval before touching production. Pushing a release
+tag does the same: `v1.2.3` → production (must be on `main`), `v1.2.3-rc.1` →
+staging. See
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), and work through
 [docs/SERVER-CHECKLIST.md](docs/SERVER-CHECKLIST.md) once before the first real
 deploy.
