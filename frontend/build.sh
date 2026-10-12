@@ -28,6 +28,27 @@ find "$DIST" -name '*.map' -delete
 rm -rf "$DIST/.git" "$DIST/node_modules"
 
 # ---------------------------------------------------------------------------
+# sitemap.xml: every page that is not marked noindex, so a new public page is
+# listed (and an account page left out) without anyone editing a list. lastmod
+# is the page's last commit date, falling back to today for uncommitted files.
+# ---------------------------------------------------------------------------
+SITE_URL="${SITE_URL:-https://diwan.codehunts.co.uk}"
+echo "==> Generating sitemap.xml for $SITE_URL"
+{
+  echo '<?xml version="1.0" encoding="UTF-8"?>'
+  echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  while IFS= read -r rel; do
+    grep -qiE '<meta[^>]+name="robots"[^>]+noindex' "$SRC/$rel" && continue
+    lastmod="$(git -C "$ROOT" log -1 --format=%cs -- "src/$rel" 2>/dev/null || true)"
+    [[ -n "$lastmod" ]] || lastmod="$(date -u +%Y-%m-%d)"
+    path="/$rel"; [[ "$rel" == "index.html" ]] && path="/"
+    printf '  <url><loc>%s%s</loc><lastmod>%s</lastmod></url>\n' "$SITE_URL" "$path" "$lastmod"
+  done < <(cd "$SRC" && find . -name '*.html' | sed 's|^\./||' | LC_ALL=C sort)
+  echo '</urlset>'
+} > "$DIST/sitemap.xml"
+echo "    $(grep -c '<loc>' "$DIST/sitemap.xml") URLs"
+
+# ---------------------------------------------------------------------------
 # CSS: Tailwind v4 compiles tailwind.css -> dist/css/styles.css, scanning
 # src/**/*.html and src/js/*.js for the classes actually in use. Needs Node;
 # `npm ci` runs once (network) if node_modules is absent, so CI and a fresh

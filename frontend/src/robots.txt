@@ -1,0 +1,7 @@
+# Account, auth and checkout pages are not blocked here on purpose: they carry
+# <meta name="robots" content="noindex">, and a crawler can only see that tag
+# if it is allowed to fetch the page.
+User-agent: *
+Disallow: /api/
+
+Sitemap: https://diwan.codehunts.co.uk/sitemap.xml
