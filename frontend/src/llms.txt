@@ -1,10 +1,12 @@
 # Diwan POS
 
-> Diwan POS is keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies in Pakistan. It is sold as a one-time licence in Pakistani Rupees (no subscription) and runs on Windows, macOS and Android from a single licence key.
+> Diwan POS is keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies. It is sold as a one-time licence (no subscription) and runs on Windows, macOS, Linux and Android from a single licence key.
 
 Key facts:
 
-- Editions: Starter Rs 8,000 (1 terminal), Standard Rs 12,000 (up to 3 terminals, 1 branch), Enterprise Rs 25,000 (unlimited terminals, multi-branch). All are one-time payments with free software updates.
+- Editions (prices in Pakistani Rupees): Starter Rs 8,000 (1 terminal), Standard Rs 12,000 (up to 3 terminals, 1 branch), Enterprise Rs 25,000 (unlimited terminals, multi-branch). All are one-time payments with free software updates.
+- Free trial: 30 days on one device, no payment required, one trial per account. Start it from the customer dashboard after creating an account at https://diwan.codehunts.co.uk/auth/signup.html.
+- Platforms: Windows 10+ (64-bit or 32-bit, .exe), macOS 11+ (separate Apple Silicon and Intel builds, .dmg), Linux x86_64 (.AppImage, .deb or .rpm) and Android 8.0+ (.apk). One licence key unlocks every platform.
 - Works offline: an internet connection is needed once, for activation. Billing, stock tracking and printing continue without a connection, and sync resumes automatically.
 - Delivery: the licence key and installer link are emailed within about a minute of confirmed payment and stay available in the customer dashboard. There is no physical product.
 - Refunds: full refund within 14 days of purchase if the licence key has not been activated.
@@ -16,6 +18,9 @@ Key facts:
 - [Features](https://diwan.codehunts.co.uk/features.html): keyboard-first billing, inventory, reporting, offline sync, printer support and cross-platform licensing
 - [Products & Editions](https://diwan.codehunts.co.uk/products.html): the three licence editions, the platform builds and the services included with every licence
 - [Pricing](https://diwan.codehunts.co.uk/pricing.html): edition prices, what each includes, and pricing FAQ
+- [Restaurant POS](https://diwan.codehunts.co.uk/restaurant-pos.html): per-table bills, one-key tokens, kitchen chits and Android order-taking for restaurants and cafés
+- [Retail POS](https://diwan.codehunts.co.uk/retail-pos.html): keyboard checkout, stock decremented per sale, and support for older and low-cost PCs
+- [Pharmacy POS](https://diwan.codehunts.co.uk/pharmacy-pos.html): quick billing, stock control and offline selling, with sales data kept on the store's own machine
 
 ## Support
 

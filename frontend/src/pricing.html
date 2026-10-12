@@ -6,13 +6,13 @@
     <title>Pricing — One-Time POS Licence from Rs 8,000 | Diwan POS</title>
     <meta
       name="description"
-      content="Diwan POS pricing: three one-time licence editions in Pakistani Rupees — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscriptions."
+      content="Diwan POS pricing: one-time licences — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscription. Free 30-day trial, no payment required."
     />
     <link rel="canonical" href="https://diwan.codehunts.co.uk/pricing.html" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Diwan POS" />
     <meta property="og:title" content="Pricing — One-Time POS Licence from Rs 8,000 | Diwan POS" />
-    <meta property="og:description" content="Diwan POS pricing: three one-time licence editions in Pakistani Rupees — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscriptions." />
+    <meta property="og:description" content="Diwan POS pricing: one-time licences — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscription. Free 30-day trial, no payment required." />
     <meta property="og:url" content="https://diwan.codehunts.co.uk/pricing.html" />
     <meta property="og:image" content="https://diwan.codehunts.co.uk/assets/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
@@ -30,7 +30,7 @@
             "@id": "https://diwan.codehunts.co.uk/pricing.html#webpage",
             "url": "https://diwan.codehunts.co.uk/pricing.html",
             "name": "Pricing — One-Time POS Licence from Rs 8,000 | Diwan POS",
-            "description": "Diwan POS pricing: three one-time licence editions in Pakistani Rupees — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscriptions.",
+            "description": "Diwan POS pricing: one-time licences — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscription. Free 30-day trial, no payment required.",
             "inLanguage": "en",
             "isPartOf": {
               "@id": "https://diwan.codehunts.co.uk/#website"
@@ -66,10 +66,10 @@
             "@id": "https://diwan.codehunts.co.uk/#software",
             "name": "Diwan POS",
             "url": "https://diwan.codehunts.co.uk/",
-            "description": "Keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies in Pakistan: billing, inventory, reporting and printer support.",
+            "description": "Keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies: billing, inventory, reporting and printer support on Windows, macOS, Linux and Android.",
             "applicationCategory": "BusinessApplication",
             "applicationSubCategory": "Point of Sale",
-            "operatingSystem": "Windows, macOS, Android",
+            "operatingSystem": "Windows, macOS, Linux, Android",
             "image": "https://diwan.codehunts.co.uk/assets/og-image.jpg",
             "publisher": {
               "@id": "https://diwan.codehunts.co.uk/#organization"
@@ -356,6 +356,10 @@
               >…and a lot more →</a
             >
           </p>
+          <p class="mx-auto mt-8 max-w-[62ch] text-center text-[.92rem] leading-[1.7] text-muted">
+            Not ready to buy? <a class="font-semibold text-accent hover:underline" href="/auth/signup.html">Start a free 30-day trial</a>
+            — one device, no payment required, one trial per account.
+          </p>
         </div>
       </section>
 
@@ -426,8 +430,13 @@
                 class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none"
                 name="platform"
               >
-                <option value="windows">Windows (.exe)</option>
-                <option value="macos">macOS (.dmg)</option>
+                <option value="windows:x64">Windows 64-bit (.exe)</option>
+                <option value="windows:x86">Windows 32-bit (.exe)</option>
+                <option value="macos:apple-silicon">macOS, Apple Silicon (.dmg)</option>
+                <option value="macos:intel">macOS, Intel (.dmg)</option>
+                <option value="linux:appimage">Linux, any distribution (.AppImage)</option>
+                <option value="linux:deb">Linux, Ubuntu/Debian (.deb)</option>
+                <option value="linux:rpm">Linux, Fedora/RHEL (.rpm)</option>
                 <option value="android">Android (.apk)</option>
               </select>
               <button
@@ -456,9 +465,9 @@
             </p>
           </div>
           <div>
-            <p class="text-[1.5rem] font-bold tracking-[-.02em]">3 platforms</p>
+            <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
             <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
-              Windows, macOS and Android, unlocked by one licence key.
+              Windows, macOS, Linux and Android, unlocked by one licence key.
             </p>
           </div>
           <div>
@@ -617,7 +626,8 @@
                 Ask for a full refund within 14 days of purchase, as long as the
                 key has not been activated. You may download and inspect the
                 software first — only activation closes the window, and no
-                reason is required.
+                reason is required. Or try it first with a free 30-day trial on one
+                device, no payment required.
               </p>
             </details>
 
@@ -705,6 +715,9 @@
                   >Features</a
                 >
               </li>
+              <li><a class="text-[.88rem] text-muted hover:text-accent" href="restaurant-pos.html">For restaurants</a></li>
+              <li><a class="text-[.88rem] text-muted hover:text-accent" href="retail-pos.html">For retail shops</a></li>
+              <li><a class="text-[.88rem] text-muted hover:text-accent" href="pharmacy-pos.html">For pharmacies</a></li>
               <li>
                 <a
                   class="text-[.88rem] text-muted hover:text-accent"

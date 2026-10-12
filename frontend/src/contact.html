@@ -88,7 +88,6 @@
             "contactType": "customer support",
             "email": "hamzawaheed057@gmail.com",
             "telephone": "+92-314-3288112",
-            "areaServed": "PK",
             "availableLanguage": "en",
             "hoursAvailable": {
               "@type": "OpeningHoursSpecification",
@@ -371,8 +370,8 @@
           <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Pay once in Rupees. No subscription, no automatic renewal.</p>
         </div>
         <div>
-          <p class="text-[1.5rem] font-bold tracking-[-.02em]">3 platforms</p>
-          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Windows, macOS and Android, unlocked by one licence key.</p>
+          <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Windows, macOS, Linux and Android, unlocked by one licence key.</p>
         </div>
         <div>
           <p class="text-[1.5rem] font-bold tracking-[-.02em]">Offline-first</p>
@@ -464,6 +463,10 @@
         </div>
 
         <p class="mt-11 text-center"><a class="text-[.9rem] text-muted hover:text-accent" href="features.html">…and a lot more →</a></p>
+        <p class="mx-auto mt-8 max-w-[62ch] text-center text-[.92rem] leading-[1.7] text-muted">
+          Not ready to buy? <a class="font-semibold text-accent hover:underline" href="/auth/signup.html">Start a free 30-day trial</a>
+          — one device, no payment required, one trial per account.
+        </p>
       </div>
     </section>
     <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]" id="faq">
@@ -527,7 +530,7 @@
             <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
               Ask for a full refund within 14 days of purchase, as long as the key
               has not been activated. You may download and inspect the software
-              first — only activation closes the window, and no reason is required.
+              first — only activation closes the window, and no reason is required. Or try it first with a free 30-day trial on one device, no payment required.
             </p>
           </details>
 
@@ -571,8 +574,13 @@
           <form class="flex flex-col gap-3" id="download-form">
             <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted">Licence key <input class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
             <select class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" name="platform">
-              <option value="windows">Windows (.exe)</option>
-              <option value="macos">macOS (.dmg)</option>
+              <option value="windows:x64">Windows 64-bit (.exe)</option>
+              <option value="windows:x86">Windows 32-bit (.exe)</option>
+              <option value="macos:apple-silicon">macOS, Apple Silicon (.dmg)</option>
+              <option value="macos:intel">macOS, Intel (.dmg)</option>
+              <option value="linux:appimage">Linux, any distribution (.AppImage)</option>
+              <option value="linux:deb">Linux, Ubuntu/Debian (.deb)</option>
+              <option value="linux:rpm">Linux, Fedora/RHEL (.rpm)</option>
               <option value="android">Android (.apk)</option>
             </select>
             <button class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" type="submit">Get download link</button>
@@ -606,6 +614,9 @@
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="products.html">Products &amp; Editions</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="pricing.html">Pricing</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="features.html">Features</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="restaurant-pos.html">For restaurants</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="retail-pos.html">For retail shops</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="pharmacy-pos.html">For pharmacies</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="support.html">Docs &amp; Support</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="/#download">Download</a></li>
           </ul>

@@ -48,6 +48,9 @@ downloadForm?.addEventListener('submit', async (e) => {
   setStatus(status, 'Verifying your licence…');
   try {
     const payload = Object.fromEntries(new FormData(downloadForm));
+    // Options are "platform:variant" (e.g. "macos:intel"); Android has one build.
+    const [platform, variant = ''] = payload.platform.split(':');
+    Object.assign(payload, { platform, variant });
     const { download_url, expires_at } = await postJson('/issue-download.php', payload);
     setStatus(status, `Licence verified. Your link expires ${expires_at}.`, 'ok');
     window.location.href = download_url;

@@ -138,8 +138,13 @@
           <form class="mb-3 flex max-w-[420px] flex-col gap-3" id="download-form">
             <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted">Licence key <input class="rounded-sm border border-line bg-surface px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
             <select class="rounded-sm border border-line bg-surface px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" name="platform">
-              <option value="windows">Windows (.exe)</option>
-              <option value="macos">macOS (.dmg)</option>
+              <option value="windows:x64">Windows 64-bit (.exe)</option>
+              <option value="windows:x86">Windows 32-bit (.exe)</option>
+              <option value="macos:apple-silicon">macOS, Apple Silicon (.dmg)</option>
+              <option value="macos:intel">macOS, Intel (.dmg)</option>
+              <option value="linux:appimage">Linux, any distribution (.AppImage)</option>
+              <option value="linux:deb">Linux, Ubuntu/Debian (.deb)</option>
+              <option value="linux:rpm">Linux, Fedora/RHEL (.rpm)</option>
               <option value="android">Android (.apk)</option>
             </select>
             <button class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" type="submit">Get download link</button>
@@ -220,8 +225,9 @@
         <div class="overflow-x-auto">
           <table class="mb-6 w-full border-collapse text-[.9rem] [&_td]:border-b [&_td]:border-line [&_td]:px-[.9rem] [&_td]:py-[.8rem] [&_td]:align-top [&_td]:text-muted [&_th]:w-[34%] [&_th]:border-b [&_th]:border-line [&_th]:px-[.9rem] [&_th]:py-[.8rem] [&_th]:align-top [&_th]:text-left [&_th]:text-ink [&_th]:font-semibold [&_tr:last-child_td]:border-b-0 [&_tr:last-child_th]:border-b-0">
             <tbody>
-              <tr><th>Windows</th><td>Windows 10 or later, 64-bit. Delivered as an <code>.exe</code> installer. USB and network printers.</td></tr>
-              <tr><th>macOS</th><td>macOS 11 (Big Sur) or later, universal binary for Intel and Apple Silicon. Delivered as a <code>.dmg</code>.</td></tr>
+              <tr><th>Windows</th><td>Windows 10 or later, 64-bit or 32-bit. Delivered as an <code>.exe</code> installer. USB and network printers.</td></tr>
+              <tr><th>macOS</th><td>macOS 11 (Big Sur) or later, separate builds for Intel and Apple Silicon. Delivered as a <code>.dmg</code>.</td></tr>
+              <tr><th>Linux</th><td>64-bit (x86_64) distributions. Delivered as an <code>.AppImage</code> (any distribution), <code>.deb</code> (Ubuntu/Debian) or <code>.rpm</code> (Fedora/RHEL).</td></tr>
               <tr><th>Android</th><td>Android 8.0 or later. Delivered as an <code>.apk</code>. Bluetooth and network printers.</td></tr>
               <tr><th>Network</th><td>Required once, for activation. Not required to sell.</td></tr>
             </tbody>
@@ -268,8 +274,8 @@
           <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Pay once in Rupees. No subscription, no automatic renewal.</p>
         </div>
         <div>
-          <p class="text-[1.5rem] font-bold tracking-[-.02em]">3 platforms</p>
-          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Windows, macOS and Android, unlocked by one licence key.</p>
+          <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Windows, macOS, Linux and Android, unlocked by one licence key.</p>
         </div>
         <div>
           <p class="text-[1.5rem] font-bold tracking-[-.02em]">Offline-first</p>
@@ -361,6 +367,10 @@
         </div>
 
         <p class="mt-11 text-center"><a class="text-[.9rem] text-muted hover:text-accent" href="features.html">…and a lot more →</a></p>
+        <p class="mx-auto mt-8 max-w-[62ch] text-center text-[.92rem] leading-[1.7] text-muted">
+          Not ready to buy? <a class="font-semibold text-accent hover:underline" href="/auth/signup.html">Start a free 30-day trial</a>
+          — one device, no payment required, one trial per account.
+        </p>
       </div>
     </section>
   </main>
@@ -387,6 +397,9 @@
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="products.html">Products &amp; Editions</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="pricing.html">Pricing</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="features.html">Features</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="restaurant-pos.html">For restaurants</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="retail-pos.html">For retail shops</a></li>
+            <li><a class="text-[.88rem] text-muted hover:text-accent" href="pharmacy-pos.html">For pharmacies</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="support.html">Docs &amp; Support</a></li>
             <li><a class="text-[.88rem] text-muted hover:text-accent" href="/#download">Download</a></li>
           </ul>

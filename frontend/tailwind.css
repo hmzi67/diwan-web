@@ -120,6 +120,11 @@
    ========================================================================== */
 
 /* Hero: radial glow + faint grid fading out downward */
+/* The glow overhangs 10% each side; clip it so phones don't scroll sideways.
+   `clip` (unlike `hidden`) keeps the upward overhang visible. */
+.hero {
+  overflow-x: clip;
+}
 .hero::before {
   content: "";
   position: absolute;
