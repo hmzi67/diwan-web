@@ -914,3 +914,15 @@ a.stat:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, var(--c
 .app .dash-steps strong, .app .qa__text strong { font-weight: 600; }
 
 .howto__list { list-style: decimal; }
+
+/* POS Store Records & Data Tables */
+.table-wrap { width: 100%; overflow-x: auto; margin-top: .75rem; }
+.data-table { width: 100%; border-collapse: collapse; font-size: .88rem; text-align: left; }
+.data-table th { padding: .75rem .9rem; border-bottom: 1px solid var(--color-line-hi); color: var(--color-muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; white-space: nowrap; }
+.data-table td { padding: .85rem .9rem; border-bottom: 1px solid var(--color-line); color: var(--color-ink); white-space: nowrap; }
+.data-table tbody tr:hover { background: var(--color-surface-hi); }
+.data-table td code { font-family: var(--font-mono); font-size: .82rem; color: var(--color-accent); }
+.badge--method { display: inline-block; padding: .2rem .55rem; border-radius: var(--radius-pill); font-size: .74rem; font-weight: 600; text-transform: uppercase; background: var(--color-surface-hi); border: 1px solid var(--color-line); }
+.badge--cash { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+.badge--card { color: #82aaff; border-color: rgba(130, 170, 255, 0.35); }
+.badge--other { color: var(--color-warn); border-color: var(--color-warn-line); }

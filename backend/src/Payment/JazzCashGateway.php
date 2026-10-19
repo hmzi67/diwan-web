@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Diwan\Payment;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use Diwan\Config\Env;
 
 /**
@@ -20,7 +22,7 @@ final class JazzCashGateway implements GatewayInterface
 
     public function buildCheckout(string $orderRef, int $amountPaisa, array $customer): array
     {
-        $now = new \DateTimeImmutable('now', new \DateTimeZone('Asia/Karachi'));
+        $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Karachi'));
 
         $fields = [
             'pp_Version'             => '1.1',
@@ -38,7 +40,7 @@ final class JazzCashGateway implements GatewayInterface
             'pp_BillReference'       => $orderRef,
             'pp_Description'         => 'Diwan POS licence',
             'pp_TxnExpiryDateTime'   => $now->modify('+1 hour')->format('YmdHis'),
-            'pp_ReturnURL'           => rtrim(Env::require('APP_URL'), '/') . '/api/payment-return.php',
+            'pp_ReturnURL'           => Env::appUrl('/api/payment-return.php'),
             'pp_SecureHash'          => '',
             'ppmpf_1'                => (string) ($customer['email'] ?? ''),
             'ppmpf_2'                => (string) ($customer['phone'] ?? ''),
@@ -78,6 +80,18 @@ final class JazzCashGateway implements GatewayInterface
     {
         $id = $payload['pp_RetreivalReferenceNo'] ?? $payload['pp_TxnRefNo'] ?? null;
         return $id !== null ? (string) $id : null;
+    }
+
+    public function amountPaisaFrom(array $payload): ?int
+    {
+        // pp_Amount is sent and echoed back in paisa (see buildCheckout).
+        $amount = (string) ($payload['pp_Amount'] ?? '');
+        return ctype_digit($amount) ? (int) $amount : null;
+    }
+
+    public function failureReasonFrom(array $payload): string
+    {
+        return (string) ($payload['pp_ResponseMessage'] ?? 'Payment not completed');
     }
 
     /** @param array<string,mixed> $fields */

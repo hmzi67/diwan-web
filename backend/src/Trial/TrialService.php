@@ -5,6 +5,7 @@ namespace Diwan\Trial;
 
 use Diwan\Config\Env;
 use Diwan\License\LicenseService;
+use Diwan\Order\OrderService;
 use PDO;
 use RuntimeException;
 
@@ -15,6 +16,12 @@ use RuntimeException;
  */
 final class TrialService
 {
+    /** Trial length. Never read from LICENSE_VALIDITY_DAYS, which is the paid setting. */
+    public const DAYS = 30;
+
+    /** Inactive for checkout; only this service issues it. */
+    public const SKU = 'diwan-pos-trial';
+
     public function ensureForCustomer(PDO $pdo, int $customerId): array
     {
         if (!$pdo->inTransaction()) {
@@ -57,7 +64,9 @@ final class TrialService
 
         // This SKU is deliberately inactive for checkout. Only this service
         // issues it, at zero cost, without a payment transaction or paid_at.
-        $product = $pdo->query('SELECT id FROM products WHERE sku = "diwan-pos-trial"')->fetchColumn();
+        $product = $pdo->prepare('SELECT id FROM products WHERE sku = :sku');
+        $product->execute(['sku' => self::SKU]);
+        $product = $product->fetchColumn();
         if ($product === false) {
             throw new RuntimeException('Trial product is not configured. Apply migration 007.');
         }
@@ -66,7 +75,7 @@ final class TrialService
                                  amount_paisa, currency, gateway, status, created_at)
              VALUES (:ref, :product, :customer, :email, "", 0, "PKR", "trial", "fulfilled", NOW())'
         )->execute([
-            'ref' => 'TR' . gmdate('YmdHis') . strtoupper(bin2hex(random_bytes(6))),
+            'ref' => OrderService::newReference('TR', 6),
             'product' => $product,
             'customer' => $customerId,
             'email' => $email,

@@ -24,21 +24,13 @@ declare(strict_types=1);
 
 require __DIR__ . '/_bootstrap.php';
 
-use Diwan\Auth\EmailVerificationService;
 use Diwan\Auth\LoginAttempts;
 use Diwan\Auth\PasswordService;
-use Diwan\Config\Env;
-use Diwan\Database\Database;
+use Diwan\Auth\RegistrationService;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
-use Diwan\Support\Mailer;
-use Diwan\Trial\TrialService;
 
 Http::requireMethod('POST');
-
-// Mirrors the other auth endpoints' IP window: one host churning through
-// signups is both an enumeration sweep and a row-flooding attack.
-$maxPerIpPerHour = 10;
 
 $input    = Http::input();
 $email    = strtolower(trim((string) ($input['email'] ?? '')));
@@ -55,84 +47,15 @@ if ($problem !== null) {
     Http::fail($problem, 422);
 }
 
-$recent = Database::pdo()->prepare(
-    'SELECT COUNT(*) FROM login_attempts
-      WHERE ip = :ip AND result = "register"
-        AND attempted_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)'
-);
-$recent->execute(['ip' => $ip]);
-if ((int) $recent->fetchColumn() >= $maxPerIpPerHour) {
+if (LoginAttempts::isRegistrationRateLimited($ip)) {
     Logger::warning('Registration rate limited by IP', ['ip' => $ip]);
     Http::fail('Too many attempts. Please wait an hour and try again.', 429);
 }
 
-$pdo = Database::pdo();
+(new RegistrationService())->register($email, PasswordService::hash($password), $ip, $plan);
 
-$existing = $pdo->prepare('SELECT id, email_verified_at FROM customers WHERE email = :email LIMIT 1');
-$existing->execute(['email' => $email]);
-$existing = $existing->fetch();
-
-// One response object for both paths, built once below.
-$respond = function () use ($email, $ip): never {
-    LoginAttempts::record($ip, $email, 'register');
-    Http::json([
-        'status'  => 'sent',
-        'message' => 'Check your email for a verification link to finish creating your account.',
-    ]);
-};
-
-if ($existing) {
-    // Deliberately does not touch the password — "registering" an address you
-    // don't own must never take over the account that does.
-    Logger::info('Registration attempted for existing email', ['customer_id' => $existing['id']]);
-
-    if ($existing['email_verified_at'] === null) {
-        // Same mailbox proof either way: hand the real owner a working link
-        // so the notice cannot be used to stall someone else's signup.
-        (new EmailVerificationService())->send($email, $ip, $plan);
-    } else {
-        $site = rtrim((string) Env::get('APP_URL', ''), '/');
-        Mailer::send(
-            $email,
-            'You already have a Diwan account',
-            "Someone (hopefully you) tried to sign up for Diwan with this email address,\n"
-            . "but an account already exists — so nothing was changed.\n\n"
-            . "To sign in: {$site}/auth/login.html\n"
-            . "If you've forgotten your password: {$site}/auth/forgot-password.html\n",
-            'From: ' . Env::get('MAIL_FROM', 'no-reply@localhost')
-        );
-    }
-
-    $respond();
-}
-
-$hash = PasswordService::hash($password);
-
-try {
-    $customerId = Database::transaction(static function (PDO $pdo) use ($email, $hash): int {
-        $pdo->prepare(
-            'INSERT INTO customers (email, password_hash, password_set_at, created_at)
-             VALUES (:email, :hash, NOW(), NOW())'
-        )->execute(['email' => $email, 'hash' => $hash]);
-        $id = (int) $pdo->lastInsertId();
-        (new TrialService())->ensureForCustomer($pdo, $id);
-        return $id;
-    });
-} catch (PDOException $e) {
-    // Unique key on customers.email: a concurrent request won the race.
-    if (($e->errorInfo[1] ?? null) !== 1062) {
-        throw $e;
-    }
-    $check = $pdo->prepare('SELECT id FROM customers WHERE email = :email');
-    $check->execute(['email' => $email]);
-    if ($check->fetchColumn() === false) {
-        throw $e; // An unrelated uniqueness failure must not pretend signup succeeded.
-    }
-    Logger::info('Registration raced into existing email', ['ip' => $ip]);
-    $respond();
-}
-
-Logger::info('Customer registered, pending verification', ['customer_id' => $customerId]);
-(new EmailVerificationService())->send($email, $ip, $plan);
-
-$respond();
+LoginAttempts::record($ip, $email, 'register');
+Http::json([
+    'status'  => 'sent',
+    'message' => 'Check your email for a verification link to finish creating your account.',
+]);

@@ -30,7 +30,7 @@ DirectoryIndex index.html index.php
 </IfModule>
 
 # Block dotfiles, the FTP sync state file, and anything that leaks config.
-<FilesMatch "^\.|\.(env|ini|log|sql|md|sh|json|bak|dist|yml|yaml)$">
+<FilesMatch "^\.|\.(env|ini|log|sql|md|sh|json|bak|dist|yml|yaml|pem|key|p8|p12|pfx)$|~$|^error_log$">
   Require all denied
 </FilesMatch>
 <Files ".ftp-deploy-sync-state.json">
@@ -38,7 +38,7 @@ DirectoryIndex index.html index.php
 </Files>
 
 # Never let a stray binary be served from the web root.
-<FilesMatch "\.(exe|dmg|apk|msi|pkg|zip|tar|gz)$">
+<FilesMatch "(?i)\.(exe|dmg|apk|aab|msi|pkg|appimage|deb|rpm|zip|tar|gz)$">
   Require all denied
 </FilesMatch>
 

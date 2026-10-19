@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Diwan\Payment;
 
 use Diwan\Config\Env;
+use RuntimeException;
 
 /**
  * Safepay integration.
@@ -35,7 +36,7 @@ final class SafepayGateway implements GatewayInterface
 
         $token = $response['data']['token'] ?? null;
         if (!is_string($token) || $token === '') {
-            throw new \RuntimeException('Safepay did not return a checkout token');
+            throw new RuntimeException('Safepay did not return a checkout token');
         }
 
         return [
@@ -44,14 +45,15 @@ final class SafepayGateway implements GatewayInterface
                 'tracker'     => $token,
                 'order_id'    => $orderRef,
                 'source'      => 'custom',
-                'redirect_url'=> rtrim(Env::require('APP_URL'), '/') . '/api/payment-return.php',
+                'redirect_url'=> Env::appUrl('/api/payment-return.php'),
             ],
         ];
     }
 
+    /** $headers arrive with lower-cased names (see WebhookProcessor). */
     public function verifyCallback(array $payload, array $headers, string $rawBody): bool
     {
-        $signature = $headers['x-sfpy-signature'] ?? $headers['X-SFPY-SIGNATURE'] ?? '';
+        $signature = $headers['x-sfpy-signature'] ?? '';
         if ($signature === '') {
             return false;
         }
@@ -77,6 +79,19 @@ final class SafepayGateway implements GatewayInterface
         return $id !== null ? (string) $id : null;
     }
 
+    public function amountPaisaFrom(array $payload): ?int
+    {
+        // The webhook's amount field and unit are not confirmed against a live
+        // Safepay account yet (see the class note), so no comparison is made.
+        return null;
+    }
+
+    public function failureReasonFrom(array $payload): string
+    {
+        $state = (string) ($payload['data']['state'] ?? $payload['state'] ?? '');
+        return 'Payment not completed' . ($state !== '' ? " (state {$state})" : '');
+    }
+
     private function post(string $url, array $body): array
     {
         $ch = curl_init($url);
@@ -94,10 +109,10 @@ final class SafepayGateway implements GatewayInterface
         curl_close($ch);
 
         if ($raw === false) {
-            throw new \RuntimeException('Safepay request failed: ' . $err);
+            throw new RuntimeException('Safepay request failed: ' . $err);
         }
         if ($code >= 400) {
-            throw new \RuntimeException('Safepay returned HTTP ' . $code);
+            throw new RuntimeException('Safepay returned HTTP ' . $code);
         }
         return json_decode((string) $raw, true) ?: [];
     }

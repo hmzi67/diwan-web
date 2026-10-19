@@ -16,7 +16,9 @@
 // pricing card lands here as ?plan=diwan-pos-standard, and after verifying or
 // signing in goes straight to that plan's checkout instead of the dashboard —
 // losing it would drop them at a generic page mid-purchase.
-const API = '/api';
+//
+// API calls go through DiwanApi (api.js): `post` resolves to {ok, status,
+// data} for every HTTP status and rejects only when the server is unreachable.
 
 const params = new URLSearchParams(window.location.search);
 const plan = params.get('plan');
@@ -27,24 +29,7 @@ function destination() {
   return plan ? `/checkout.html${planQuery}` : '/dashboard.html';
 }
 
-async function postJson(path, body) {
-  const res = await fetch(API + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
-}
-
-function setStatus(el, message, kind) {
-  if (!el) return;
-  el.textContent = message;
-  el.className = kind === 'ok' ? 'min-h-6 text-[.9rem] text-accent'
-    : kind === 'error' ? 'min-h-6 text-[.9rem] text-danger'
-    : 'min-h-6 text-[.9rem] text-muted';
-}
+const { setStatus } = DiwanApi;
 
 function show(id) {
   ['step-form', 'step-sent', 'step-done', 'step-invalid', 'step-unverified'].forEach((name) => {
@@ -133,7 +118,7 @@ function wire(formId, statusId, submit) {
 // --- Sign up ----------------------------------------------------------------
 wire('signup-form', 'signup-status', async (data, status) => {
   const email = data.get('email');
-  const { ok, data: body } = await postJson('/register.php', {
+  const { ok, data: body } = await DiwanApi.post('/register.php', {
     email,
     password: data.get('password'),
     plan,
@@ -153,7 +138,7 @@ wire('signup-form', 'signup-status', async (data, status) => {
 
 // --- Sign in ----------------------------------------------------------------
 wire('signin-form', 'signin-status', async (data, status) => {
-  const { ok, data: body } = await postJson('/sign-in.php', {
+  const { ok, data: body } = await DiwanApi.post('/sign-in.php', {
     email: data.get('email'),
     password: data.get('password'),
   });
@@ -192,7 +177,7 @@ document.getElementById('resend-btn')?.addEventListener('click', async (e) => {
   button.disabled = true;
   setStatus(status, 'Sending…');
   try {
-    const { ok, data: body } = await postJson('/resend-verification.php', { email: authEmail });
+    const { ok, data: body } = await DiwanApi.post('/resend-verification.php', { email: authEmail });
     setStatus(status, ok ? body.message : (body.error || 'Could not send the link. Try again.'), ok ? 'ok' : 'error');
   } catch {
     setStatus(status, 'Could not reach the server. Please try again.', 'error');
@@ -204,7 +189,7 @@ document.getElementById('resend-btn')?.addEventListener('click', async (e) => {
 // --- Forgot password --------------------------------------------------------
 wire('forgot-form', 'forgot-status', async (data, status) => {
   const email = data.get('email');
-  const { ok, data: body } = await postJson('/request-password-reset.php', { email });
+  const { ok, data: body } = await DiwanApi.post('/request-password-reset.php', { email });
 
   if (!ok) {
     setStatus(status, body.error || 'Could not send the link. Please try again.', 'error');
@@ -220,7 +205,7 @@ wire('forgot-form', 'forgot-status', async (data, status) => {
 const resetToken = params.get('token');
 
 wire('reset-form', 'reset-status', async (data, status) => {
-  const { ok, status: code, data: body } = await postJson('/reset-password.php', {
+  const { ok, status: code, data: body } = await DiwanApi.post('/reset-password.php', {
     token: resetToken || '',
     password: data.get('password'),
   });
@@ -257,20 +242,25 @@ if (document.getElementById('verify-panel')) {
   if (!token) {
     show('step-invalid');
   } else {
-    postJson('/verify-email.php', { token })
-      .then(({ ok }) => {
-        if (ok) {
-          const cont = document.getElementById('verify-continue');
-          if (cont) cont.href = destination();
-          show('step-done');
-          setTimeout(() => { window.location.href = destination(); }, 1400);
-        } else {
-          show('step-invalid');
-        }
-      })
-      // Network trouble, not a dead link — say so rather than blaming the
-      // link, which may be perfectly fine.
-      .catch(() => setStatus(status, 'Could not reach the server. Refresh to try again.', 'error'));
+    (async () => {
+      let ok;
+      try {
+        ({ ok } = await DiwanApi.post('/verify-email.php', { token }));
+      } catch {
+        // Network trouble, not a dead link — say so rather than blaming the
+        // link, which may be perfectly fine.
+        setStatus(status, 'Could not reach the server. Refresh to try again.', 'error');
+        return;
+      }
+      if (ok) {
+        const cont = document.getElementById('verify-continue');
+        if (cont) cont.href = destination();
+        show('step-done');
+        setTimeout(() => { window.location.href = destination(); }, 1400);
+      } else {
+        show('step-invalid');
+      }
+    })();
   }
 }
 

@@ -3,7 +3,6 @@
 // Wrapped so nothing leaks to globals: the dashboard's Help view loads this
 // beside dashboard.js.
 (() => {
-  const API = '/api';
   const MAX = 3000;
   // Topics where an order reference helps us find the purchase.
   const ORDER_TOPICS = ['licence', 'device', 'refund', 'support'];
@@ -69,14 +68,8 @@
     form.setAttribute('aria-busy', 'true');
     setStatus('Sending…');
     try {
-      const res = await fetch(API + '/contact.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify(Object.fromEntries(data)),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data: body } = await DiwanApi.post('/contact.php', Object.fromEntries(data));
+      if (!ok) {
         setStatus(body.error || 'Something went wrong. Please try again, or email us directly.', 'error');
         return;
       }

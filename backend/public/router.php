@@ -1,4 +1,7 @@
 <?php
+/** Local dev only: `php -S` router that mirrors production's /api/ rewrite. */
+declare(strict_types=1);
+
 $path = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
 // Mirror production's .htaccess: strip a leading /api/ prefix before

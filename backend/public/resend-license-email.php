@@ -12,12 +12,9 @@ declare(strict_types=1);
 require __DIR__ . '/_bootstrap.php';
 
 use Diwan\Auth\Session;
-use Diwan\Config\Env;
-use Diwan\Database\Database;
 use Diwan\License\LicenseService;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
-use Diwan\Support\Mailer;
 
 Http::requireMethod('POST');
 
@@ -32,24 +29,15 @@ if ($licenseId <= 0) {
     Http::fail('Missing license.', 422);
 }
 
-$pdo = Database::pdo();
+$licenses = new LicenseService();
 
 // Ownership check: the license must belong to THIS customer, via its order.
-$stmt = $pdo->prepare(
-    'SELECT l.id, l.license_key_encrypted, l.customer_email
-       FROM licenses l
-       JOIN orders o ON o.id = l.order_id
-      WHERE l.id = :license AND o.customer_id = :customer
-      LIMIT 1'
-);
-$stmt->execute(['license' => $licenseId, 'customer' => $customerId]);
-$license = $stmt->fetch();
-
-if (!$license) {
+$license = $licenses->findOwned($licenseId, $customerId);
+if ($license === null) {
     Http::fail('License not found.', 404);
 }
 
-$key = (new LicenseService())->decrypt($license['license_key_encrypted']);
+$key = $licenses->decrypt($license['license_key_encrypted']);
 
 if ($key === null) {
     Http::fail(
@@ -59,17 +47,7 @@ if ($key === null) {
     );
 }
 
-$sent = Mailer::send(
-    $license['customer_email'],
-    'Your Diwan POS licence key',
-    "Here is your licence key again, as requested:\n\n"
-    . "Licence key: {$key}\n\n"
-    . "Download your installer: " . rtrim((string) Env::require('APP_URL'), '/') . "/#download\n\n"
-    . "Keep this key safe — it is your proof of purchase.\n",
-    'From: ' . Env::get('MAIL_FROM', 'no-reply@localhost')
-);
-
-if (!$sent) {
+if (!$licenses->sendKeyEmail((string) $license['customer_email'], $key, true)) {
     Logger::error('License resend email failed to send', ['license_id' => $licenseId]);
     Http::fail('Could not send the email right now. Please try again shortly.', 502);
 }

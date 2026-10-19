@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Diwan\Auth;
 
-use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Support\Crypto;
 
 /**
  * Rolling-window rate limiting for password sign-in.
@@ -28,6 +28,9 @@ final class LoginAttempts
     private const WINDOW_MINUTES     = 15;
     private const MAX_PER_IP         = 10;
     private const MAX_PER_EMAIL      = 5;
+
+    /** Sign-ups from one IP per hour: enumeration sweeps and row flooding. */
+    private const MAX_REGISTRATIONS_PER_IP_PER_HOUR = 10;
 
     public static function isRateLimited(string $ip, string $email): bool
     {
@@ -54,6 +57,18 @@ final class LoginAttempts
 
         return (int) ($row['by_ip'] ?? 0) >= self::MAX_PER_IP
             || (int) ($row['by_email'] ?? 0) >= self::MAX_PER_EMAIL;
+    }
+
+    /** Registrations reuse this table with result = "register" (see register.php). */
+    public static function isRegistrationRateLimited(string $ip): bool
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT COUNT(*) FROM login_attempts
+              WHERE ip = :ip AND result = "register"
+                AND attempted_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)'
+        );
+        $stmt->execute(['ip' => $ip]);
+        return (int) $stmt->fetchColumn() >= self::MAX_REGISTRATIONS_PER_IP_PER_HOUR;
     }
 
     public static function record(string $ip, string $email, string $result): void
@@ -84,6 +99,6 @@ final class LoginAttempts
 
     private static function hashEmail(string $email): string
     {
-        return hash_hmac('sha256', strtolower(trim($email)), Env::require('APP_KEY'));
+        return Crypto::hmac(Customers::normalizeEmail($email));
     }
 }

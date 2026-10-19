@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Diwan\Payment;
 
+use DateTimeImmutable;
 use Diwan\Config\Env;
 
 /**
@@ -24,9 +25,9 @@ final class EasyPaisaGateway implements GatewayInterface
         $fields = [
             'storeId'            => Env::require('EASYPAISA_STORE_ID'),
             'amount'             => number_format($amountPaisa / 100, 1, '.', ''),
-            'postBackURL'        => rtrim(Env::require('APP_URL'), '/') . '/api/payment-webhook.php',
+            'postBackURL'        => Env::appUrl('/api/payment-webhook.php'),
             'orderRefNum'        => $orderRef,
-            'expiryDate'         => (new \DateTimeImmutable('+1 hour'))->format('Ymd His'),
+            'expiryDate'         => (new DateTimeImmutable('+1 hour'))->format('Ymd His'),
             'merchantHashedReq'  => '',
             'autoRedirect'       => '1',
             'paymentMethod'      => '',
@@ -62,6 +63,19 @@ final class EasyPaisaGateway implements GatewayInterface
     {
         $id = $payload['transactionId'] ?? null;
         return $id !== null ? (string) $id : null;
+    }
+
+    public function amountPaisaFrom(array $payload): ?int
+    {
+        // Rupees with decimals, the same shape buildCheckout sends.
+        $amount = (string) ($payload['amount'] ?? $payload['transactionAmount'] ?? '');
+        return is_numeric($amount) ? (int) round((float) $amount * 100) : null;
+    }
+
+    public function failureReasonFrom(array $payload): string
+    {
+        $status = (string) ($payload['status'] ?? '');
+        return 'Payment not completed' . ($status !== '' ? " (status {$status})" : '');
     }
 
     private function sign(array $fields): string

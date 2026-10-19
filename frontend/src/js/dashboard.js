@@ -4,12 +4,13 @@
 // The page is a set of views (Overview, Licences, Get started, Products,
 // Pricing, Help) switched by the URL hash, so every sidebar/tab link stays
 // inside the dashboard and the browser back button still works.
-const API = '/api';
 const platforms = { windows: 'Windows', macos: 'macOS', linux: 'Linux', android: 'Android' };
 const requestedPlatform = new URLSearchParams(window.location.search).get('platform');
 let platform = Object.hasOwn(platforms, requestedPlatform) ? requestedPlatform : 'windows';
 const platformQuery = `?platform=${encodeURIComponent(platform)}`;
 // Platforms that ship more than one build, and the choice each one offers.
+// Keys must match DownloadService::PLATFORMS / VARIANTS in the backend, which
+// issue-download.php validates against.
 // The first option is the default: 64-bit Windows, Apple Silicon (every Mac
 // sold since 2020), and AppImage (runs on any distribution). detectVariants()
 // corrects Windows and macOS where the browser can tell — Chromium reports the
@@ -32,11 +33,11 @@ const VARIANTS = {
   },
 };
 const selectedVariant = Object.fromEntries(Object.entries(VARIANTS).map(([p, v]) => [p, Object.keys(v.options)[0]]));
-const TRIAL_DAYS = 30;
 const DAY_MS = 86400000;
 
 const VIEWS = {
   overview: 'Overview',
+  records: 'Store records',
   licences: 'Licences',
   setup: 'Get started',
   products: 'Products',
@@ -66,25 +67,6 @@ const ICONS = {
 const icon = (name, size = 18) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
 
-async function apiGet(path) {
-  const res = await fetch(API + path, { method: 'GET', credentials: 'same-origin' });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw { status: res.status, message: data.error || 'Request failed' };
-  return data;
-}
-
-async function apiPost(path, body) {
-  const res = await fetch(API + path, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body || {}),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw { status: res.status, message: data.error || 'Request failed' };
-  return data;
-}
-
 const money = (paisa, currency) => {
   if (!paisa) return 'Free';
   const amount = (paisa / 100).toLocaleString('en-PK', { minimumFractionDigits: 0 });
@@ -101,6 +83,13 @@ const unixDate = (seconds) =>
 const daysLeft = (order) => order.expires_at === null
   ? null
   : Math.max(0, Math.ceil((order.expires_at * 1000 - Date.now()) / DAY_MS));
+
+// A licence's full term in days, from its order date to its expiry — so the
+// progress ring is right for a trial or any fixed-term licence without the
+// page having to know how long each kind lasts.
+const termDays = (order) => Math.max(1, Math.round(
+  (order.expires_at * 1000 - new Date(String(order.created_at).replace(' ', 'T')).getTime()) / DAY_MS
+) || 1);
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
@@ -241,7 +230,7 @@ function renderStats(licensed, primary) {
     cards.push(stat({ iconName: 'clock', label: 'Time left', value: 'Lifetime', sub: 'Never expires', tone: 'ok', href: '#licences' }));
   } else {
     const left = daysLeft(primary);
-    const total = primary.gateway === 'trial' ? TRIAL_DAYS : Math.max(left, 365);
+    const total = Math.max(left, termDays(primary));
     cards.push(stat({
       iconName: 'clock',
       label: primary.gateway === 'trial' ? 'Trial left' : 'Time left',
@@ -345,7 +334,7 @@ function keybox(order) {
 function timeline(order) {
   if (order.expires_at === null) return '';
   const left = daysLeft(order);
-  const total = order.gateway === 'trial' ? TRIAL_DAYS : Math.max(left, 365);
+  const total = Math.max(left, termDays(order));
   const pct = Math.round((left / total) * 100);
   const tone = left === 0 ? 'bad' : left <= 7 ? 'warn' : 'ok';
   return `
@@ -618,13 +607,103 @@ function prefillContact(data, primary) {
   if (primary) set('order_ref', primary.order_ref);
 }
 
+
+// --- Store Records & Synced POS Data ----------------------------------------
+function renderStoreRecords(pos, customerId) {
+  const noDataEl = document.getElementById('pos-no-data');
+  const dataEl = document.getElementById('pos-data');
+  const badgeEl = document.querySelector('[data-pos-badge]');
+
+  if (!pos || !pos.has_synced_data) {
+    if (noDataEl) noDataEl.hidden = false;
+    if (dataEl) dataEl.hidden = true;
+    if (badgeEl) badgeEl.hidden = true;
+    return;
+  }
+
+  if (noDataEl) noDataEl.hidden = true;
+  if (dataEl) dataEl.hidden = false;
+  if (badgeEl) {
+    badgeEl.textContent = 'Live';
+    badgeEl.hidden = false;
+  }
+
+  // Summary Metrics
+  const today = pos.summary?.today || {};
+  const month = pos.summary?.month || {};
+  const allTime = pos.summary?.all_time || {};
+
+  const setTxt = (sel, val) => {
+    const el = document.querySelector(sel);
+    if (el) el.textContent = val;
+  };
+
+  setTxt('[data-pos-today-sales]', money(today.total_sales_minor, 'PKR'));
+  setTxt('[data-pos-today-txns]', `${today.transaction_count || 0} orders`);
+  setTxt('[data-pos-month-sales]', money(month.total_sales_minor, 'PKR'));
+  setTxt('[data-pos-month-txns]', `${month.transaction_count || 0} orders`);
+  setTxt('[data-pos-alltime-sales]', money(allTime.total_sales_minor, 'PKR'));
+  setTxt('[data-pos-alltime-txns]', `${allTime.transaction_count || 0} orders`);
+  setTxt('[data-pos-cash-sales]', `Cash: ${money(today.cash_minor, 'PKR')}`);
+  setTxt('[data-pos-card-sales]', `Card: ${money(today.card_minor, 'PKR')}`);
+
+  // Devices List
+  const devicesList = document.getElementById('pos-devices-list');
+  if (devicesList) {
+    devicesList.innerHTML = (pos.devices || []).map((d) => `
+      <div class="order-card" style="padding: 1rem 1.25rem;">
+        <div class="order-card__head" style="margin-bottom: 0;">
+          <div class="order-card__title">
+            <div class="order-card__icon">${icon('device', 18)}</div>
+            <div>
+              <h3 class="order-card__product" style="font-size: 0.95rem;">${escapeHtml(d.device_name)}</h3>
+              <div class="order-card__meta" style="font-size: 0.8rem;">Fingerprint: <code>${escapeHtml(d.device_fingerprint.slice(0, 16))}…</code></div>
+            </div>
+          </div>
+          <span class="badge badge--active" style="font-size: 0.76rem;"><span class="dot dot--ok"></span>Synced ${d.last_sync_at}</span>
+        </div>
+      </div>
+    `).join('') || '<p class="order-note">No terminals connected.</p>';
+  }
+
+  // Recent Sales Table
+  const recentTbody = document.getElementById('pos-recent-sales-tbody');
+  if (recentTbody) {
+    recentTbody.innerHTML = (pos.recent_sales || []).map((s) => `
+      <tr>
+        <td><code>#${s.local_sale_id}</code>${s.order_no ? ` <small style="color:var(--color-muted);">(#${s.order_no})</small>` : ''}</td>
+        <td><small>${escapeHtml(s.sale_created_at)}</small></td>
+        <td>${escapeHtml(s.cashier_name || '—')}${s.table_name ? ` <small style="color:var(--color-muted);">(${escapeHtml(s.table_name)})</small>` : ''}</td>
+        <td><strong>${s.items_count} items</strong>${s.items_summary ? `<br><small style="color:var(--color-muted); font-size: 0.78rem;">${escapeHtml(s.items_summary)}</small>` : ''}</td>
+        <td><span class="badge--method badge--${s.payment_method}">${escapeHtml(s.payment_method)}</span></td>
+        <td style="text-align: right; font-weight: 700;">${money(s.total_minor, s.currency)}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--color-muted);">No transactions recorded yet.</td></tr>';
+  }
+
+  // Daily Trends Table
+  const trendsTbody = document.getElementById('pos-daily-trends-tbody');
+  if (trendsTbody) {
+    trendsTbody.innerHTML = (pos.daily_trends || []).map((t) => `
+      <tr>
+        <td><strong>${escapeHtml(t.summary_date)}</strong></td>
+        <td>${t.transaction_count}</td>
+        <td>${money(t.cash_minor, t.currency)}</td>
+        <td>${money(t.card_minor, t.currency)}</td>
+        <td style="color: var(--color-warn);">${t.refunds_minor > 0 ? `-${money(t.refunds_minor, t.currency)}` : '—'}</td>
+        <td style="text-align: right; font-weight: 700; color: var(--color-accent);">${money(t.net_sales_minor, t.currency)}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--color-muted);">No sales history recorded yet.</td></tr>';
+  }
+}
+
 // --- Load -------------------------------------------------------------------
 async function load() {
   const loading = document.getElementById('loading');
   const content = document.getElementById('content');
 
   try {
-    const data = await apiGet('/dashboard-data.php');
+    const data = await DiwanApi.getJson('/dashboard-data.php');
     const licensed = data.orders.filter((o) => o.license_id !== null);
     // The licence the overview describes: the newest active one, else the newest.
     const primary = licensed.find((o) => o.license_status === 'active') || licensed[0] || null;
@@ -635,6 +714,7 @@ async function load() {
     renderCurrent(primary);
     renderQuick(primary);
     renderSetup(primary);
+    renderStoreRecords(data.pos, data.customer_id);
     renderPlans(licensed);
     prefillContact(data, primary);
     selectHowto(platform);
@@ -695,7 +775,7 @@ document.addEventListener('click', async (e) => {
     if (resendBtn.disabled) return;
     resendBtn.disabled = true;
     try {
-      await apiPost('/resend-license-email.php', { license_id: Number(resendBtn.dataset.resend) });
+      await DiwanApi.postJson('/resend-license-email.php', { license_id: Number(resendBtn.dataset.resend) });
       toast('We’ve emailed your licence key — check your inbox', 'ok');
     } catch (err) {
       toast(err.message || 'Could not send the email. Please try again.', 'error');
@@ -710,7 +790,7 @@ document.addEventListener('click', async (e) => {
     if (trialBtn.disabled) return;
     trialBtn.disabled = true;
     try {
-      const { status } = await apiPost('/start-trial.php');
+      const { status } = await DiwanApi.postJson('/start-trial.php');
       if (status === 'issued' || status === 'existing_trial' || status === 'paid_license') {
         window.location.reload();   // the new licence renders on the next load
         return;
@@ -766,7 +846,7 @@ document.addEventListener('submit', async (e) => {
     const payload = { license_key, platform: chosen };
     // Send only the chosen platform's build, never e.g. a Mac chip for Windows.
     if (Object.hasOwn(VARIANTS, chosen)) payload.variant = selectedVariant[chosen];
-    const { download_url, expires_at } = await apiPost('/issue-download.php', payload);
+    const { download_url, expires_at } = await DiwanApi.postJson('/issue-download.php', payload);
     status.textContent = `Licence verified. Your link expires ${expires_at}.`;
     status.className = 'download-status ok';
     window.location.href = download_url;
@@ -780,7 +860,7 @@ document.addEventListener('submit', async (e) => {
 
 document.querySelectorAll('[data-logout]').forEach((btn) => {
   btn.addEventListener('click', async () => {
-    try { await apiPost('/logout.php'); } catch { /* clearing client-side regardless */ }
+    try { await DiwanApi.postJson('/logout.php'); } catch { /* clearing client-side regardless */ }
     window.location.href = '/auth/login.html';
   });
 });

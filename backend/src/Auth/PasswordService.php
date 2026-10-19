@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Diwan\Auth;
 
+use RuntimeException;
+
 /**
  * Password hashing and verification.
  *
@@ -47,7 +49,7 @@ final class PasswordService
         // cannot allocate the memory cost). Failing loudly here is right: the
         // alternative is storing something unusable as a password.
         if (!is_string($hash) || $hash === '') {
-            throw new \RuntimeException('Password hashing failed on this host.');
+            throw new RuntimeException('Password hashing failed on this host.');
         }
         return $hash;
     }

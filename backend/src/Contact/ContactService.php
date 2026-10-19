@@ -111,7 +111,7 @@ final class ContactService
             $to,
             '[Diwan] ' . self::TOPICS[$topic] . ' — ' . $name,
             $body,
-            'From: ' . Env::get('MAIL_FROM', 'no-reply@localhost'),
+            null,
             $email
         );
 

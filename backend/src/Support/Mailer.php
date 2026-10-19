@@ -31,34 +31,36 @@ final class Mailer
 {
     /**
      * $replyTo must already be a validated address (FILTER_VALIDATE_EMAIL
-     * rejects CR/LF, so it cannot inject extra headers).
+     * rejects CR/LF, so it cannot inject extra headers). $from is the From
+     * header's value ("Name <addr>" or "addr"), defaulting to MAIL_FROM.
      */
     public static function send(
         string $to,
         string $subject,
         string $body,
-        string $fromHeader,
+        ?string $from = null,
         ?string $replyTo = null
     ): bool {
+        $from ??= Env::get('MAIL_FROM', 'no-reply@localhost');
         $driver = strtolower(Env::get('MAIL_DRIVER', 'sendmail') ?? 'sendmail');
 
         return $driver === 'smtp'
-            ? self::sendSmtp($to, $subject, $body, $fromHeader, $replyTo)
-            : mail($to, $subject, $body, $fromHeader . ($replyTo !== null ? "\r\nReply-To: <{$replyTo}>" : ''));
+            ? self::sendSmtp($to, $subject, $body, $from, $replyTo)
+            : mail($to, $subject, $body, "From: {$from}" . ($replyTo !== null ? "\r\nReply-To: <{$replyTo}>" : ''));
     }
 
     private static function sendSmtp(
         string $to,
         string $subject,
         string $body,
-        string $fromHeader,
+        string $fromValue,
         ?string $replyTo
     ): bool {
         $host = Env::get('MAIL_HOST', '127.0.0.1');
         $port = Env::int('MAIL_PORT', 1025);
         $user = Env::get('MAIL_USERNAME');
         $pass = Env::get('MAIL_PASSWORD');
-        $from = self::extractAddress($fromHeader) ?? Env::get('MAIL_FROM', 'no-reply@localhost');
+        $from = self::extractAddress($fromValue) ?? Env::get('MAIL_FROM', 'no-reply@localhost');
 
         try {
             // Port 465 is implicit TLS (SMTPS): the connection is encrypted
@@ -94,7 +96,7 @@ final class Mailer
             self::command($socket, "RCPT TO:<{$to}>", 250);
             self::command($socket, 'DATA', 354);
 
-            $headers = "From: {$fromHeader}\r\n"
+            $headers = "From: {$fromValue}\r\n"
                 . "To: <{$to}>\r\n"
                 . ($replyTo !== null ? "Reply-To: <{$replyTo}>\r\n" : '')
                 . "Subject: {$subject}\r\n"
@@ -110,7 +112,8 @@ final class Mailer
 
             return true;
         } catch (RuntimeException $e) {
-            Logger::error('SMTP send failed', ['error' => $e->getMessage(), 'host' => $host, 'port' => $port]);
+            // Logger masks addresses in the reason; SMTP replies echo the recipient.
+            Logger::error('SMTP send failed', ['reason' => $e->getMessage(), 'host' => $host, 'port' => $port]);
             return false;
         }
     }
@@ -141,13 +144,13 @@ final class Mailer
         return $response;
     }
 
-    private static function extractAddress(string $fromHeader): ?string
+    private static function extractAddress(string $from): ?string
     {
-        // "From: Name <addr@x>" or "From: addr@x" -> addr@x
-        if (preg_match('/<([^>]+)>/', $fromHeader, $m)) {
+        // "Name <addr@x>" or "addr@x" -> addr@x
+        if (preg_match('/<([^>]+)>/', $from, $m)) {
             return $m[1];
         }
-        if (preg_match('/([^\s:]+@[^\s>]+)/', $fromHeader, $m)) {
+        if (preg_match('/([^\s:]+@[^\s>]+)/', $from, $m)) {
             return $m[1];
         }
         return null;

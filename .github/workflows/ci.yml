@@ -1,18 +1,20 @@
 name: CI
 
 # Runs on every PR and on branches that are not deploy targets, so problems
-# surface before they can ever reach a deploy branch.
+# surface before they can ever reach a deploy branch. deploy.yml also calls it
+# (workflow_call), so the same suite gates every staging and production deploy.
 on:
   pull_request:
   push:
     branches-ignore: [main, staging]
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
   verify:
-    name: Lint & build
+    name: Lint, test & build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,9 +23,9 @@ jobs:
         # one, so a host upgrade never breaks a live payment flow.
         php: ['8.1', '8.2', '8.3']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php }}
           tools: none
@@ -35,7 +37,7 @@ jobs:
           fail=0
           while IFS= read -r -d '' file; do
             php -l "$file" > /dev/null || { echo "::error file=$file::PHP syntax error"; fail=1; }
-          done < <(find backend -name '*.php' -print0)
+          done < <(find backend scripts -name '*.php' -print0)
           [ "$fail" -eq 0 ] || exit 1
 
       - name: Build frontend
@@ -46,49 +48,69 @@ jobs:
           set -euo pipefail
           for f in scripts/*.sh frontend/build.sh; do bash -n "$f"; done
 
-      - name: Schema is valid SQL
-        uses: shogo82148/actions-setup-mysql@v1
+      - name: Install MySQL 8.0
+        uses: shogo82148/actions-setup-mysql@1d4ebc60ba1227dd13fc7e6ba845bd3997928d75 # v1.54.2
         with: { mysql-version: '8.0' }
 
-      - name: Apply schema to a scratch database
+      - name: Schema and every migration apply twice
         run: |
           set -euo pipefail
-          mysql -uroot -h127.0.0.1 -e 'CREATE DATABASE diwan_ci;'
-          mysql -uroot -h127.0.0.1 diwan_ci < database/schema.sql
-          mysql -uroot -h127.0.0.1 diwan_ci -e 'SHOW TABLES;'
-          # Re-apply: schema.sql must stay idempotent.
-          mysql -uroot -h127.0.0.1 diwan_ci < database/schema.sql
+          mysql -uroot -h127.0.0.1 -e 'CREATE DATABASE diwan_test_ci;'
+          # Each pass must succeed: schema.sql and every migration are required
+          # to be idempotent, because they are applied by hand on a live DB.
+          for pass in 1 2; do
+            mysql -uroot -h127.0.0.1 diwan_test_ci < database/schema.sql
+            for migration in database/migrations/*.sql; do
+              mysql -uroot -h127.0.0.1 diwan_test_ci < "$migration" > /dev/null \
+                || { echo "::error file=$migration::fails on pass ${pass}"; exit 1; }
+            done
+          done
+          tables=$(mysql -uroot -h127.0.0.1 -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'diwan_test_ci'")
+          [ "$tables" -ge 15 ] || { echo "::error::Expected at least 15 tables, found ${tables}"; exit 1; }
+
+      - name: Test database and config
+        run: |
+          set -euo pipefail
+          mysql -uroot -h127.0.0.1 -e "CREATE USER 'diwan_test'@'127.0.0.1' IDENTIFIED BY 'test-only-password'; GRANT ALL ON diwan_test_ci.* TO 'diwan_test'@'127.0.0.1';"
+          cat > "$RUNNER_TEMP/test.env" <<'ENV'
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_NAME=diwan_test_ci
+          DB_USER=diwan_test
+          DB_PASS=test-only-password
+          APP_KEY=ci-only-test-key-never-use-in-production-0123456789
+          LICENSE_VALIDITY_DAYS=0
+          TRIAL_SIGNUP_ENABLED=true
+          ENV
+          # The kill-switch run gets its own complete file rather than an
+          # in-place edit of this one.
+          sed '/^TRIAL_SIGNUP_ENABLED=/d' "$RUNNER_TEMP/test.env" > "$RUNNER_TEMP/test-trials-off.env"
+          echo 'TRIAL_SIGNUP_ENABLED=false' >> "$RUNNER_TEMP/test-trials-off.env"
+
+      - name: Backend tests
+        run: php scripts/tests/run.php "$RUNNER_TEMP/test.env"
 
       - name: Trial licensing regression checks
         run: |
           set -euo pipefail
-          mysql -uroot -h127.0.0.1 -e "CREATE DATABASE diwan_test_trial; CREATE USER 'diwan_trial_test'@'127.0.0.1' IDENTIFIED BY 'test-only-password'; GRANT ALL ON diwan_test_trial.* TO 'diwan_trial_test'@'127.0.0.1';"
-          mysql -uroot -h127.0.0.1 diwan_test_trial < database/schema.sql
-          mysql -uroot -h127.0.0.1 diwan_test_trial < database/migrations/007_free_trial.sql
-          mysql -uroot -h127.0.0.1 diwan_test_trial < database/migrations/007_free_trial.sql
-          cat > "$RUNNER_TEMP/diwan-trial-test.env" <<'ENV'
-          DB_HOST=127.0.0.1
-          DB_PORT=3306
-          DB_NAME=diwan_test_trial
-          DB_USER=diwan_trial_test
-          DB_PASS=test-only-password
-          APP_KEY=ci-only-trial-test-key-never-use-in-production
-          LICENSE_VALIDITY_DAYS=0
-          TRIAL_SIGNUP_ENABLED=true
-          ENV
-          php -l scripts/test-trial.php
-          php scripts/test-trial.php "$RUNNER_TEMP/diwan-trial-test.env"
-          sed -i 's/TRIAL_SIGNUP_ENABLED=true/TRIAL_SIGNUP_ENABLED=false/' "$RUNNER_TEMP/diwan-trial-test.env"
-          php scripts/test-trial.php "$RUNNER_TEMP/diwan-trial-test.env"
+          php scripts/test-trial.php "$RUNNER_TEMP/test.env"
+          php scripts/test-trial.php "$RUNNER_TEMP/test-trials-off.env"
 
-      - name: No secrets committed
+      - name: HTTP checks against a local server
+        run: bash scripts/http-check.sh "$RUNNER_TEMP/test.env"
+
+      - name: No secrets or binaries committed
         run: |
           set -euo pipefail
           if git ls-files | grep -E '(^|/)\.env$|\.env\.(local|production|staging)$'; then
             echo "::error::A real .env file is tracked in git."
             exit 1
           fi
-          if git ls-files | grep -E '\.(exe|dmg|apk|msi|pkg)$'; then
+          if git ls-files | grep -iE '\.(exe|dmg|apk|aab|msi|pkg|appimage|deb|rpm)$'; then
             echo "::error::Installer binaries are tracked in git."
+            exit 1
+          fi
+          if git ls-files | grep -iE '\.(pem|key|p8|p12|pfx)$|(^|/)error_log$|\.log$'; then
+            echo "::error::A key, certificate or log file is tracked in git."
             exit 1
           fi

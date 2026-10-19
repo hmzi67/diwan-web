@@ -15,10 +15,10 @@ declare(strict_types=1);
 
 require __DIR__ . '/_bootstrap.php';
 
+use Diwan\Auth\Customers;
 use Diwan\Auth\LoginAttempts;
 use Diwan\Auth\PasswordService;
 use Diwan\Auth\Session;
-use Diwan\Database\Database;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
 
@@ -43,11 +43,7 @@ if (LoginAttempts::isRateLimited($ip, $email)) {
     );
 }
 
-$customer = Database::pdo()->prepare(
-    'SELECT id, password_hash, session_epoch, email_verified_at, apple_sub FROM customers WHERE email = :email LIMIT 1'
-);
-$customer->execute(['email' => $email]);
-$customer = $customer->fetch();
+$customer = Customers::findByEmail($email);
 
 $generic = 'Email or password is incorrect.';
 
@@ -87,8 +83,7 @@ $customerId = (int) $customer['id'];
 // Transparently upgrade an old hash now that we have the plaintext in hand —
 // this is how the cost factor gets raised later without a migration.
 if (PasswordService::needsRehash((string) $customer['password_hash'])) {
-    Database::pdo()->prepare('UPDATE customers SET password_hash = :hash WHERE id = :id')
-        ->execute(['hash' => PasswordService::hash($password), 'id' => $customerId]);
+    Customers::updatePasswordHash($customerId, PasswordService::hash($password));
     Logger::info('Password hash upgraded', ['customer_id' => $customerId]);
 }
 

@@ -46,6 +46,7 @@ use Diwan\Database\Database;
 use Diwan\License\ActivationThrottle;
 use Diwan\License\LicenseService;
 use Diwan\License\LicenseSigner;
+use Diwan\Support\DeviceInput;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
 
@@ -53,22 +54,18 @@ Http::requireMethod('POST');
 
 $input       = Http::input();
 $key         = trim((string) ($input['license_key'] ?? ''));
-$fingerprint = strtolower(trim((string) ($input['machine_fingerprint'] ?? '')));
 
 if ($key === '') {
     Http::fail('Please provide a licence key.', 422);
 }
-if (!preg_match('/^[a-f0-9]{64}$/', $fingerprint)) {
-    // The app must send sha256(machine id) hex-encoded — never the raw id.
-    Http::fail('Invalid device fingerprint.', 422);
-}
+$fingerprint = DeviceInput::fingerprint($input);
 
 $prefix   = ActivationThrottle::prefixOf($key);
 $throttle = new ActivationThrottle(Database::pdo(), Http::clientIp(), $prefix);
 $throttle->enforce();
 
 $licenses = new LicenseService();
-$outcome  = $licenses->statusForDevice($key, hash('sha256', $fingerprint));
+$outcome  = $licenses->statusForDevice($key, DeviceInput::fingerprintHash($fingerprint));
 
 switch ($outcome['result']) {
     case 'unknown':
@@ -88,7 +85,7 @@ switch ($outcome['result']) {
 }
 
 $signed = (new LicenseSigner())->sign([
-    'license_key'        => $licenses->normaliseKey($key),
+    'license_key'        => $licenses->normalizeKey($key),
     'status'             => $outcome['status'],
     'issued_at'          => time(),
     'expires_at'         => $outcome['expires_at'],

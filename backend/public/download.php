@@ -11,6 +11,7 @@ declare(strict_types=1);
 require __DIR__ . '/_bootstrap.php';
 
 use Diwan\Download\DownloadService;
+use Diwan\Support\Crypto;
 use Diwan\Support\Http;
 
 Http::requireMethod('GET');
@@ -18,7 +19,7 @@ Http::requireMethod('GET');
 $token = (string) ($_GET['token'] ?? '');
 
 // 64 hex chars — reject anything malformed before it touches the database.
-if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+if (!Crypto::isToken($token)) {
     Http::fail('Invalid download link.', 400);
 }
 

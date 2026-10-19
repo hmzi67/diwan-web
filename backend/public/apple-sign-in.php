@@ -29,6 +29,7 @@ use Diwan\Apple\SignInNonce;
 use Diwan\Auth\Session;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
+use Diwan\Support\UserFacingException;
 
 Http::requireMethod('POST');
 
@@ -70,7 +71,7 @@ try {
         $refreshToken,
         $claims['aud']
     );
-} catch (RuntimeException $e) {
+} catch (UserFacingException $e) {
     Http::fail($e->getMessage(), 409);
 }
 

@@ -7,9 +7,11 @@ declare(strict_types=1);
 
 require __DIR__ . '/_bootstrap.php';
 
+use Diwan\Auth\PasswordService;
 use Diwan\Config\Env;
 use Diwan\Database\Database;
 use Diwan\Download\DownloadService;
+use Diwan\License\LicenseSigner;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
 
@@ -29,7 +31,7 @@ $hints = [];
 // bogus-key probe (403, never reaches the signer) and this endpoint both looked
 // healthy. Constructing it here is the same check the real request makes.
 try {
-    new Diwan\License\LicenseSigner();
+    new LicenseSigner();
     $checks['license_signing'] = true;
 } catch (Throwable $e) {
     // A fixed vocabulary naming which precondition failed — never the key,
@@ -57,13 +59,17 @@ if ($appKey === null) {
 }
 
 try {
-    Database::pdo()->query('SELECT 1');
+    Database::ping();
     $checks['database'] = true;
 } catch (Throwable $e) {
-    // Full detail goes to the log. The response carries only a coarse category,
-    // never the driver message, the host, the user or the database name.
-    Logger::error('Health check: database unreachable', ['message' => $e->getMessage()]);
-    $hints['database'] = classifyDatabaseFailure($e);
+    // Neither the response nor the log carries the driver message: it can name
+    // the host, the user and the database. The category and code are enough.
+    $hints['database'] = Database::classifyFailure($e);
+    Logger::error('Health check: database unreachable', [
+        'category'  => $hints['database'],
+        'exception' => get_class($e),
+        'code'      => $e->getCode(),
+    ]);
 
     // Naming the absent keys is safe — they are documented in .env.example —
     // and it turns "not_configured" into something you can act on directly.
@@ -92,9 +98,7 @@ if (!$checks['private_storage']) {
 // and flags GitHub-hosted releases that have no token to fetch them with.
 if ($checks['database'] ?? false) {
     try {
-        $sources = Database::pdo()->query(
-            'SELECT platform, source FROM releases WHERE is_active = 1'
-        )->fetchAll(PDO::FETCH_KEY_PAIR);
+        $sources = DownloadService::activeSources();
         $missing = array_values(array_diff(DownloadService::PLATFORMS, array_keys($sources)));
         if ($missing !== []) {
             $hints['downloads_missing'] = $missing;
@@ -120,32 +124,14 @@ $body = [
     // version alone — PasswordService picks the strongest available rather
     // than hardcoding one, so this reports what it settled on. Safe to expose:
     // the algorithm is already recoverable from any hash's prefix.
-    'password_algo' => Diwan\Auth\PasswordService::algorithmName(),
+    'password_algo' => PasswordService::algorithmName(),
 ];
 
-// Diagnostics are on by default so a fresh deploy is debuggable. Set
-// HEALTH_DIAGNOSTICS=false in .env once the site is live and healthy.
-if ($hints !== [] && Env::bool('HEALTH_DIAGNOSTICS', true)) {
+// Off by default: the hints name missing config keys and failure categories
+// to anyone who asks. Set HEALTH_DIAGNOSTICS=true while debugging a deploy.
+if ($hints !== [] && Env::bool('HEALTH_DIAGNOSTICS', false)) {
     $body['hints'] = $hints;
 }
 
 Http::json($body, $ok ? 200 : 503);
 
-/**
- * Maps a connection failure to a coarse category. Deliberately returns a fixed
- * vocabulary: enough to tell you which thing to go fix, not enough to help
- * anyone attack the database.
- */
-function classifyDatabaseFailure(Throwable $e): string
-{
-    if ($e instanceof RuntimeException && str_contains($e->getMessage(), 'Missing required environment value')) {
-        return 'not_configured';   // a DB_* value is absent from .env
-    }
-    $message = $e->getMessage();
-    return match (true) {
-        str_contains($message, '1045'), str_contains($message, 'Access denied')   => 'auth_failed',
-        str_contains($message, '1049'), str_contains($message, 'Unknown database') => 'unknown_database',
-        str_contains($message, '2002'), str_contains($message, '2005')             => 'unreachable',
-        default                                                                    => 'unknown',
-    };
-}

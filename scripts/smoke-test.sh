@@ -3,6 +3,11 @@
 # path that must be private has become reachable.
 #
 #   bash scripts/smoke-test.sh https://diwan.example.com
+#   bash scripts/smoke-test.sh --local http://127.0.0.1:8000
+#
+# --local is for CI's own `php -S` server: it has no Apache, so .htaccess rules
+# do not apply there and the private-path checks are skipped (dotfiles and
+# config are simply not in its document root). Everything else runs the same.
 #
 # NOTE ON EXIT CODES
 #   0  all checks passed
@@ -15,6 +20,12 @@
 # make every "must not be reachable" assertion pass trivially — see the guard
 # in expect_blocked below.
 set -Eeuo pipefail
+
+LOCAL=0
+if [[ "${1-}" == "--local" ]]; then
+  LOCAL=1
+  shift
+fi
 
 if [[ -z "${1-}" ]]; then
   echo "usage: smoke-test.sh <base-url>      e.g. https://diwan.codehunts.co.uk" >&2
@@ -36,6 +47,11 @@ CURL=(curl -sS --max-time 25 -A "$UA")
 CHALLENGE_RE='Checking your browser before accessing|/hcdn-cgi/|__cf_chl|Just a moment'
 
 code() { "${CURL[@]}" -o /dev/null -w '%{http_code}' -L "$1" 2>/dev/null || echo 000; }
+# No -L: an API answer is checked as given, never after a redirect.
+post_code() {
+  "${CURL[@]}" -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+    --data "${2:-{\}}" "$1" 2>/dev/null || echo 000
+}
 body() { "${CURL[@]}" -L "$1" 2>/dev/null || true; }
 
 is_challenge() { grep -qE "$CHALLENGE_RE" <<<"${1-}"; }
@@ -140,12 +156,44 @@ if is_challenge "$health"; then
   failures=$((failures + 1))
 else
   echo "  ${health:0:400}"
-  if ! grep -q '"status":"ok"' <<<"$health"; then
+  # Tolerant of JSON spacing: the shape is checked, not the encoder's output.
+  if ! grep -Eq '"status"[[:space:]]*:[[:space:]]*"ok"' <<<"$health"; then
     echo "  FAIL  health endpoint is not reporting ok"
     failures=$((failures + 1))
   fi
 fi
 
+expect_post() {
+  local url="$1" body="$2" want="$3" label="$4"
+  local got; got="$(post_code "$url" "$body")"
+  if [[ "$got" == "$want" ]]; then
+    printf '  ok    %-52s %s\n' "$label" "$got"
+  else
+    printf '  FAIL  %-52s got %s, expected %s\n' "$label" "$got" "$want"
+    failures=$((failures + 1))
+  fi
+}
+
+# Every check below is refused before any state changes, so it is as safe to
+# run against production as against CI's scratch database.
+echo
+echo "API refuses what it must:"
+expect      "$BASE/api/products.php"                          200 "products.php lists editions"
+expect      "$BASE/api/payment-return.php?order_id=NONE"      200 "payment-return.php shows a pending page"
+expect      "$BASE/api/payment-webhook.php"                   405 "payment-webhook.php refuses GET"
+expect_post "$BASE/api/payment-webhook.php" '{}'              400 "payment-webhook.php refuses an unsigned call"
+expect      "$BASE/api/dashboard-data.php"                    401 "dashboard-data.php needs a session"
+expect_post "$BASE/api/checkout.php" '{}'                     401 "checkout.php needs a session"
+expect_post "$BASE/api/resend-license-email.php" '{}'         401 "resend-license-email.php needs a session"
+expect_post "$BASE/api/sign-in.php" '{}'                      422 "sign-in.php rejects an empty form"
+expect_post "$BASE/api/activate-license.php" '{}'             422 "activate-license.php rejects an empty key"
+expect_post "$BASE/api/license-status.php" '{"license_key":"x"}' 422 "license-status.php rejects a missing fingerprint"
+expect_post "$BASE/api/issue-download.php" '{"platform":"beos"}' 422 "issue-download.php rejects an unknown platform"
+
+if [[ "$LOCAL" -eq 1 ]]; then
+  echo
+  echo "Private paths: skipped (--local: no Apache, so .htaccess does not apply)"
+else
 echo
 echo "Private paths must NOT be reachable:"
 expect_blocked "$BASE/private-storage/"                       "/private-storage/"
@@ -158,6 +206,12 @@ expect_blocked "$BASE/src/bootstrap.php"                      "/src/bootstrap.ph
 expect_blocked "$BASE/api/src/bootstrap.php"                  "/api/src/bootstrap.php"
 expect_blocked "$BASE/.ftp-deploy-web.json"                   "FTP sync state file"
 expect_blocked "$BASE/build.json"                             "build stamp"
+expect_blocked "$BASE/.git/config"                            "/.git/config"
+expect_blocked "$BASE/database/schema.sql"                    "/database/schema.sql"
+expect_blocked "$BASE/scripts/smoke-test.sh"                  "/scripts/"
+expect_blocked "$BASE/private-storage/logs/"                  "/private-storage/logs/"
+expect_blocked "$BASE/api/router.php"                         "/api/router.php (dev only)"
+fi
 
 echo
 echo "Download gate must reject unauthenticated requests:"

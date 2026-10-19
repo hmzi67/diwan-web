@@ -83,6 +83,12 @@ final class Env
         return $value === null ? $default : (int) $value;
     }
 
+    /** Absolute URL on this site, e.g. appUrl('/api/download.php'). */
+    public static function appUrl(string $path = ''): string
+    {
+        return rtrim(self::require('APP_URL'), '/') . $path;
+    }
+
     public static function isProduction(): bool
     {
         return self::get('APP_ENV', 'local') === 'production';

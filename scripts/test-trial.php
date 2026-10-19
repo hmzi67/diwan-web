@@ -1,8 +1,15 @@
 <?php
-/** Integration checks against a disposable MySQL database; no test framework. */
+/**
+ * Trial licensing regression checks against a disposable MySQL database; no
+ * test framework. Run twice by CI: once with TRIAL_SIGNUP_ENABLED=true, once
+ * with it false to check the kill switch. The wider suite is scripts/tests/.
+ *
+ *   php scripts/test-trial.php /path/to/test.env
+ */
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/backend/src/bootstrap-autoload.php';
+require __DIR__ . '/tests/TestKit.php';
 
 use Diwan\Config\Env;
 use Diwan\Database\Database;
@@ -24,24 +31,35 @@ $orders = new OrderService();
 
 function check(bool $condition, string $message): void
 {
-    if (!$condition) {
-        throw new RuntimeException($message);
-    }
+    TestKit::check($condition, $message);
     echo "PASS: {$message}\n";
 }
-function customer(PDO $pdo): int
+
+/** Requires the issuance-path guard specifically, not just any failure. */
+function rejectsIneligible(callable $operation, string $message): void
 {
-    $pdo->prepare('INSERT INTO customers (email) VALUES (:email)')
-        ->execute(['email' => bin2hex(random_bytes(12)) . '@trial-test.invalid']);
-    return (int) $pdo->lastInsertId();
+    TestKit::throws(RuntimeException::class, $operation, $message, 'not eligible');
+    echo "PASS: {$message}\n";
 }
-function rejected(callable $operation): bool
+
+function count_rows(string $sql, int $customerId): int
 {
-    try {
-        $operation();
-        return false;
-    } catch (RuntimeException $e) {
-        return true;
+    return (int) TestKit::scalar($sql, ['id' => $customerId]);
+}
+
+/**
+ * Applies a migration file statement by statement. Splits only on a ';' that
+ * ends a line, after removing -- and block comments, which is the shape every
+ * file in database/migrations/ follows.
+ */
+function apply_migration(PDO $pdo, string $file): void
+{
+    $sql = (string) file_get_contents($file);
+    $sql = (string) preg_replace(['~/\*.*?\*/~s', '/^\s*--.*$/m'], '', $sql);
+    foreach (preg_split('/;\s*$/m', $sql) as $statement) {
+        if (trim($statement) !== '') {
+            $pdo->query($statement)->closeCursor();
+        }
     }
 }
 
@@ -56,9 +74,9 @@ if (($argv[2] ?? '') === '--claim') {
 if (!Env::bool('TRIAL_SIGNUP_ENABLED', true)) {
     $pdo->beginTransaction();
     try {
-        $id = customer($pdo);
+        $id = TestKit::customer($pdo);
         check($trials->ensureForCustomer($pdo, $id)['status'] === 'disabled', 'Disabled trials create no grant');
-        check((int) $pdo->query('SELECT COUNT(*) FROM orders WHERE customer_id = ' . $id)->fetchColumn() === 0, 'Disabled trials create no order');
+        check(count_rows('SELECT COUNT(*) FROM orders WHERE customer_id = :id', $id) === 0, 'Disabled trials create no order');
     } finally {
         $pdo->rollBack();
     }
@@ -66,23 +84,23 @@ if (!Env::bool('TRIAL_SIGNUP_ENABLED', true)) {
 }
 
 // Issuance and activation manage transactions separately, like HTTP requests.
-$id = 0;
-$paidCustomer = 0;
-$raceCustomer = 0;
 try {
     $id = Database::transaction(static function (PDO $pdo) use ($trials): int {
-        $id = customer($pdo);
+        $id = TestKit::customer($pdo);
         check($trials->ensureForCustomer($pdo, $id)['status'] === 'issued', 'New account receives a trial');
         return $id;
     });
-    $row = $pdo->query('SELECT l.*, o.order_ref, o.gateway, o.amount_paisa, o.paid_at,
+    $stmt = $pdo->prepare('SELECT l.*, o.order_ref, o.gateway, o.amount_paisa, o.paid_at,
         o.gateway_txn_id, o.status AS order_status,
-        TIMESTAMPDIFF(SECOND, l.created_at, l.expires_at) AS lifetime
-        FROM licenses l JOIN orders o ON o.id = l.order_id WHERE o.customer_id = ' . $id)->fetch();
+        TIMESTAMPDIFF(SECOND, l.created_at, l.expires_at) AS lifetime,
+        UNIX_TIMESTAMP(l.expires_at) AS expires_ts
+        FROM licenses l JOIN orders o ON o.id = l.order_id WHERE o.customer_id = :id');
+    $stmt->execute(['id' => $id]);
+    $row = $stmt->fetch();
     check($row['gateway'] === 'trial' && $row['order_status'] === 'fulfilled'
         && (int) $row['amount_paisa'] === 0 && $row['paid_at'] === null
         && $row['gateway_txn_id'] === null, 'Trial order is distinguishable from payment');
-    check((int) $row['lifetime'] === 30 * 86400, 'Trial lasts exactly 30 days');
+    check((int) $row['lifetime'] === TrialService::DAYS * 86400, 'Trial lasts TrialService::DAYS');
     $key = $licenses->decrypt($row['license_key_encrypted']);
     check($key !== null && $licenses->findActive($key) !== null, 'Account key decrypts and authorizes downloads');
 
@@ -90,10 +108,11 @@ try {
         $result = Database::transaction(static fn (PDO $pdo): array => $trials->ensureForCustomer($pdo, $id));
         check($result['status'] === 'existing_trial', 'Retry reuses the trial');
     }
-    check((int) $pdo->query('SELECT COUNT(*) FROM orders WHERE customer_id = ' . $id)->fetchColumn() === 1, 'One order after repeated requests');
+    check(count_rows('SELECT COUNT(*) FROM orders WHERE customer_id = :id', $id) === 1, 'One order after repeated requests');
     check(!$orders->markPaid($pdo, $row['order_ref'], 'must-not-be-written'), 'Payment transition cannot mark a trial paid');
-    check(rejected(static fn () => $licenses->issueForOrder($pdo, (int) $row['order_id'], $row['customer_email'])), 'Paid issuer rejects a trial order');
-    check(rejected(static fn () => $orders->product('diwan-pos-trial')), 'Trial SKU is unavailable to checkout');
+    rejectsIneligible(static fn () => $licenses->issueForOrder($pdo, (int) $row['order_id'], $row['customer_email']), 'Paid issuer rejects a trial order');
+    TestKit::throws(RuntimeException::class, static fn () => $orders->product(TrialService::SKU), 'Trial SKU is unavailable to checkout', 'inactive product');
+    echo "PASS: Trial SKU is unavailable to checkout\n";
 
     $fingerprint = hash('sha256', 'device-a');
     check($licenses->activate($key, $fingerprint, 'Test device')['result'] === 'activated', 'Trial binds to first device');
@@ -102,40 +121,28 @@ try {
     check($licenses->statusForDevice($key, $fingerprint)['expires_at'] !== null, 'Device status includes trial expiry');
 
     // Exercise the actual repair SQL, including its diagnostic statements.
-    $repair = file_get_contents(dirname(__DIR__) . '/database/migrations/005_fix_license_expiry.sql');
-    $repair = preg_replace('/^--.*$/m', '', $repair);
-    foreach (explode(';', $repair) as $sql) {
-        if (trim($sql) !== '') {
-            $stmt = $pdo->query($sql);
-            $stmt->closeCursor();
-        }
-    }
-    check($pdo->query('SELECT expires_at FROM licenses WHERE id = ' . (int) $row['id'])->fetchColumn() === $row['expires_at'], 'Repair migration preserves trial expiry');
+    apply_migration($pdo, dirname(__DIR__) . '/database/migrations/005_fix_license_expiry.sql');
+    check((int) TestKit::scalar('SELECT UNIX_TIMESTAMP(expires_at) FROM licenses WHERE id = :id', ['id' => $row['id']])
+        === (int) $row['expires_ts'], 'Repair migration preserves trial expiry');
 
-    $pdo->exec('UPDATE licenses SET expires_at = DATE_SUB(NOW(), INTERVAL 1 SECOND) WHERE id = ' . (int) $row['id']);
+    TestKit::exec('UPDATE licenses SET expires_at = DATE_SUB(NOW(), INTERVAL 1 SECOND) WHERE id = :id', ['id' => $row['id']]);
     check($licenses->findActive($key) === null, 'Expired trial cannot authorize downloads');
     check($licenses->activate($key, $fingerprint, null)['result'] === 'invalid_key', 'Expired trial cannot activate');
     check($licenses->statusForDevice($key, $fingerprint)['status'] === 'expired', 'Bound device receives expired status');
     $result = Database::transaction(static fn (PDO $pdo): array => $trials->ensureForCustomer($pdo, $id));
     check($result['status'] === 'existing_trial', 'Expired trial is not reissued');
-    $pdo->exec('UPDATE licenses SET status = "revoked" WHERE id = ' . (int) $row['id']);
+    TestKit::exec('UPDATE licenses SET status = "revoked" WHERE id = :id', ['id' => $row['id']]);
     $result = Database::transaction(static fn (PDO $pdo): array => $trials->ensureForCustomer($pdo, $id));
     check($result['status'] === 'existing_trial', 'Revoked trial is not reissued');
 
-    $paidCustomer = customer($pdo);
-    $email = $pdo->query('SELECT email FROM customers WHERE id = ' . $paidCustomer)->fetchColumn();
-    $pending = $orders->createPending('diwan-pos-starter', $paidCustomer, $email, '', 'test');
-    $paid = $orders->findByRef($pending['order_ref']);
-    Database::transaction(static function (PDO $pdo) use ($orders, $licenses, $paid, $email): void {
-        check($orders->markPaid($pdo, $paid['order_ref'], 'test-payment'), 'Real order can transition to paid');
-        $licenses->issueForOrder($pdo, (int) $paid['id'], $email);
-    });
-    check($pdo->query('SELECT expires_at FROM licenses WHERE order_id = ' . (int) $paid['id'])->fetchColumn() === null, 'Paid licence remains perpetual');
-    check(rejected(static fn () => $licenses->issueTrialForOrder($pdo, (int) $paid['id'], $email)), 'Trial issuer rejects paid orders');
+    $paidCustomer = TestKit::customer();
+    [$paid] = TestKit::paidLicense($paidCustomer);
+    check(TestKit::scalar('SELECT expires_at FROM licenses WHERE order_id = :id', ['id' => $paid['id']]) === null, 'Paid licence remains perpetual');
+    rejectsIneligible(static fn () => $licenses->issueTrialForOrder($pdo, (int) $paid['id'], $paid['customer_email']), 'Trial issuer rejects paid orders');
     $result = Database::transaction(static fn (PDO $pdo): array => $trials->ensureForCustomer($pdo, $paidCustomer));
     check($result['status'] === 'paid_license', 'Paid owner retains existing entitlement');
 
-    $raceCustomer = customer($pdo);
+    $raceCustomer = TestKit::customer();
     $workers = [];
     for ($i = 0; $i < 2; $i++) {
         $process = proc_open([PHP_BINARY, __FILE__, $argv[1], '--claim', (string) $raceCustomer],
@@ -157,31 +164,22 @@ try {
     }
     sort($outcomes);
     check($outcomes === ['existing_trial', 'issued'], 'Concurrent requests issue exactly one trial');
-    check((int) $pdo->query('SELECT COUNT(*) FROM licenses WHERE customer_id = ' . $raceCustomer)->fetchColumn() === 1, 'Concurrent requests persist exactly one licence');
+    check(count_rows('SELECT COUNT(*) FROM licenses WHERE customer_id = :id', $raceCustomer) === 1, 'Concurrent requests persist exactly one licence');
 
     // Check that a mid-signup failure leaves neither account nor grant behind.
     $rollbackId = 0;
     try {
         Database::transaction(static function (PDO $pdo) use ($trials, &$rollbackId): void {
-            $rollbackId = customer($pdo);
+            $rollbackId = TestKit::customer($pdo);
             $trials->ensureForCustomer($pdo, $rollbackId);
-            throw new RuntimeException('Simulated failure before commit');
+            throw new LogicException('Simulated failure before commit');
         });
-    } catch (RuntimeException $e) {
-        if ($e->getMessage() !== 'Simulated failure before commit') {
-            throw $e;
-        }
+    } catch (LogicException $e) {
+        // expected
     }
-    check((int) $pdo->query('SELECT COUNT(*) FROM customers WHERE id = ' . $rollbackId)->fetchColumn() === 0, 'Failed signup rolls back account');
-    check((int) $pdo->query('SELECT COUNT(*) FROM orders WHERE customer_id = ' . $rollbackId)->fetchColumn() === 0, 'Failed signup rolls back trial order');
+    check(count_rows('SELECT COUNT(*) FROM customers WHERE id = :id', $rollbackId) === 0, 'Failed signup rolls back account');
+    check(count_rows('SELECT COUNT(*) FROM orders WHERE customer_id = :id', $rollbackId) === 0, 'Failed signup rolls back trial order');
 } finally {
-    // Only the generated test accounts are removed; never truncate shared tables.
-    foreach ([$id, $paidCustomer, $raceCustomer] as $customerId) {
-        if ($customerId > 0) {
-            $pdo->exec('DELETE FROM trial_grants WHERE customer_id = ' . $customerId);
-            $pdo->exec('DELETE FROM licenses WHERE customer_id = ' . $customerId);
-            $pdo->exec('DELETE FROM orders WHERE customer_id = ' . $customerId);
-            $pdo->exec('DELETE FROM customers WHERE id = ' . $customerId);
-        }
-    }
+    // Only fixture accounts (@tests.invalid) are removed; never truncate shared tables.
+    TestKit::cleanup();
 }
