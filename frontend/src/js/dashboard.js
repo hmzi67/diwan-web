@@ -695,7 +695,67 @@ function renderStoreRecords(pos, customerId) {
       </tr>
     `).join('') || '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--color-muted);">No sales history recorded yet.</td></tr>';
   }
+
+  renderAllPosRecords(pos.records || {});
 }
+
+const posRecordState = { records: {}, entity: '', search: '', from: '', to: '' };
+
+function posRecordLabel(entity) {
+  return entity.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function renderAllPosRecords(records) {
+  posRecordState.records = records && typeof records === 'object' ? records : {};
+  const select = document.getElementById('pos-record-entity');
+  if (!select) return;
+  const entities = Object.keys(posRecordState.records).sort();
+  select.innerHTML = '<option value="">All record types</option>' +
+    entities.map((entity) => `<option value="${escapeHtml(entity)}">${escapeHtml(posRecordLabel(entity))}</option>`).join('');
+  renderFilteredPosRecords();
+}
+
+function renderFilteredPosRecords() {
+  const thead = document.getElementById('pos-records-thead');
+  const tbody = document.getElementById('pos-records-tbody');
+  const empty = document.getElementById('pos-record-empty');
+  const count = document.querySelector('[data-pos-record-count]');
+  if (!thead || !tbody) return;
+
+  const selected = posRecordState.entity
+    ? { [posRecordState.entity]: posRecordState.records[posRecordState.entity] || [] }
+    : posRecordState.records;
+  const rows = Object.entries(selected).flatMap(([entity, values]) =>
+    (Array.isArray(values) ? values : []).map((record) => ({ entity, record }))
+  ).filter(({ entity, record }) => {
+    const text = JSON.stringify(record).toLowerCase();
+    if (posRecordState.search && !text.includes(posRecordState.search.toLowerCase())) return false;
+    const dateValue = Object.entries(record).find(([key]) => /date|created|updated|opened|closed|paid|check_in|check_out/i.test(key))?.[1];
+    const dateText = dateValue ? String(dateValue).slice(0, 10) : '';
+    if (posRecordState.from && (!dateText || dateText < posRecordState.from)) return false;
+    if (posRecordState.to && (!dateText || dateText > posRecordState.to)) return false;
+    return true;
+  });
+  const columns = ['entity', ...new Set(rows.flatMap(({ record }) => Object.keys(record))).values()].slice(0, 9);
+  thead.innerHTML = `<tr>${columns.map((column) => `<th>${escapeHtml(column === 'entity' ? 'Record type' : column.replaceAll('_', ' '))}</th>`).join('')}</tr>`;
+  tbody.innerHTML = rows.map(({ entity, record }) => `<tr>${
+    columns.map((column) => {
+      const value = column === 'entity' ? posRecordLabel(entity) : record[column];
+      const rendered = value === null || value === undefined || value === '' ? '—' : typeof value === 'object' ? JSON.stringify(value) : String(value);
+      return `<td title="${escapeHtml(rendered)}">${escapeHtml(rendered.length > 120 ? `${rendered.slice(0, 117)}…` : rendered)}</td>`;
+    }).join('')
+  }</tr>`).join('');
+  empty.hidden = rows.length > 0;
+  count.textContent = `${rows.length} records`;
+}
+
+['entity', 'search', 'from', 'to'].forEach((name) => {
+  const id = `pos-record-${name}`;
+  document.getElementById(id)?.addEventListener(name === 'entity' ? 'change' : 'input', (event) => {
+    posRecordState[name] = event.target.value;
+    renderFilteredPosRecords();
+  });
+});
 
 // --- Load -------------------------------------------------------------------
 async function load() {

@@ -19,6 +19,7 @@ final class SyncService
      * @param string|null $deviceName Human-readable machine label, e.g. "Counter 1"
      * @param list<array<string, mixed>> $sales Recent/unsynced sale transactions
      * @param list<array<string, mixed>> $dailySummaries Aggregated daily numbers
+     * @param array<string, list<array<string, mixed>>> $records Complete POS read model
      * @param int|null $claimedCustomerId Optional user ID sent by client
      * @return array{status: string, customer_id: int, synced_sales: int, synced_summaries: int, server_time: string}
      */
@@ -28,7 +29,8 @@ final class SyncService
         ?string $deviceName,
         array $sales,
         array $dailySummaries,
-        ?int $claimedCustomerId = null
+        ?int $claimedCustomerId = null,
+        array $records = []
     ): array {
         $fpHash = DeviceInput::fingerprintHash($fingerprint);
         $license = (new LicenseService())->findLicenseForDevice($rawKey, $fpHash);
@@ -164,6 +166,8 @@ final class SyncService
                 if ($sdate === null || !is_string($sdate)) {
                     continue;
                 }
+
+                $syncedRecords = $this->storeRecords($pdo, $customerId, $fingerprint, $records);
                 $total = (int) ($summary['total_sales_minor'] ?? $summary['totalSalesMinor'] ?? 0);
                 $refunds = (int) ($summary['refunds_minor'] ?? $summary['refundsMinor'] ?? 0);
                 $net = (int) ($summary['net_sales_minor'] ?? $summary['netSalesMinor'] ?? 0);
@@ -200,6 +204,7 @@ final class SyncService
             'customer_id'      => (int) $customerId,
             'synced_sales'     => $syncedSales,
             'synced_summaries' => $syncedSummaries,
+            'synced_records'   => $syncedRecords,
             'server_time'      => gmdate('Y-m-d H:i:s'),
         ];
     }
@@ -315,6 +320,23 @@ final class SyncService
             $dailyTrends = $stmtFallbackTrends->fetchAll();
         }
 
+        $stmtRecords = $pdo->prepare(
+            'SELECT entity_name, local_record_id, record_json
+               FROM pos_records
+              WHERE customer_id = :id
+              ORDER BY entity_name ASC, local_record_id ASC'
+        );
+        $stmtRecords->execute(['id' => $customerId]);
+        $records = [];
+        foreach ($stmtRecords->fetchAll() as $record) {
+            $entity = (string) $record['entity_name'];
+            $decoded = json_decode((string) $record['record_json'], true);
+            if (!is_array($decoded)) {
+                continue;
+            }
+            $records[$entity][] = $decoded;
+        }
+
         return [
             'has_synced_data' => !empty($devices) || !empty($recentSales),
             'devices'         => array_map(static fn (array $d): array => [
@@ -364,7 +386,51 @@ final class SyncService
                 'other_minor'       => (int) $t['other_minor'],
                 'currency'          => (string) $t['currency'],
             ], $dailyTrends),
+            'records'         => $records,
         ];
+    }
+
+    /**
+     * Replaces each entity's records atomically. JSON is intentional here:
+     * the POS schema evolves independently and the dashboard must not lose a
+     * new POS field while waiting for a web migration.
+     *
+     * @param array<string, list<array<string, mixed>>> $records
+     */
+    private function storeRecords(PDO $pdo, int $customerId, string $fingerprint, array $records): int
+    {
+        $stmt = $pdo->prepare(
+            'INSERT INTO pos_records
+                (customer_id, device_fingerprint, entity_name, local_record_id, record_json, synced_at)
+             VALUES (:customer, :device, :entity, :record_id, :json, NOW())
+             ON DUPLICATE KEY UPDATE
+                device_fingerprint = VALUES(device_fingerprint),
+                record_json = VALUES(record_json),
+                synced_at = NOW()'
+        );
+        $count = 0;
+        foreach ($records as $entity => $rows) {
+            if (!is_string($entity) || !preg_match('/^[a-z_]{1,64}$/', $entity) || !is_array($rows)) {
+                continue;
+            }
+            foreach ($rows as $index => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $localId = isset($row['id']) && is_scalar($row['id'])
+                    ? (string) $row['id']
+                    : (string) ($index + 1);
+                $stmt->execute([
+                    'customer' => $customerId,
+                    'device' => $fingerprint,
+                    'entity' => $entity,
+                    'record_id' => mb_substr($localId, 0, 100),
+                    'json' => json_encode($row, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+                ]);
+                $count++;
+            }
+        }
+        return $count;
     }
 
     private static bool $tablesVerified = false;
@@ -433,6 +499,22 @@ final class SyncService
                   PRIMARY KEY (id),
                   UNIQUE KEY uq_pos_daily_customer_date (customer_id, summary_date),
                   KEY idx_pos_daily_customer_date (customer_id, summary_date)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS pos_records (
+                  id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                  customer_id         BIGINT UNSIGNED NOT NULL,
+                  device_fingerprint  VARCHAR(64) NOT NULL,
+                  entity_name         VARCHAR(64) NOT NULL,
+                  local_record_id     VARCHAR(100) NOT NULL,
+                  record_json         LONGTEXT NOT NULL,
+                  synced_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY uq_pos_records_customer_device_entity_record
+                    (customer_id, device_fingerprint, entity_name, local_record_id),
+                  KEY idx_pos_records_customer_entity (customer_id, entity_name),
+                  CONSTRAINT fk_pos_records_customer
+                    FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ');
             self::$tablesVerified = true;

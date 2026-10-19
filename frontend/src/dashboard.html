@@ -275,6 +275,44 @@
                   </table>
                 </div>
               </div>
+
+              <!-- Complete POS read model -->
+              <div class="panel" style="margin-top: 1.5rem;">
+                <div class="panel__head">
+                  <div>
+                    <h2>All POS records</h2>
+                    <p class="panel__note">Every synced inventory, order, workforce, finance and configuration record.</p>
+                  </div>
+                  <span class="badge" data-pos-record-count>0 records</span>
+                </div>
+                <div class="pos-record-filters" role="search" aria-label="Filter POS records">
+                  <label>
+                    <span>Record type</span>
+                    <select id="pos-record-entity">
+                      <option value="">All record types</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Search</span>
+                    <input id="pos-record-search" type="search" placeholder="Search any field">
+                  </label>
+                  <label>
+                    <span>From</span>
+                    <input id="pos-record-from" type="date">
+                  </label>
+                  <label>
+                    <span>To</span>
+                    <input id="pos-record-to" type="date">
+                  </label>
+                </div>
+                <div class="table-wrap">
+                  <table class="data-table" aria-label="All POS records">
+                    <thead id="pos-records-thead"></thead>
+                    <tbody id="pos-records-tbody"></tbody>
+                  </table>
+                </div>
+                <p class="order-note" id="pos-record-empty" hidden>No records match these filters.</p>
+              </div>
             </div>
           </section>
 

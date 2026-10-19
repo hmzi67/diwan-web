@@ -37,11 +37,12 @@ $fingerprint = DeviceInput::fingerprint($input);
 $hint = DeviceInput::hint($input);
 $sales = isset($input['sales']) && is_array($input['sales']) ? $input['sales'] : [];
 $dailySummaries = isset($input['daily_summaries']) && is_array($input['daily_summaries']) ? $input['daily_summaries'] : [];
+$records = isset($input['records']) && is_array($input['records']) ? $input['records'] : [];
 $claimedCustomerId = isset($input['customer_id']) ? (int) $input['customer_id'] : null;
 
 try {
     $service = new SyncService();
-    $result = $service->sync($key, $fingerprint, $hint, $sales, $dailySummaries, $claimedCustomerId);
+    $result = $service->sync($key, $fingerprint, $hint, $sales, $dailySummaries, $claimedCustomerId, $records);
     Http::json($result);
 } catch (\Throwable $e) {
     Logger::warning('POS sync failed', ['error' => $e->getMessage()]);
