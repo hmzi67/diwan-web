@@ -47,6 +47,7 @@ final class SyncService
         }
 
         $pdo = Database::pdo();
+        $this->ensureTablesExist($pdo);
 
         // 1. Register / touch device
         $stmtDevice = $pdo->prepare(
@@ -212,6 +213,7 @@ final class SyncService
     public function dashboardDataFor(int $customerId): array
     {
         $pdo = Database::pdo();
+        $this->ensureTablesExist($pdo);
 
         // 1. Devices registered
         $stmtDevices = $pdo->prepare(
@@ -363,5 +365,79 @@ final class SyncService
                 'currency'          => (string) $t['currency'],
             ], $dailyTrends),
         ];
+    }
+
+    private static bool $tablesVerified = false;
+
+    /**
+     * Self-heals the database schema by ensuring POS sync tables exist.
+     * Prevents failures when migrations have not yet been manually applied to MySQL.
+     */
+    private function ensureTablesExist(PDO $pdo): void
+    {
+        if (self::$tablesVerified) {
+            return;
+        }
+
+        try {
+            $pdo->exec('
+                CREATE TABLE IF NOT EXISTS pos_devices (
+                  id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                  customer_id         BIGINT UNSIGNED NOT NULL,
+                  license_id          BIGINT UNSIGNED NULL,
+                  device_fingerprint  VARCHAR(64)     NOT NULL,
+                  device_name         VARCHAR(100)    NULL,
+                  last_sync_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY uq_pos_devices_customer_fingerprint (customer_id, device_fingerprint),
+                  KEY idx_pos_devices_customer (customer_id),
+                  KEY idx_pos_devices_license (license_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS pos_sales (
+                  id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                  customer_id         BIGINT UNSIGNED NOT NULL,
+                  device_fingerprint  VARCHAR(64)     NOT NULL,
+                  local_sale_id       BIGINT          NOT NULL,
+                  order_no            INT             NULL,
+                  table_name          VARCHAR(100)    NULL,
+                  cashier_name        VARCHAR(100)    NULL,
+                  total_minor         BIGINT          NOT NULL,
+                  discount_minor      BIGINT          NOT NULL DEFAULT 0,
+                  tax_minor           BIGINT          NOT NULL DEFAULT 0,
+                  payment_method      VARCHAR(20)     NOT NULL DEFAULT "cash",
+                  currency            VARCHAR(10)     NOT NULL DEFAULT "PKR",
+                  items_count         INT             NOT NULL DEFAULT 1,
+                  items_summary       TEXT            NULL,
+                  sale_created_at     DATETIME        NOT NULL,
+                  synced_at           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY uq_pos_sales_customer_device_sale (customer_id, device_fingerprint, local_sale_id),
+                  KEY idx_pos_sales_customer_created (customer_id, sale_created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS pos_daily_summaries (
+                  id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                  customer_id         BIGINT UNSIGNED NOT NULL,
+                  summary_date        DATE            NOT NULL,
+                  total_sales_minor   BIGINT          NOT NULL DEFAULT 0,
+                  refunds_minor       BIGINT          NOT NULL DEFAULT 0,
+                  net_sales_minor     BIGINT          NOT NULL DEFAULT 0,
+                  transaction_count   INT             NOT NULL DEFAULT 0,
+                  cash_minor          BIGINT          NOT NULL DEFAULT 0,
+                  card_minor          BIGINT          NOT NULL DEFAULT 0,
+                  other_minor         BIGINT          NOT NULL DEFAULT 0,
+                  currency            VARCHAR(10)     NOT NULL DEFAULT "PKR",
+                  updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY uq_pos_daily_customer_date (customer_id, summary_date),
+                  KEY idx_pos_daily_customer_date (customer_id, summary_date)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ');
+            self::$tablesVerified = true;
+        } catch (\Throwable $e) {
+            Logger::warning('ensureTablesExist check failed: ' . $e->getMessage());
+        }
     }
 }
