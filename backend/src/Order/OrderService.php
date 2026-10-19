@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Diwan\Order;
 
 use Diwan\Database\Database;
+use Diwan\License\LicenseService;
 use Diwan\Support\Logger;
 use PDO;
 use RuntimeException;
@@ -22,7 +23,7 @@ final class OrderService
         $pdo = Database::pdo();
 
         $product = $this->product($sku);
-        $orderRef = $this->generateReference();
+        $orderRef = self::newReference('DW');
 
         $stmt = $pdo->prepare(
             'INSERT INTO orders (order_ref, product_id, customer_id, customer_email, customer_phone,
@@ -47,6 +48,44 @@ final class OrderService
             'amount_paisa' => (int) $product['price_paisa'],
             'product'      => $product,
         ];
+    }
+
+    /**
+     * Every order the customer owns, newest first, with its licence (if any)
+     * and the decrypted key. Scoped by owner in SQL; the caller must send the
+     * result with Cache-Control: no-store (Http::json does) and never put keys
+     * in URLs, logs or browser storage.
+     */
+    public function dashboardRowsFor(int $customerId): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT o.id AS order_id, o.order_ref, o.amount_paisa, o.currency, o.status AS order_status,
+                    o.created_at, o.paid_at, o.gateway,
+                    p.name AS product_name,
+                    l.id AS license_id, l.license_key_prefix, l.license_key_encrypted,
+                    CASE WHEN l.status = "active" AND l.expires_at <= NOW() THEN "expired"
+                         ELSE l.status END AS license_status,
+                    UNIX_TIMESTAMP(l.expires_at) AS expires_at,
+                    l.activation_status, l.activated_machine_hint, l.activated_at,
+                    l.max_downloads, l.downloads_used,
+                    (l.license_key_encrypted IS NOT NULL) AS can_resend
+               FROM orders o
+               JOIN products p ON p.id = o.product_id
+          LEFT JOIN licenses l ON l.order_id = o.id
+              WHERE o.customer_id = :id
+              ORDER BY o.created_at DESC'
+        );
+        $stmt->execute(['id' => $customerId]);
+
+        $licenses = new LicenseService();
+        $rows = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $row['license_key'] = $licenses->decrypt($row['license_key_encrypted']);
+            unset($row['license_key_encrypted']);
+            $row['expires_at'] = $row['expires_at'] === null ? null : (int) $row['expires_at'];
+            $rows[] = $row;
+        }
+        return $rows;
     }
 
     public function findByRef(string $orderRef): ?array
@@ -81,6 +120,15 @@ final class OrderService
         $stmt->execute(['ref' => $orderRef, 'reason' => mb_substr($reason, 0, 255)]);
     }
 
+    /** @return list<array{sku:string, name:string, price_paisa:int, currency:string}> */
+    public function activeProducts(): array
+    {
+        $rows = Database::pdo()->query(
+            'SELECT sku, name, price_paisa, currency FROM products WHERE is_active = 1 ORDER BY price_paisa'
+        )->fetchAll();
+        return array_map(static fn (array $row): array => ['price_paisa' => (int) $row['price_paisa']] + $row, $rows);
+    }
+
     public function product(string $sku): array
     {
         $stmt = Database::pdo()->prepare(
@@ -95,9 +143,12 @@ final class OrderService
         return $product;
     }
 
-    /** Gateway-safe reference: alphanumeric, unique, sortable by time. */
-    private function generateReference(): string
+    /**
+     * Gateway-safe reference: alphanumeric, unique, sortable by time. The
+     * prefix names the source — DW checkout, AP App Store, TR trial.
+     */
+    public static function newReference(string $prefix, int $randomBytes = 3): string
     {
-        return 'DW' . gmdate('YmdHis') . strtoupper(bin2hex(random_bytes(3)));
+        return $prefix . gmdate('YmdHis') . strtoupper(bin2hex(random_bytes($randomBytes)));
     }
 }

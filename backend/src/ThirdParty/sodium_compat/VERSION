@@ -1,0 +1,4 @@
+paragonie/sodium_compat v2.5.2
+Source: https://github.com/paragonie/sodium_compat/releases/tag/v2.5.2
+Vendored in commit 9e8a836 (no Composer on the FTP-only host).
+Update by replacing this directory with a newer release and editing this file.

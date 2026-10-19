@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace Diwan\Auth;
 
-use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Support\Crypto;
+use PDO;
 
 /**
  * Customer dashboard session: a signed, mostly-stateless HttpOnly cookie.
@@ -38,7 +39,7 @@ final class Session
         $expires = time() + self::TTL_DAYS * 86400;
         $epoch ??= self::epochFor($customerId);
         $payload = $customerId . '.' . $epoch . '.' . $expires;
-        $signature = hash_hmac('sha256', $payload, Env::require('APP_KEY'));
+        $signature = Crypto::hmac($payload);
 
         setcookie(self::COOKIE_NAME, $payload . '.' . $signature, [
             'expires'  => $expires,
@@ -72,7 +73,7 @@ final class Session
         }
         [$id, $epoch, $expires, $signature] = $parts;
 
-        $expected = hash_hmac('sha256', $id . '.' . $epoch . '.' . $expires, Env::require('APP_KEY'));
+        $expected = Crypto::hmac($id . '.' . $epoch . '.' . $expires);
         if (!hash_equals($expected, $signature)) {
             return null;
         }
@@ -97,7 +98,7 @@ final class Session
         $expires = time() + self::APP_TOKEN_TTL_SECONDS;
         $epoch ??= self::epochFor($customerId);
         $payload = $customerId . '.' . $epoch . '.' . $expires;
-        return $payload . '.' . hash_hmac('sha256', 'app:' . $payload, Env::require('APP_KEY'));
+        return $payload . '.' . Crypto::hmac('app:' . $payload);
     }
 
     /**
@@ -113,7 +114,7 @@ final class Session
             return null;
         }
         [$id, $epoch, $expires, $signature] = $parts;
-        $expected = hash_hmac('sha256', 'app:' . $id . '.' . $epoch . '.' . $expires, Env::require('APP_KEY'));
+        $expected = Crypto::hmac('app:' . $id . '.' . $epoch . '.' . $expires);
         if (!hash_equals($expected, $signature) || (int) $expires < time()) {
             return null;
         }
@@ -143,7 +144,7 @@ final class Session
      * Invalidates every session cookie already issued for this customer, on
      * every device. Called after a password reset.
      */
-    public static function revokeAll(\PDO $pdo, int $customerId): void
+    public static function revokeAll(PDO $pdo, int $customerId): void
     {
         $pdo->prepare('UPDATE customers SET session_epoch = session_epoch + 1 WHERE id = :id')
             ->execute(['id' => $customerId]);

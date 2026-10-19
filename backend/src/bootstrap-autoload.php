@@ -21,3 +21,10 @@ spl_autoload_register(static function (string $class): void {
         require $file;
     }
 });
+
+
+// Same libsodium fallback as bootstrap.php: the keygen script and the tests
+// sign with Ed25519 too, on machines that may lack ext-sodium.
+if (!extension_loaded('sodium')) {
+    require_once DIWAN_SRC . '/ThirdParty/sodium_compat/autoload.php';
+}

@@ -21,6 +21,7 @@ require __DIR__ . '/_bootstrap.php';
 use Diwan\Database\Database;
 use Diwan\License\ActivationThrottle;
 use Diwan\License\LicenseService;
+use Diwan\Support\DeviceInput;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
 
@@ -28,25 +29,20 @@ Http::requireMethod('POST');
 
 $input       = Http::input();
 $key         = trim((string) ($input['license_key'] ?? ''));
-$fingerprint = strtolower(trim((string) ($input['machine_fingerprint'] ?? '')));
-$hint        = trim((string) ($input['machine_hint'] ?? ''));
 $ip          = Http::clientIp();
 
 if ($key === '') {
     Http::fail('Please provide a licence key.', 422);
 }
-if (!preg_match('/^[a-f0-9]{64}$/', $fingerprint)) {
-    // The app must send sha256(machine id) hex-encoded — never the raw id.
-    Http::fail('Invalid device fingerprint.', 422);
-}
-$hint = $hint !== '' ? substr(preg_replace('/[^\x20-\x7E]/', '', $hint), 0, 64) : null;
+$fingerprint = DeviceInput::fingerprint($input);
+$hint        = DeviceInput::hint($input);
 
 $prefix   = ActivationThrottle::prefixOf($key);
 $throttle = new ActivationThrottle(Database::pdo(), $ip, $prefix);
 $throttle->enforce();
 
 $licenses = new LicenseService();
-$outcome  = $licenses->activate($key, hash('sha256', $fingerprint), $hint);
+$outcome  = $licenses->activate($key, DeviceInput::fingerprintHash($fingerprint), $hint);
 
 switch ($outcome['result']) {
     case 'invalid_key':

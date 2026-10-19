@@ -81,7 +81,7 @@ final class AppleConfig
     {
         return Env::get(
             'APPLE_SIGN_IN_REDIRECT_URI',
-            rtrim((string) Env::get('APP_URL', ''), '/') . '/auth/login.html'
+            Env::appUrl('/auth/login.html')
         );
     }
 

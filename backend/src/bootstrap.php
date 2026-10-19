@@ -47,7 +47,9 @@ define('DIWAN_PRIVATE_STORAGE', rtrim(
 ));
 
 // --- Error handling: never leak stack traces to a paying customer ---
-$debug = Env::bool('APP_DEBUG', false);
+// Production never shows an error or exception message, whatever APP_DEBUG
+// says: a PDO message can carry the DB host and user.
+$debug = Env::bool('APP_DEBUG', false) && !Env::isProduction();
 ini_set('display_errors', $debug ? '1' : '0');
 ini_set('log_errors', '1');
 // Self-heal the log directory. private-storage is deliberately never deployed,
@@ -61,10 +63,7 @@ ini_set('error_log', DIWAN_PRIVATE_STORAGE . '/logs/php-error.log');
 error_reporting(E_ALL);
 
 set_exception_handler(static function (Throwable $e) use ($debug): void {
-    Logger::error('Unhandled exception', [
-        'message' => $e->getMessage(),
-        'file'    => $e->getFile() . ':' . $e->getLine(),
-    ]);
+    Logger::exception('Unhandled exception', $e);
     if (!headers_sent()) {
         http_response_code(500);
         header('Content-Type: application/json');

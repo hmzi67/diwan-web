@@ -53,6 +53,16 @@ final class ActivationThrottle
     /** Responds 429 and exits if either axis is over budget. */
     public function enforce(): void
     {
+        if ($this->isOverBudget()) {
+            Logger::warning('Licence endpoint rate limited', ['ip' => $this->ip, 'prefix' => $this->prefix]);
+            $this->record('rate_limited');
+            Http::fail('Too many attempts. Please try again in an hour.', 429);
+        }
+    }
+
+    /** Whether this IP or this key prefix has used up its failed attempts. */
+    public function isOverBudget(): bool
+    {
         $this->pdo->prepare(
             'DELETE FROM license_activation_attempts WHERE attempted_at < ' . self::WINDOW_SQL
         )->execute();
@@ -71,12 +81,8 @@ final class ActivationThrottle
         );
         $prefixCount->execute(['prefix' => $this->prefix]);
 
-        if ((int) $ipCount->fetchColumn() >= self::MAX_PER_WINDOW
-            || (int) $prefixCount->fetchColumn() >= self::MAX_PER_WINDOW) {
-            Logger::warning('Licence endpoint rate limited', ['ip' => $this->ip, 'prefix' => $this->prefix]);
-            $this->record('rate_limited');
-            Http::fail('Too many attempts. Please try again in an hour.', 429);
-        }
+        return (int) $ipCount->fetchColumn() >= self::MAX_PER_WINDOW
+            || (int) $prefixCount->fetchColumn() >= self::MAX_PER_WINDOW;
     }
 
     /** Fire-and-forget audit row; mirrors the download_attempts insert pattern. */

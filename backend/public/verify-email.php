@@ -18,6 +18,7 @@ require __DIR__ . '/_bootstrap.php';
 
 use Diwan\Auth\EmailVerificationService;
 use Diwan\Auth\Session;
+use Diwan\Support\Crypto;
 use Diwan\Support\Http;
 
 Http::requireMethod('POST');
@@ -27,7 +28,7 @@ $token = (string) ($input['token'] ?? '');
 
 // 64 hex chars — same shape as every other bin2hex(random_bytes(32)) token
 // in this codebase. Reject junk before it touches the DB.
-if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+if (!Crypto::isToken($token)) {
     Http::fail('That verification link is not valid. Please request a new one.', 400);
 }
 

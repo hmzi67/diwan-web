@@ -1,48 +1,15 @@
 // Checkout page: requires a session (checkout.php enforces this too — this
 // is just so a logged-out visitor gets a redirect instead of a 401).
-const API = '/api';
-
-// Display names/prices only — must match database/schema.sql, index.html
-// #pricing and products.html. The real price is never trusted from here:
-// checkout.php reads it from the products table when it creates the order.
-const PLANS = {
-  'diwan-pos-starter':    { name: 'Starter',    price: 'Rs 8,000' },
-  'diwan-pos-standard':   { name: 'Standard',   price: 'Rs 12,000' },
-  'diwan-pos-enterprise': { name: 'Enterprise', price: 'Rs 25,000' },
-};
 const DEFAULT_PLAN = 'diwan-pos-standard';
 
-async function getJson(path) {
-  const res = await fetch(API + path, { credentials: 'same-origin' });
-  const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
-}
-
-async function postJson(path, body) {
-  const res = await fetch(API + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-  return data;
-}
-
-function setStatus(el, message, kind) {
-  el.textContent = message;
-  el.className = kind === 'ok' ? 'min-h-6 text-[.9rem] text-accent'
-    : kind === 'error' ? 'min-h-6 text-[.9rem] text-danger'
-    : 'min-h-6 text-[.9rem] text-muted';
-}
+const rupees = (paisa) => `Rs ${(paisa / 100).toLocaleString('en-PK')}`;
 
 const params = new URLSearchParams(window.location.search);
-const rawPlan = params.get('plan') || DEFAULT_PLAN;
-// Only ever used for display — an unrecognised value still gets sent to
-// checkout.php as-is, which will reject it server-side if it's not a real,
-// active product.
-const plan = Object.prototype.hasOwnProperty.call(PLANS, rawPlan) ? rawPlan : DEFAULT_PLAN;
-const planInfo = PLANS[plan];
+const requestedPlan = params.get('plan') || DEFAULT_PLAN;
+// Settled once the product list arrives: an unrecognised plan falls back to
+// the default. checkout.php re-checks the SKU and reads the price itself, so
+// nothing shown here is trusted for the charge.
+let plan = requestedPlan;
 
 const title   = document.getElementById('checkout-title');
 const summary = document.getElementById('checkout-summary');
@@ -51,14 +18,25 @@ const emailEl = document.getElementById('checkout-email');
 const status  = document.getElementById('checkout-status');
 
 (async () => {
-  const { ok, data } = await getJson('/dashboard-data.php');
-  if (!ok) {
-    window.location.href = `/auth/login.html?plan=${encodeURIComponent(plan)}`;
+  const [account, catalogue] = await Promise.all([
+    DiwanApi.get('/dashboard-data.php'),
+    DiwanApi.get('/products.php'),
+  ]);
+  if (!account.ok) {
+    window.location.href = `/auth/login.html?plan=${encodeURIComponent(requestedPlan)}`;
     return;
   }
-  title.textContent = `Checkout — ${planInfo.name}`;
-  summary.textContent = `${planInfo.name} plan, ${planInfo.price} one-time.`;
-  emailEl.textContent = data.email;
+  const products = catalogue.ok ? catalogue.data.products : [];
+  const product = products.find((p) => p.sku === requestedPlan)
+    || products.find((p) => p.sku === DEFAULT_PLAN);
+  if (!product) {
+    DiwanApi.setStatus(status, 'Checkout is unavailable right now. Please try again shortly.', 'error');
+    return;
+  }
+  plan = product.sku;
+  title.textContent = `Checkout — ${product.name}`;
+  summary.textContent = `${product.name}, ${rupees(product.price_paisa)} one-time.`;
+  emailEl.textContent = account.data.email;
   form.hidden = false;
 })();
 
@@ -66,10 +44,10 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const button = form.querySelector('button');
   button.disabled = true;
-  setStatus(status, 'Creating your order…');
+  DiwanApi.setStatus(status, 'Creating your order…');
   try {
     const phone = new FormData(form).get('phone');
-    const { redirect_url, fields } = await postJson('/checkout.php', {
+    const { redirect_url, fields } = await DiwanApi.postJson('/checkout.php', {
       phone,
       product_sku: plan,
     });
@@ -87,7 +65,7 @@ form.addEventListener('submit', async (e) => {
     document.body.appendChild(gwForm);
     gwForm.submit();
   } catch (err) {
-    setStatus(status, err.message, 'error');
+    DiwanApi.setStatus(status, err.message, 'error');
     button.disabled = false;
   }
 });

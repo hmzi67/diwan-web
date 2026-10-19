@@ -1,26 +1,8 @@
-// All backend calls go through /api/* — the only web-accessible PHP entrypoints.
-// This file loads FIRST on pages that also load their own script (checkout.js,
-// auth.js). Never declare a top-level `const` here whose name a page script also
-// declares (`API`, `params`, `form`, …): a duplicate `const` in global scope
-// throws SyntaxError and the page script dies with it.
-
-async function postJson(path, body) {
-  const res = await fetch('/api' + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-  return data;
-}
-
-function setStatus(el, message, kind) {
-  el.textContent = message;
-  el.className = kind === 'ok' ? 'min-h-6 text-[.9rem] text-accent'
-    : kind === 'error' ? 'min-h-6 text-[.9rem] text-danger'
-    : 'min-h-6 text-[.9rem] text-muted';
-}
+// All backend calls go through DiwanApi (api.js, loaded first). This file
+// loads before page scripts (checkout.js, contact.js) in the same global
+// scope: never declare a top-level name here that a page script also
+// declares (`params`, `form`, …) — a duplicate `const` throws SyntaxError and
+// the page script dies with it.
 
 // Pricing cards: "Get Started" needs a session before it can reach checkout.
 // The href on each card already points at /auth/login.html?plan=X, so anyone
@@ -31,8 +13,8 @@ document.querySelectorAll('.plan__cta[data-plan]').forEach((link) => {
     e.preventDefault();
     const plan = link.dataset.plan;
     try {
-      const res = await fetch('/api/dashboard-data.php', { credentials: 'same-origin' });
-      window.location.href = res.ok
+      const { ok } = await DiwanApi.get('/dashboard-data.php');
+      window.location.href = ok
         ? `/checkout.html?plan=${encodeURIComponent(plan)}`
         : `/auth/login.html?plan=${encodeURIComponent(plan)}`;
     } catch {
@@ -45,17 +27,17 @@ const downloadForm = document.getElementById('download-form');
 downloadForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const status = document.getElementById('download-status');
-  setStatus(status, 'Verifying your licence…');
+  DiwanApi.setStatus(status, 'Verifying your licence…');
   try {
     const payload = Object.fromEntries(new FormData(downloadForm));
     // Options are "platform:variant" (e.g. "macos:intel"); Android has one build.
     const [platform, variant = ''] = payload.platform.split(':');
     Object.assign(payload, { platform, variant });
-    const { download_url, expires_at } = await postJson('/issue-download.php', payload);
-    setStatus(status, `Licence verified. Your link expires ${expires_at}.`, 'ok');
+    const { download_url, expires_at } = await DiwanApi.postJson('/issue-download.php', payload);
+    DiwanApi.setStatus(status, `Licence verified. Your link expires ${expires_at}.`, 'ok');
     window.location.href = download_url;
   } catch (err) {
-    setStatus(status, err.message, 'error');
+    DiwanApi.setStatus(status, err.message, 'error');
   }
 });
 
@@ -102,8 +84,8 @@ downloadForm?.addEventListener('submit', async (e) => {
 
   let me = null;
   try {
-    const res = await fetch('/api/dashboard-data.php', { credentials: 'same-origin' });
-    if (res.ok) me = await res.json().catch(() => null);
+    const { ok, data } = await DiwanApi.get('/dashboard-data.php');
+    if (ok) me = data;
   } catch { /* backend unreachable — stay in guest state */ }
   if (!me || !(me.email || me.name)) return;
 
@@ -141,7 +123,7 @@ downloadForm?.addEventListener('submit', async (e) => {
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
   document.getElementById('logout-btn').addEventListener('click', async () => {
-    try { await postJson('/logout.php', {}); } catch { /* cookie is gone server-side regardless */ }
+    try { await DiwanApi.post('/logout.php'); } catch { /* cookie is gone server-side regardless */ }
     window.location.href = '/auth/login.html';
   });
 })();

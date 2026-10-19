@@ -9,7 +9,13 @@ DirectoryIndex index.php
 </FilesMatch>
 
 # No dotfiles, no config, no leftovers.
-<FilesMatch "^\.|\.(env|ini|log|sql|md|sh|bak|dist|yml|yaml|example)$">
+<FilesMatch "^\.|\.(env|ini|log|sql|md|sh|json|bak|dist|yml|yaml|example|pem|key|p8|p12|pfx)$|~$|^error_log$">
+  Require all denied
+</FilesMatch>
+
+# Installers are only ever streamed by download.php from private storage;
+# a stray copy in this directory must not be downloadable directly.
+<FilesMatch "(?i)\.(exe|dmg|apk|aab|msi|pkg|appimage|deb|rpm|zip|tar|gz)$">
   Require all denied
 </FilesMatch>
 

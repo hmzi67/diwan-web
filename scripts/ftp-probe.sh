@@ -17,7 +17,9 @@ ftp_do() {
   # ssl:verify-certificate no — shared hosts routinely present a certificate for
   # the hostname rather than the FTP vhost. Acceptable for a read-only probe;
   # never relax this for the real deploy.
-  lftp -u "$USER","$PASS" "$HOST" <<LFTP 2>&1
+  # --env-password reads LFTP_PASSWORD, so the password never appears in the
+  # process list the way a `-u user,pass` argument does.
+  LFTP_PASSWORD="$PASS" lftp --env-password -u "$USER" "$HOST" <<LFTP 2>&1
 set ssl:verify-certificate no
 set net:timeout 20
 set net:max-retries 1

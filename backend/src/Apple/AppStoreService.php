@@ -7,6 +7,7 @@ use Diwan\Database\Database;
 use Diwan\License\LicenseService;
 use Diwan\Order\OrderService;
 use Diwan\Support\Logger;
+use Diwan\Support\UserFacingException;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -41,31 +42,31 @@ final class AppStoreService
         $tx = AppStoreJws::verify($jws);
 
         if (($tx['bundleId'] ?? null) !== AppleConfig::bundleId()) {
-            throw new RuntimeException('This purchase belongs to a different app.');
+            throw new UserFacingException('This purchase belongs to a different app.');
         }
         $environment = (string) ($tx['environment'] ?? '');
         if ($environment === 'Sandbox' && !AppleConfig::allowSandbox()) {
-            throw new RuntimeException('Sandbox purchases are not accepted.');
+            throw new UserFacingException('Sandbox purchases are not accepted.');
         }
         if ($environment !== 'Production' && $environment !== 'Sandbox') {
             // "Xcode"/"LocalTesting" transactions are signed by a local
             // StoreKit configuration, never by Apple — AppStoreJws already
             // refuses their chain; this is the explicit backstop.
-            throw new RuntimeException('Only App Store and sandbox purchases are accepted.');
+            throw new UserFacingException('Only App Store and sandbox purchases are accepted.');
         }
         if (($tx['type'] ?? null) !== 'Non-Consumable') {
-            throw new RuntimeException('Unsupported purchase type.');
+            throw new UserFacingException('Unsupported purchase type.');
         }
         if (($tx['inAppOwnershipType'] ?? 'PURCHASED') === 'FAMILY_SHARED') {
             // A licence binds to one device; Family Sharing would let one
             // purchase move between households. Turn it off for these
             // products in App Store Connect — this refuses it regardless.
-            throw new RuntimeException('Licences shared through Family Sharing cannot be activated. Please buy your own licence.');
+            throw new UserFacingException('Licences shared through Family Sharing cannot be activated. Please buy your own licence.');
         }
         $productId = (string) ($tx['productId'] ?? '');
         $sku       = AppleConfig::skuFor($productId);
         if ($sku === null) {
-            throw new RuntimeException('Unknown App Store product.');
+            throw new UserFacingException('Unknown App Store product.');
         }
 
         // `price` is in milliunits of `currency` (8000 PKR = 8000000);
@@ -136,7 +137,7 @@ final class AppStoreService
 
         if ($row) {
             if ($row['status'] === 'revoked') {
-                throw new RuntimeException('This purchase was refunded, so its licence is no longer active.');
+                throw new UserFacingException('This purchase was refunded, so its licence is no longer active.');
             }
             if ($customerId !== null && $row['customer_id'] === null) {
                 $this->attachToCustomer($pdo, (int) $row['order_id'], $customerId);
@@ -148,13 +149,13 @@ final class AppStoreService
 
             $key = $licenses->decrypt($row['license_key_encrypted']);
             if ($key === null) {
-                throw new RuntimeException('This purchase\'s licence key cannot be recovered. Please contact support.');
+                throw new UserFacingException('This purchase\'s licence key cannot be recovered. Please contact support.');
             }
             return ['license_id' => (int) $row['license_id'], 'license_key' => $key, 'created' => false];
         }
 
         if ($tx['revoked']) {
-            throw new RuntimeException('This purchase was refunded, so it cannot be activated.');
+            throw new UserFacingException('This purchase was refunded, so it cannot be activated.');
         }
 
         $product = (new OrderService())->product($tx['sku']);
@@ -176,7 +177,7 @@ final class AppStoreService
              VALUES (:ref, :product, :customer, :email, "", :amount, :currency, "apple", :txn, "paid",
                      NOW(), FROM_UNIXTIME(:paid_at))'
         )->execute([
-            'ref'      => 'AP' . gmdate('YmdHis') . strtoupper(bin2hex(random_bytes(3))),
+            'ref'      => OrderService::newReference('AP'),
             'product'  => $product['id'],
             'customer' => $customerId,
             'email'    => $email,

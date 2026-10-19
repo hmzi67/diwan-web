@@ -50,7 +50,11 @@ foreach (array_slice($argv, 1) as $arg) {
         $mode = 'dry';
     } elseif (str_starts_with($arg, '--env=')) {
         $envPath = substr($arg, 6);
-    } elseif (preg_match('/^--asset=(windows|macos|linux|android)(?::([a-z0-9-]{1,32}))?=(.+)$/', $arg, $m)) {
+    } elseif (preg_match('/^--asset=(' . implode('|', DownloadService::PLATFORMS) . ')(?::([a-z0-9-]{1,32}))?=(.+)$/', $arg, $m)) {
+        if ($m[2] !== '' && !in_array($m[2], DownloadService::VARIANTS[$m[1]], true)) {
+            fwrite(STDERR, "Unknown {$m[1]} build '{$m[2]}'. Known: " . implode(', ', DownloadService::VARIANTS[$m[1]]) . "\n");
+            exit(2);
+        }
         $overrides[$m[1] . ':' . $m[2]] = $m[3];
     } elseif (!str_starts_with($arg, '--') && $tag === null) {
         $tag = $arg;

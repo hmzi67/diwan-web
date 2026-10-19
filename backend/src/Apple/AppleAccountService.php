@@ -5,10 +5,11 @@ namespace Diwan\Apple;
 
 use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Support\Crypto;
 use Diwan\Support\Logger;
+use Diwan\Support\UserFacingException;
 use Diwan\Trial\TrialService;
 use PDO;
-use RuntimeException;
 
 /**
  * Customer accounts behind Sign in with Apple, for the website and the app.
@@ -47,7 +48,7 @@ final class AppleAccountService
                 if ($customer && $customer['apple_sub'] !== null) {
                     // Same address, different Apple ID. Never re-point an
                     // account from one Apple ID to another.
-                    throw new RuntimeException('That email address is already linked to a different Apple ID.');
+                    throw new UserFacingException('That email address is already linked to a different Apple ID.');
                 }
                 if ($customer && $customer['email_verified_at'] === null) {
                     // An unverified row means nobody has proved they own this
@@ -74,7 +75,7 @@ final class AppleAccountService
             $created = false;
             if (!$customer) {
                 if ($claims['email'] === null) {
-                    throw new RuntimeException(
+                    throw new UserFacingException(
                         'Apple did not share an email address. Remove Diwan from "Sign in with Apple" in your '
                         . 'Apple ID settings, then sign in again and choose an email to share.'
                     );
@@ -198,21 +199,12 @@ final class AppleAccountService
     /** AES-256-GCM under a key derived from APP_KEY, separate from the licence-key one. */
     private function encrypt(string $plain): string
     {
-        $nonce  = random_bytes(12);
-        $tag    = '';
-        $cipher = openssl_encrypt($plain, 'aes-256-gcm', $this->key(), OPENSSL_RAW_DATA, $nonce, $tag);
-        return base64_encode($nonce . $tag . $cipher);
+        return Crypto::seal($plain, $this->key());
     }
 
     private function decrypt(?string $encoded): ?string
     {
-        $raw = $encoded !== null ? base64_decode($encoded, true) : false;
-        if ($raw === false || strlen($raw) < 28) {
-            return null;
-        }
-        $plain = openssl_decrypt(substr($raw, 28), 'aes-256-gcm', $this->key(), OPENSSL_RAW_DATA,
-            substr($raw, 0, 12), substr($raw, 12, 16));
-        return $plain === false ? null : $plain;
+        return Crypto::open($encoded, $this->key());
     }
 
     private function key(): string

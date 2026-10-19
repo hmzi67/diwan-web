@@ -5,8 +5,12 @@ namespace Diwan\License;
 
 use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Support\Crypto;
 use Diwan\Support\Logger;
+use Diwan\Support\Mailer;
+use Diwan\Trial\TrialService;
 use PDO;
+use RuntimeException;
 
 final class LicenseService
 {
@@ -23,7 +27,7 @@ final class LicenseService
     public function issueTrialForOrder(PDO $pdo, int $orderId, string $email): array
     {
         $this->requireOrderKind($pdo, $orderId, true);
-        return $this->issue($pdo, $orderId, $email, 30);
+        return $this->issue($pdo, $orderId, $email, TrialService::DAYS);
     }
 
     private function requireOrderKind(PDO $pdo, int $orderId, bool $trial): void
@@ -33,7 +37,7 @@ final class LicenseService
         $order = $stmt->fetch();
         if (!$order || ($order['gateway'] === 'trial') !== $trial
             || $order['status'] !== ($trial ? 'fulfilled' : 'paid')) {
-            throw new \RuntimeException('Order is not eligible for this licence issuance path.');
+            throw new RuntimeException('Order is not eligible for this licence issuance path.');
         }
     }
 
@@ -43,7 +47,7 @@ final class LicenseService
         $existing = $pdo->prepare('SELECT id FROM licenses WHERE order_id = :order LIMIT 1');
         $existing->execute(['order' => $orderId]);
         if ($existing->fetch()) {
-            Logger::info('Licence already exists for order, skipping', ['order_id' => $orderId]);
+            Logger::debug('Licence already exists for order, skipping', ['order_id' => $orderId]);
             return ['license_key' => null, 'already_issued' => true];
         }
 
@@ -102,9 +106,43 @@ final class LicenseService
                 AND (expires_at IS NULL OR expires_at > NOW())
               LIMIT 1'
         );
-        $stmt->execute(['hash' => $this->hash($this->normalise($key))]);
+        $stmt->execute(['hash' => $this->hash($this->normalize($key))]);
 
         return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * One of the customer's own licences, matched through its order, or null
+     * when it does not exist or belongs to someone else.
+     */
+    public function findOwned(int $licenseId, int $customerId): ?array
+    {
+        $stmt = Database::pdo()->prepare(
+            'SELECT l.id, l.license_key_encrypted, l.customer_email
+               FROM licenses l
+               JOIN orders o ON o.id = l.order_id
+              WHERE l.id = :license AND o.customer_id = :customer
+              LIMIT 1'
+        );
+        $stmt->execute(['license' => $licenseId, 'customer' => $customerId]);
+        return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Emails a licence key with the download link. $resend switches the
+     * opening line; the rest of the message is the same on purpose, so a
+     * customer who asks for it again gets exactly what they got the first time.
+     */
+    public function sendKeyEmail(string $email, string $key, bool $resend = false): bool
+    {
+        return Mailer::send(
+            $email,
+            'Your Diwan POS licence key',
+            ($resend ? "Here is your licence key again, as requested:\n\n" : "Thank you for your purchase.\n\n")
+            . "Licence key: {$key}\n\n"
+            . 'Download your installer: ' . Env::appUrl('/#download') . "\n\n"
+            . "Keep this key safe — it is your proof of purchase.\n"
+        );
     }
 
     public function hasDownloadsLeft(array $license): bool
@@ -129,7 +167,7 @@ final class LicenseService
      */
     public function activate(string $rawKey, string $fingerprintHash, ?string $machineHint): array
     {
-        $hash = $this->hash($this->normalise($rawKey));
+        $hash = $this->hash($this->normalize($rawKey));
 
         return Database::transaction(function (PDO $pdo) use ($hash, $fingerprintHash, $machineHint) {
             $stmt = $pdo->prepare(
@@ -213,7 +251,7 @@ final class LicenseService
               WHERE license_key_hash = :hash
               LIMIT 1'
         );
-        $stmt->execute(['hash' => $this->hash($this->normalise($rawKey))]);
+        $stmt->execute(['hash' => $this->hash($this->normalize($rawKey))]);
         $license = $stmt->fetch();
 
         if (!$license) {
@@ -238,16 +276,55 @@ final class LicenseService
         ];
     }
 
-    /** The canonical form of a key as the app must store and resend it. */
-    public function normaliseKey(string $key): string
+    /**
+     * Looks up an activated licence row for a given key and device fingerprint.
+     * Used by POS cloud sync to authenticate the terminal and associate its
+     * sales records with the customer account that owns the licence.
+     *
+     * @return array{id: int, customer_id: int|null, customer_email: string, status: string}|null
+     */
+    public function findLicenseForDevice(string $rawKey, string $fingerprintHash): ?array
     {
-        return $this->normalise($key);
+        $stmt = \Diwan\Database\Database::pdo()->prepare(
+            'SELECT id, customer_id, customer_email, status, activation_status, activated_machine_hash,
+                    (expires_at IS NOT NULL AND expires_at <= NOW()) AS past_expiry
+               FROM licenses
+              WHERE license_key_hash = :hash
+              LIMIT 1'
+        );
+        $stmt->execute(['hash' => $this->hash($this->normalize($rawKey))]);
+        $license = $stmt->fetch();
+
+        if (!$license) {
+            return null;
+        }
+        if ($license['activation_status'] !== 'activated') {
+            return null;
+        }
+        if (!hash_equals((string) $license['activated_machine_hash'], $fingerprintHash)) {
+            return null;
+        }
+        if ($license['status'] !== 'active' || (bool) $license['past_expiry']) {
+            return null;
+        }
+
+        return [
+            'id'             => (int) $license['id'],
+            'customer_id'    => $license['customer_id'] !== null ? (int) $license['customer_id'] : null,
+            'customer_email' => (string) $license['customer_email'],
+            'status'         => (string) $license['status'],
+        ];
     }
 
-    /** HMAC, not a bare hash: a stolen DB is useless without APP_KEY. */
+    /** The canonical form of a key as the app must store and resend it. */
+    public function normalizeKey(string $key): string
+    {
+        return $this->normalize($key);
+    }
+
     private function hash(string $key): string
     {
-        return hash_hmac('sha256', $key, Env::require('APP_KEY'));
+        return Crypto::hmac($key);
     }
 
     /**
@@ -257,33 +334,21 @@ final class LicenseService
      */
     private function encrypt(string $key): string
     {
-        $encKey = hash('sha256', Env::require('APP_KEY'), true);
-        $nonce  = random_bytes(12);
-        $tag    = '';
-        $cipher = openssl_encrypt($key, 'aes-256-gcm', $encKey, OPENSSL_RAW_DATA, $nonce, $tag);
-        return base64_encode($nonce . $tag . $cipher);
+        return Crypto::seal($key, $this->encryptionKey());
     }
 
     /** Inverse of encrypt(). Returns null for anything malformed or pre-migration-002 (NULL). */
     public function decrypt(?string $encoded): ?string
     {
-        if ($encoded === null || $encoded === '') {
-            return null;
-        }
-        $raw = base64_decode($encoded, true);
-        if ($raw === false || strlen($raw) < 12 + 16) {
-            return null;
-        }
-        $nonce  = substr($raw, 0, 12);
-        $tag    = substr($raw, 12, 16);
-        $cipher = substr($raw, 28);
-
-        $encKey = hash('sha256', Env::require('APP_KEY'), true);
-        $plain  = openssl_decrypt($cipher, 'aes-256-gcm', $encKey, OPENSSL_RAW_DATA, $nonce, $tag);
-        return $plain === false ? null : $plain;
+        return Crypto::open($encoded, $this->encryptionKey());
     }
 
-    private function normalise(string $key): string
+    private function encryptionKey(): string
+    {
+        return hash('sha256', Env::require('APP_KEY'), true);
+    }
+
+    private function normalize(string $key): string
     {
         return strtoupper(trim($key));
     }

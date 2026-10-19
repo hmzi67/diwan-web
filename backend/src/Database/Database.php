@@ -5,6 +5,8 @@ namespace Diwan\Database;
 
 use Diwan\Config\Env;
 use PDO;
+use RuntimeException;
+use Throwable;
 
 /** Lazily-constructed shared PDO connection. */
 final class Database
@@ -34,6 +36,31 @@ final class Database
         return self::$pdo;
     }
 
+    /** Connects and runs a trivial query; throws if the database is unusable. */
+    public static function ping(): void
+    {
+        self::pdo()->query('SELECT 1');
+    }
+
+    /**
+     * Maps a connection failure to a coarse category. Deliberately a fixed
+     * vocabulary: enough to tell you which thing to go fix, not enough to help
+     * anyone attack the database. Used by health.php.
+     */
+    public static function classifyFailure(Throwable $e): string
+    {
+        if ($e instanceof RuntimeException && str_contains($e->getMessage(), 'Missing required environment value')) {
+            return 'not_configured';   // a DB_* value is absent from .env
+        }
+        $message = $e->getMessage();
+        return match (true) {
+            str_contains($message, '1045'), str_contains($message, 'Access denied')   => 'auth_failed',
+            str_contains($message, '1049'), str_contains($message, 'Unknown database') => 'unknown_database',
+            str_contains($message, '2002'), str_contains($message, '2005')             => 'unreachable',
+            default                                                                    => 'unknown',
+        };
+    }
+
     public static function transaction(callable $work): mixed
     {
         $pdo = self::pdo();
@@ -42,7 +69,7 @@ final class Database
             $result = $work($pdo);
             $pdo->commit();
             return $result;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }

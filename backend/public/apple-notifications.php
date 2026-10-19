@@ -17,6 +17,7 @@ require __DIR__ . '/_bootstrap.php';
 use Diwan\Apple\AppStoreJws;
 use Diwan\Apple\AppStoreService;
 use Diwan\Database\Database;
+use Diwan\Payment\WebhookEvents;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
 
@@ -41,10 +42,8 @@ if ($eventId === '') {
     Http::fail('Invalid request', 400);
 }
 
-$pdo  = Database::pdo();
-$seen = $pdo->prepare('SELECT 1 FROM webhook_events WHERE gateway = "apple" AND event_id = :id LIMIT 1');
-$seen->execute(['id' => $eventId]);
-if ($seen->fetchColumn() !== false) {
+$events = new WebhookEvents(Database::pdo());
+if ($events->seen('apple', $eventId)) {
     Http::json(['status' => 'duplicate']);
 }
 
@@ -58,10 +57,7 @@ try {
 
 // Recorded only after it was handled, so a crash above is retried by Apple
 // instead of being swallowed as a "duplicate" next time.
-$pdo->prepare(
-    'INSERT IGNORE INTO webhook_events (gateway, event_id, order_ref, payload, received_at)
-     VALUES ("apple", :id, NULL, :payload, NOW())'
-)->execute(['id' => $eventId, 'payload' => mb_substr(json_encode($notification), 0, 65535)]);
+$events->record('apple', $eventId, null, $notification);
 
 Logger::info('App Store notification processed', [
     'type'    => $notification['notificationType'] ?? null,

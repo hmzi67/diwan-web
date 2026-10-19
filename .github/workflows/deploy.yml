@@ -45,13 +45,22 @@ env:
 
 jobs:
   # ==========================================================================
+  # 0. TESTS — the full CI suite (lint, migrations, unit and HTTP tests) gates
+  #    every deploy, so nothing reaches FTP that has not passed it.
+  # ==========================================================================
+  verify:
+    name: Tests
+    uses: ./.github/workflows/ci.yml
+
+  # ==========================================================================
   # 1. BUILD — everything that can fail, fails here, before any FTP connection
   # ==========================================================================
   build:
     name: Build & verify
+    needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0 }   # the tag guard below walks main's history
 
       # A stable tag deploys to production, so it must not be able to ship a
@@ -69,7 +78,7 @@ jobs:
           echo "Tag ${GITHUB_REF_NAME} is on main."
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.2'   # match the server; see docs/SERVER-CHECKLIST.md
           tools: none
@@ -98,8 +107,9 @@ jobs:
           cp -R backend/public/.       bundle/web/api/
           cp -R backend/src/.          bundle/app/src/
 
-          # Things that must never reach the server.
-          rm -f  bundle/web/api/_app_root.php.example
+          # Things that must never reach the server. router.php is the local
+          # `php -S` router only; on Apache it would just be a stray entrypoint.
+          rm -f  bundle/web/api/_app_root.php.example bundle/web/api/router.php
           rm -rf bundle/web/node_modules bundle/app/node_modules
           find bundle -name '.DS_Store' -delete
           find bundle -name '*.md'      -delete
@@ -127,7 +137,7 @@ jobs:
           fi
           echo "Bundle guard passed."
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: deploy-bundle
           path: bundle/
@@ -149,10 +159,10 @@ jobs:
       name: staging
       url: ${{ vars.SITE_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { sparse-checkout: scripts }
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with: { name: deploy-bundle, path: bundle }
 
       - name: Preflight — verify server paths before connecting
@@ -184,56 +194,107 @@ jobs:
           bash scripts/check-ftp-host.sh "$FTP_HOST" "${FTP_PORT:-21}"
 
       - name: Generate server config from secrets
+        # Every value arrives through env: and is written with printf, never
+        # interpolated into the script: a secret containing $, a backtick or
+        # $( would otherwise be expanded or executed by the shell.
+        env:
+          CFG_APP_ENV: staging
+          CFG_APP_DEBUG: false
+          CFG_APP_URL: ${{ vars.SITE_URL }}
+          CFG_APP_KEY: ${{ secrets.APP_KEY }}
+          CFG_APP_COMMIT: ${{ github.sha }}
+          CFG_DB_HOST: ${{ secrets.DB_HOST }}
+          CFG_DB_PORT: ${{ vars.DB_PORT || '3306' }}
+          CFG_DB_NAME: ${{ secrets.DB_NAME }}
+          CFG_DB_USER: ${{ secrets.DB_USER }}
+          CFG_DB_PASS: ${{ secrets.DB_PASS }}
+          CFG_LICENSE_VALIDITY_DAYS: ${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          CFG_TRIAL_SIGNUP_ENABLED: ${{ vars.TRIAL_SIGNUP_ENABLED || 'true' }}
+          CFG_LICENSE_SIGNING_KEY_ID: ${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
+          CFG_LICENSE_SIGNING_PRIVATE_KEY: ${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
+          CFG_LICENSE_MAX_OFFLINE_DAYS: ${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
+          CFG_DOWNLOAD_LINK_TTL_MINUTES: ${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
+          CFG_DOWNLOAD_MAX_ATTEMPTS: ${{ vars.DOWNLOAD_MAX_ATTEMPTS || 20 }}
+          CFG_PAYMENT_GATEWAY: ${{ vars.PAYMENT_GATEWAY }}
+          CFG_JAZZCASH_MERCHANT_ID: ${{ secrets.JAZZCASH_MERCHANT_ID }}
+          CFG_JAZZCASH_PASSWORD: ${{ secrets.JAZZCASH_PASSWORD }}
+          CFG_JAZZCASH_INTEGRITY_SALT: ${{ secrets.JAZZCASH_INTEGRITY_SALT }}
+          CFG_JAZZCASH_ENDPOINT: ${{ vars.JAZZCASH_ENDPOINT }}
+          CFG_EASYPAISA_STORE_ID: ${{ secrets.EASYPAISA_STORE_ID }}
+          CFG_EASYPAISA_HASH_KEY: ${{ secrets.EASYPAISA_HASH_KEY }}
+          CFG_SAFEPAY_API_KEY: ${{ secrets.SAFEPAY_API_KEY }}
+          CFG_SAFEPAY_WEBHOOK_SECRET: ${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          CFG_MAIL_DRIVER: ${{ vars.MAIL_DRIVER || 'sendmail' }}
+          CFG_MAIL_HOST: ${{ vars.MAIL_HOST || 'smtp.hostinger.com' }}
+          CFG_MAIL_PORT: ${{ vars.MAIL_PORT || '587' }}
+          CFG_MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          CFG_MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          CFG_APPLE_BUNDLE_ID: ${{ vars.APPLE_BUNDLE_ID || 'com.diwan.pos' }}
+          CFG_APPLE_APP_ID: ${{ vars.APPLE_APP_ID }}
+          CFG_APPLE_IAP_ALLOW_SANDBOX: ${{ vars.APPLE_IAP_ALLOW_SANDBOX || 'true' }}
+          CFG_APPLE_SIGN_IN_SERVICES_ID: ${{ vars.APPLE_SIGN_IN_SERVICES_ID }}
+          CFG_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          CFG_APPLE_SIGN_IN_KEY_ID: ${{ vars.APPLE_SIGN_IN_KEY_ID }}
+          CFG_APPLE_SIGN_IN_PRIVATE_KEY: ${{ secrets.APPLE_SIGN_IN_PRIVATE_KEY }}
+          CFG_MAIL_FROM: ${{ vars.MAIL_FROM }}
+          CFG_MAIL_FROM_NAME: Diwan POS
+          CFG_CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          CFG_GITHUB_RELEASES_REPO: ${{ vars.POS_RELEASES_REPO || 'hmzi67/point-of-sale' }}
+          CFG_GITHUB_RELEASES_TOKEN: ${{ secrets.POS_RELEASES_TOKEN }}
         run: |
           set -euo pipefail
           # upload-artifact drops empty directories, so bundle/app/config/ does
           # not survive the round-trip from the build job. Recreate it here.
           mkdir -p bundle/app/config
-          cat > bundle/app/config/.env <<EOF
-          APP_ENV=staging
-          APP_DEBUG=false
-          APP_URL=${{ vars.SITE_URL }}
-          APP_KEY=${{ secrets.APP_KEY }}
-          APP_COMMIT=${{ github.sha }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ vars.DB_PORT || '3306' }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASS=${{ secrets.DB_PASS }}
-          LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
-          TRIAL_SIGNUP_ENABLED=${{ vars.TRIAL_SIGNUP_ENABLED || 'true' }}
-          LICENSE_SIGNING_KEY_ID=${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
-          LICENSE_SIGNING_PRIVATE_KEY=${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
-          LICENSE_MAX_OFFLINE_DAYS=${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
-          DOWNLOAD_LINK_TTL_MINUTES=${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
-          DOWNLOAD_MAX_ATTEMPTS=${{ vars.DOWNLOAD_MAX_ATTEMPTS || 20 }}
-          PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
-          JAZZCASH_MERCHANT_ID=${{ secrets.JAZZCASH_MERCHANT_ID }}
-          JAZZCASH_PASSWORD=${{ secrets.JAZZCASH_PASSWORD }}
-          JAZZCASH_INTEGRITY_SALT=${{ secrets.JAZZCASH_INTEGRITY_SALT }}
-          JAZZCASH_ENDPOINT=${{ vars.JAZZCASH_ENDPOINT }}
-          EASYPAISA_STORE_ID=${{ secrets.EASYPAISA_STORE_ID }}
-          EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
-          SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
-          SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
-          MAIL_DRIVER=${{ vars.MAIL_DRIVER || 'sendmail' }}
-          MAIL_HOST=${{ vars.MAIL_HOST || 'smtp.hostinger.com' }}
-          MAIL_PORT=${{ vars.MAIL_PORT || '587' }}
-          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-          APPLE_BUNDLE_ID=${{ vars.APPLE_BUNDLE_ID || 'com.diwan.pos' }}
-          APPLE_APP_ID=${{ vars.APPLE_APP_ID }}
-          APPLE_IAP_ALLOW_SANDBOX=${{ vars.APPLE_IAP_ALLOW_SANDBOX || 'true' }}
-          APPLE_SIGN_IN_SERVICES_ID=${{ vars.APPLE_SIGN_IN_SERVICES_ID }}
-          APPLE_TEAM_ID=${{ vars.APPLE_TEAM_ID }}
-          APPLE_SIGN_IN_KEY_ID=${{ vars.APPLE_SIGN_IN_KEY_ID }}
-          APPLE_SIGN_IN_PRIVATE_KEY=${{ secrets.APPLE_SIGN_IN_PRIVATE_KEY }}
-          MAIL_FROM=${{ vars.MAIL_FROM }}
-          MAIL_FROM_NAME=Diwan POS
-          CONTACT_EMAIL=${{ vars.CONTACT_EMAIL }}
-          GITHUB_RELEASES_REPO=${{ vars.POS_RELEASES_REPO || 'hmzi67/point-of-sale' }}
-          GITHUB_RELEASES_TOKEN=${{ secrets.POS_RELEASES_TOKEN }}
-          EOF
+          keys=(
+            APP_ENV
+            APP_DEBUG
+            APP_URL
+            APP_KEY
+            APP_COMMIT
+            DB_HOST
+            DB_PORT
+            DB_NAME
+            DB_USER
+            DB_PASS
+            LICENSE_VALIDITY_DAYS
+            TRIAL_SIGNUP_ENABLED
+            LICENSE_SIGNING_KEY_ID
+            LICENSE_SIGNING_PRIVATE_KEY
+            LICENSE_MAX_OFFLINE_DAYS
+            DOWNLOAD_LINK_TTL_MINUTES
+            DOWNLOAD_MAX_ATTEMPTS
+            PAYMENT_GATEWAY
+            JAZZCASH_MERCHANT_ID
+            JAZZCASH_PASSWORD
+            JAZZCASH_INTEGRITY_SALT
+            JAZZCASH_ENDPOINT
+            EASYPAISA_STORE_ID
+            EASYPAISA_HASH_KEY
+            SAFEPAY_API_KEY
+            SAFEPAY_WEBHOOK_SECRET
+            MAIL_DRIVER
+            MAIL_HOST
+            MAIL_PORT
+            MAIL_USERNAME
+            MAIL_PASSWORD
+            APPLE_BUNDLE_ID
+            APPLE_APP_ID
+            APPLE_IAP_ALLOW_SANDBOX
+            APPLE_SIGN_IN_SERVICES_ID
+            APPLE_TEAM_ID
+            APPLE_SIGN_IN_KEY_ID
+            APPLE_SIGN_IN_PRIVATE_KEY
+            MAIL_FROM
+            MAIL_FROM_NAME
+            CONTACT_EMAIL
+            GITHUB_RELEASES_REPO
+            GITHUB_RELEASES_TOKEN
+          )
+          for key in "${keys[@]}"; do
+            value_var="CFG_${key}"
+            printf '%s=%s\n' "$key" "${!value_var-}"
+          done > bundle/app/config/.env
           # Prove the file exists and is populated, without printing any value.
           # Keys only: a missing secret shows up as a key with an empty value.
           echo "--- generated .env ---"
@@ -268,7 +329,7 @@ jobs:
       - name: Upload site + api (attempt 1)
         id: upload_site_api_0
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -301,7 +362,7 @@ jobs:
 
       - name: Upload site + api (retry)
         if: steps.upload_site_api_0.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -332,7 +393,7 @@ jobs:
       - name: Upload backend classes (attempt 1)
         id: upload_backend_classes_1
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -354,7 +415,7 @@ jobs:
 
       - name: Upload backend classes (retry)
         if: steps.upload_backend_classes_1.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -374,7 +435,7 @@ jobs:
       - name: Upload generated .env (attempt 1)
         id: upload_generated_env_2
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -396,7 +457,7 @@ jobs:
 
       - name: Upload generated .env (retry)
         if: steps.upload_generated_env_2.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -410,20 +471,24 @@ jobs:
           dangerous-clean-slate: false
 
       - name: Smoke test
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
         run: |
           set +e
-          bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+          bash scripts/smoke-test.sh "$SITE_URL"
           rc=$?
           set -e
           # 0 = passed. 1 = a real failure (site broken, or something private is
           # reachable) — must break the build. 2 = the host's edge blocked the
           # runner, so nothing could be verified; that is not evidence the deploy
-          # is bad, so warn loudly and carry on.
+          # is bad, so warn loudly and carry on. The same API checks already ran
+          # against this exact commit before the deploy (ci.yml, `verify` job),
+          # so a blocked run here never means the build went out untested.
           if [ "$rc" -eq 2 ]; then
-            echo "::warning::Smoke test was INCONCLUSIVE (edge blocked the runner). Verify the site manually."
+            echo "::warning::Post-deploy smoke test was INCONCLUSIVE (edge blocked the runner). Pre-deploy checks passed; verify the live site manually."
             exit 0
           fi
-          exit "$rc"
+          exit "$rc""
 
   # ==========================================================================
   # 3. PRODUCTION — dry run first, then a gated real deploy
@@ -440,10 +505,10 @@ jobs:
     # can read the diff BEFORE deciding whether to approve the real thing.
     steps:
       # checkout FIRST: it cleans the workspace, which would wipe the artifact.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { sparse-checkout: scripts }
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with: { name: deploy-bundle, path: bundle }
 
       - name: Preflight — verify server paths before connecting
@@ -482,7 +547,7 @@ jobs:
       - name: Dry run — show exactly what would change (attempt 1)
         id: dry_run_show_exactly_what__3
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -517,7 +582,7 @@ jobs:
 
       - name: Dry run — show exactly what would change (retry)
         if: steps.dry_run_show_exactly_what__3.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -559,10 +624,10 @@ jobs:
       name: production
       url: ${{ vars.SITE_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { sparse-checkout: scripts }
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with: { name: deploy-bundle, path: bundle }
 
       - name: Preflight — verify server paths before connecting
@@ -594,56 +659,107 @@ jobs:
           bash scripts/check-ftp-host.sh "$FTP_HOST" "${FTP_PORT:-21}"
 
       - name: Generate server config from secrets
+        # Every value arrives through env: and is written with printf, never
+        # interpolated into the script: a secret containing $, a backtick or
+        # $( would otherwise be expanded or executed by the shell.
+        env:
+          CFG_APP_ENV: production
+          CFG_APP_DEBUG: false
+          CFG_APP_URL: ${{ vars.SITE_URL }}
+          CFG_APP_KEY: ${{ secrets.APP_KEY }}
+          CFG_APP_COMMIT: ${{ github.sha }}
+          CFG_DB_HOST: ${{ secrets.DB_HOST }}
+          CFG_DB_PORT: ${{ vars.DB_PORT || '3306' }}
+          CFG_DB_NAME: ${{ secrets.DB_NAME }}
+          CFG_DB_USER: ${{ secrets.DB_USER }}
+          CFG_DB_PASS: ${{ secrets.DB_PASS }}
+          CFG_LICENSE_VALIDITY_DAYS: ${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
+          CFG_TRIAL_SIGNUP_ENABLED: ${{ vars.TRIAL_SIGNUP_ENABLED || 'true' }}
+          CFG_LICENSE_SIGNING_KEY_ID: ${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
+          CFG_LICENSE_SIGNING_PRIVATE_KEY: ${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
+          CFG_LICENSE_MAX_OFFLINE_DAYS: ${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
+          CFG_DOWNLOAD_LINK_TTL_MINUTES: ${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
+          CFG_DOWNLOAD_MAX_ATTEMPTS: ${{ vars.DOWNLOAD_MAX_ATTEMPTS || 20 }}
+          CFG_PAYMENT_GATEWAY: ${{ vars.PAYMENT_GATEWAY }}
+          CFG_JAZZCASH_MERCHANT_ID: ${{ secrets.JAZZCASH_MERCHANT_ID }}
+          CFG_JAZZCASH_PASSWORD: ${{ secrets.JAZZCASH_PASSWORD }}
+          CFG_JAZZCASH_INTEGRITY_SALT: ${{ secrets.JAZZCASH_INTEGRITY_SALT }}
+          CFG_JAZZCASH_ENDPOINT: ${{ vars.JAZZCASH_ENDPOINT }}
+          CFG_EASYPAISA_STORE_ID: ${{ secrets.EASYPAISA_STORE_ID }}
+          CFG_EASYPAISA_HASH_KEY: ${{ secrets.EASYPAISA_HASH_KEY }}
+          CFG_SAFEPAY_API_KEY: ${{ secrets.SAFEPAY_API_KEY }}
+          CFG_SAFEPAY_WEBHOOK_SECRET: ${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          CFG_MAIL_DRIVER: ${{ vars.MAIL_DRIVER || 'sendmail' }}
+          CFG_MAIL_HOST: ${{ vars.MAIL_HOST || 'smtp.hostinger.com' }}
+          CFG_MAIL_PORT: ${{ vars.MAIL_PORT || '587' }}
+          CFG_MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          CFG_MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          CFG_APPLE_BUNDLE_ID: ${{ vars.APPLE_BUNDLE_ID || 'com.diwan.pos' }}
+          CFG_APPLE_APP_ID: ${{ vars.APPLE_APP_ID }}
+          CFG_APPLE_IAP_ALLOW_SANDBOX: ${{ vars.APPLE_IAP_ALLOW_SANDBOX || 'true' }}
+          CFG_APPLE_SIGN_IN_SERVICES_ID: ${{ vars.APPLE_SIGN_IN_SERVICES_ID }}
+          CFG_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          CFG_APPLE_SIGN_IN_KEY_ID: ${{ vars.APPLE_SIGN_IN_KEY_ID }}
+          CFG_APPLE_SIGN_IN_PRIVATE_KEY: ${{ secrets.APPLE_SIGN_IN_PRIVATE_KEY }}
+          CFG_MAIL_FROM: ${{ vars.MAIL_FROM }}
+          CFG_MAIL_FROM_NAME: Diwan POS
+          CFG_CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          CFG_GITHUB_RELEASES_REPO: ${{ vars.POS_RELEASES_REPO || 'hmzi67/point-of-sale' }}
+          CFG_GITHUB_RELEASES_TOKEN: ${{ secrets.POS_RELEASES_TOKEN }}
         run: |
           set -euo pipefail
           # upload-artifact drops empty directories, so bundle/app/config/ does
           # not survive the round-trip from the build job. Recreate it here.
           mkdir -p bundle/app/config
-          cat > bundle/app/config/.env <<EOF
-          APP_ENV=production
-          APP_DEBUG=false
-          APP_URL=${{ vars.SITE_URL }}
-          APP_KEY=${{ secrets.APP_KEY }}
-          APP_COMMIT=${{ github.sha }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ vars.DB_PORT || '3306' }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASS=${{ secrets.DB_PASS }}
-          LICENSE_VALIDITY_DAYS=${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
-          TRIAL_SIGNUP_ENABLED=${{ vars.TRIAL_SIGNUP_ENABLED || 'true' }}
-          LICENSE_SIGNING_KEY_ID=${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
-          LICENSE_SIGNING_PRIVATE_KEY=${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
-          LICENSE_MAX_OFFLINE_DAYS=${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
-          DOWNLOAD_LINK_TTL_MINUTES=${{ vars.DOWNLOAD_LINK_TTL_MINUTES || 15 }}
-          DOWNLOAD_MAX_ATTEMPTS=${{ vars.DOWNLOAD_MAX_ATTEMPTS || 20 }}
-          PAYMENT_GATEWAY=${{ vars.PAYMENT_GATEWAY }}
-          JAZZCASH_MERCHANT_ID=${{ secrets.JAZZCASH_MERCHANT_ID }}
-          JAZZCASH_PASSWORD=${{ secrets.JAZZCASH_PASSWORD }}
-          JAZZCASH_INTEGRITY_SALT=${{ secrets.JAZZCASH_INTEGRITY_SALT }}
-          JAZZCASH_ENDPOINT=${{ vars.JAZZCASH_ENDPOINT }}
-          EASYPAISA_STORE_ID=${{ secrets.EASYPAISA_STORE_ID }}
-          EASYPAISA_HASH_KEY=${{ secrets.EASYPAISA_HASH_KEY }}
-          SAFEPAY_API_KEY=${{ secrets.SAFEPAY_API_KEY }}
-          SAFEPAY_WEBHOOK_SECRET=${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
-          MAIL_DRIVER=${{ vars.MAIL_DRIVER || 'sendmail' }}
-          MAIL_HOST=${{ vars.MAIL_HOST || 'smtp.hostinger.com' }}
-          MAIL_PORT=${{ vars.MAIL_PORT || '587' }}
-          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-          APPLE_BUNDLE_ID=${{ vars.APPLE_BUNDLE_ID || 'com.diwan.pos' }}
-          APPLE_APP_ID=${{ vars.APPLE_APP_ID }}
-          APPLE_IAP_ALLOW_SANDBOX=${{ vars.APPLE_IAP_ALLOW_SANDBOX || 'true' }}
-          APPLE_SIGN_IN_SERVICES_ID=${{ vars.APPLE_SIGN_IN_SERVICES_ID }}
-          APPLE_TEAM_ID=${{ vars.APPLE_TEAM_ID }}
-          APPLE_SIGN_IN_KEY_ID=${{ vars.APPLE_SIGN_IN_KEY_ID }}
-          APPLE_SIGN_IN_PRIVATE_KEY=${{ secrets.APPLE_SIGN_IN_PRIVATE_KEY }}
-          MAIL_FROM=${{ vars.MAIL_FROM }}
-          MAIL_FROM_NAME=Diwan POS
-          CONTACT_EMAIL=${{ vars.CONTACT_EMAIL }}
-          GITHUB_RELEASES_REPO=${{ vars.POS_RELEASES_REPO || 'hmzi67/point-of-sale' }}
-          GITHUB_RELEASES_TOKEN=${{ secrets.POS_RELEASES_TOKEN }}
-          EOF
+          keys=(
+            APP_ENV
+            APP_DEBUG
+            APP_URL
+            APP_KEY
+            APP_COMMIT
+            DB_HOST
+            DB_PORT
+            DB_NAME
+            DB_USER
+            DB_PASS
+            LICENSE_VALIDITY_DAYS
+            TRIAL_SIGNUP_ENABLED
+            LICENSE_SIGNING_KEY_ID
+            LICENSE_SIGNING_PRIVATE_KEY
+            LICENSE_MAX_OFFLINE_DAYS
+            DOWNLOAD_LINK_TTL_MINUTES
+            DOWNLOAD_MAX_ATTEMPTS
+            PAYMENT_GATEWAY
+            JAZZCASH_MERCHANT_ID
+            JAZZCASH_PASSWORD
+            JAZZCASH_INTEGRITY_SALT
+            JAZZCASH_ENDPOINT
+            EASYPAISA_STORE_ID
+            EASYPAISA_HASH_KEY
+            SAFEPAY_API_KEY
+            SAFEPAY_WEBHOOK_SECRET
+            MAIL_DRIVER
+            MAIL_HOST
+            MAIL_PORT
+            MAIL_USERNAME
+            MAIL_PASSWORD
+            APPLE_BUNDLE_ID
+            APPLE_APP_ID
+            APPLE_IAP_ALLOW_SANDBOX
+            APPLE_SIGN_IN_SERVICES_ID
+            APPLE_TEAM_ID
+            APPLE_SIGN_IN_KEY_ID
+            APPLE_SIGN_IN_PRIVATE_KEY
+            MAIL_FROM
+            MAIL_FROM_NAME
+            CONTACT_EMAIL
+            GITHUB_RELEASES_REPO
+            GITHUB_RELEASES_TOKEN
+          )
+          for key in "${keys[@]}"; do
+            value_var="CFG_${key}"
+            printf '%s=%s\n' "$key" "${!value_var-}"
+          done > bundle/app/config/.env
           # Prove the file exists and is populated, without printing any value.
           # Keys only: a missing secret shows up as a key with an empty value.
           echo "--- generated .env ---"
@@ -684,7 +800,7 @@ jobs:
       - name: Upload backend classes (attempt 1)
         id: upload_backend_classes_4
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -706,7 +822,7 @@ jobs:
 
       - name: Upload backend classes (retry)
         if: steps.upload_backend_classes_4.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -726,7 +842,7 @@ jobs:
       - name: Upload generated .env (attempt 1)
         id: upload_generated_env_5
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -748,7 +864,7 @@ jobs:
 
       - name: Upload generated .env (retry)
         if: steps.upload_generated_env_5.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -768,7 +884,7 @@ jobs:
       - name: Upload site + api (attempt 1)
         id: upload_site_api_6
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -801,7 +917,7 @@ jobs:
 
       - name: Upload site + api (retry)
         if: steps.upload_site_api_6.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
         with:
           timeout:     ${{ env.FTP_TIMEOUT_MS }}
           server:      ${{ secrets.FTP_HOST }}
@@ -826,17 +942,21 @@ jobs:
             **/.user.ini
 
       - name: Smoke test
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
         run: |
           set +e
-          bash scripts/smoke-test.sh "${{ vars.SITE_URL }}"
+          bash scripts/smoke-test.sh "$SITE_URL"
           rc=$?
           set -e
           # 0 = passed. 1 = a real failure (site broken, or something private is
           # reachable) — must break the build. 2 = the host's edge blocked the
           # runner, so nothing could be verified; that is not evidence the deploy
-          # is bad, so warn loudly and carry on.
+          # is bad, so warn loudly and carry on. The same API checks already ran
+          # against this exact commit before the deploy (ci.yml, `verify` job),
+          # so a blocked run here never means the build went out untested.
           if [ "$rc" -eq 2 ]; then
-            echo "::warning::Smoke test was INCONCLUSIVE (edge blocked the runner). Verify the site manually."
+            echo "::warning::Post-deploy smoke test was INCONCLUSIVE (edge blocked the runner). Pre-deploy checks passed; verify the live site manually."
             exit 0
           fi
-          exit "$rc"
+          exit "$rc""

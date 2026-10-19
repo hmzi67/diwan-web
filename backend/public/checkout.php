@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 require __DIR__ . '/_bootstrap.php';
 
+use Diwan\Auth\Customers;
 use Diwan\Auth\Session;
-use Diwan\Database\Database;
 use Diwan\Order\OrderService;
 use Diwan\Payment\GatewayFactory;
 use Diwan\Support\Http;
@@ -28,9 +28,7 @@ if ($customerId === null) {
     Http::fail('Please log in first.', 401);
 }
 
-$customer = Database::pdo()->prepare('SELECT email FROM customers WHERE id = :id LIMIT 1');
-$customer->execute(['id' => $customerId]);
-$customer = $customer->fetch();
+$customer = Customers::findById($customerId);
 
 if (!$customer) {
     // Session cookie outlived the customer row (e.g. deleted account).

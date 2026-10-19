@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace Diwan\Download;
 
+use DateTimeImmutable;
 use Diwan\Config\Env;
 use Diwan\Database\Database;
+use Diwan\Support\Crypto;
 use Diwan\Support\Logger;
+use PDO;
 use RuntimeException;
 
 /**
@@ -30,6 +33,20 @@ final class DownloadService
     public const PLATFORMS = ['windows', 'macos', 'linux', 'android'];
 
     /**
+     * The builds each platform can ship, mirrored by scripts/sync-github-release.php
+     * and the platform picker in frontend/src/js/dashboard.js. Android has one.
+     */
+    public const VARIANTS = [
+        'windows' => ['x64', 'x86'],
+        'macos'   => ['apple-silicon', 'intel'],
+        'linux'   => ['appimage', 'deb', 'rpm'],
+        'android' => [],
+    ];
+
+    /** Licence-key guesses allowed per IP per hour on issue-download.php. */
+    private const MAX_ATTEMPTS_PER_HOUR = 10;
+
+    /**
      * How long a single download LINK stays valid, in minutes. This governs the
      * link only — it has nothing to do with how long the customer's licence
      * lasts, which is LICENSE_VALIDITY_DAYS (see LicenseService::issueForOrder).
@@ -43,6 +60,43 @@ final class DownloadService
      * 'apple-silicon' / 'intel', Windows 'x64' / 'x86', Linux 'appimage' /
      * 'deb' / 'rpm'). '' means "whatever this platform has".
      */
+    /**
+     * platform => source ('local' | 'github') of each platform's active
+     * release, for health.php. Throws on a pre-010 schema (no `source`).
+     *
+     * @return array<string,string>
+     */
+    public static function activeSources(): array
+    {
+        return Database::pdo()->query(
+            'SELECT platform, source FROM releases WHERE is_active = 1'
+        )->fetchAll(PDO::FETCH_KEY_PAIR);
+    }
+
+    /**
+     * Rate limit for issue-download.php, the obvious brute-force target:
+     * every attempt counts, valid or not. Records this attempt when allowed.
+     */
+    public function allowAttempt(string $ip): bool
+    {
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM download_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)')->execute();
+
+        $count = $pdo->prepare(
+            'SELECT COUNT(*) FROM download_attempts
+              WHERE ip = :ip AND attempted_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)'
+        );
+        $count->execute(['ip' => $ip]);
+        if ((int) $count->fetchColumn() >= self::MAX_ATTEMPTS_PER_HOUR) {
+            Logger::warning('Download issue rate limited', ['ip' => $ip]);
+            return false;
+        }
+
+        $pdo->prepare('INSERT INTO download_attempts (ip, attempted_at) VALUES (:ip, NOW())')
+            ->execute(['ip' => $ip]);
+        return true;
+    }
+
     public function issueToken(int $licenseId, string $platform, string $ip, string $variant = ''): array
     {
         $release = $this->activeRelease($platform, $variant);
@@ -52,20 +106,22 @@ final class DownloadService
             $ttlMinutes = self::TOKEN_TTL_MINUTES;
         }
 
-        $token     = bin2hex(random_bytes(32));
-        $expiresAt = (new \DateTimeImmutable('+' . $ttlMinutes . ' minutes'));
+        $token = Crypto::newToken();
 
+        // Stored and checked on MySQL's clock (see redeem()); the PHP-side
+        // value is only what the customer is shown.
         $stmt = Database::pdo()->prepare(
             'INSERT INTO download_tokens (token_hash, license_id, release_id, issued_ip, expires_at, created_at)
-             VALUES (:hash, :license, :release, :ip, :expires, NOW())'
+             VALUES (:hash, :license, :release, :ip, DATE_ADD(NOW(), INTERVAL :ttl MINUTE), NOW())'
         );
         $stmt->execute([
             'hash'    => $this->hashToken($token),
             'license' => $licenseId,
             'release' => $release['id'],
             'ip'      => $ip,
-            'expires' => $expiresAt->format('Y-m-d H:i:s'),
+            'ttl'     => $ttlMinutes,
         ]);
+        $expiresAt = new DateTimeImmutable('+' . $ttlMinutes . ' minutes');
 
         return [
             'token'      => $token,
@@ -80,13 +136,40 @@ final class DownloadService
      */
     public function stream(string $token, string $ip): never
     {
+        try {
+            $target = $this->redeem($token, $ip);
+        } catch (DownloadDenied $e) {
+            Logger::warning('Download denied', $e->context + ['status' => $e->status]);
+            http_response_code($e->status);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+            exit;
+        }
+
+        if ($target['github_url'] !== null) {
+            $this->redirect($target['github_url']);
+        }
+        $this->send((string) $target['path'], $target['filename']);
+    }
+
+    /**
+     * Validates and burns a token, returning where the installer is. Throws
+     * DownloadDenied for every refusal; nothing is burned or counted unless
+     * the installer can actually be served.
+     *
+     * @return array{github_url:?string, path:?string, filename:string}
+     */
+    public function redeem(string $token, string $ip): array
+    {
         $pdo = Database::pdo();
 
         $stmt = $pdo->prepare(
             'SELECT t.*, r.filename, r.storage_path, r.checksum_sha256, r.version,
                     r.source, r.github_tag, r.github_asset,
                     l.id AS license_id, l.status AS license_status,
-                    l.downloads_used, l.max_downloads, l.expires_at AS license_expires_at
+                    l.downloads_used, l.max_downloads,
+                    (t.expires_at <= NOW()) AS token_expired,
+                    (l.expires_at IS NOT NULL AND l.expires_at <= NOW()) AS license_expired
                FROM download_tokens t
                JOIN releases r ON r.id = t.release_id
                JOIN licenses l ON l.id = t.license_id
@@ -102,13 +185,14 @@ final class DownloadService
         if ($row['used_at'] !== null) {
             $this->deny('This download link has already been used. Request a new one.', 410, ['reason' => 'token_used']);
         }
-        if (strtotime((string) $row['expires_at']) < time()) {
+        // Both expiries are compared on MySQL's clock, the one they were written with.
+        if ((bool) $row['token_expired']) {
             $this->deny('This download link has expired. Request a new one.', 410, ['reason' => 'token_expired']);
         }
         if ($row['license_status'] !== 'active') {
             $this->deny('This licence is no longer active.', 403, ['reason' => 'license_inactive']);
         }
-        if ($row['license_expires_at'] !== null && strtotime((string) $row['license_expires_at']) < time()) {
+        if ((bool) $row['license_expired']) {
             $this->deny('This licence has expired.', 403, ['reason' => 'license_expired']);
         }
         if ((int) $row['downloads_used'] >= (int) $row['max_downloads']) {
@@ -126,9 +210,16 @@ final class DownloadService
         }
 
         // Burn the token and count the download BEFORE streaming, so a client
-        // that reconnects mid-transfer cannot farm extra downloads.
-        $pdo->prepare('UPDATE download_tokens SET used_at = NOW(), used_ip = :ip WHERE id = :id')
-            ->execute(['ip' => $ip, 'id' => $row['id']]);
+        // that reconnects mid-transfer cannot farm extra downloads. The
+        // `used_at IS NULL` guard makes the burn atomic: of two requests racing
+        // on one token, only the one whose UPDATE changes the row may proceed.
+        $burn = $pdo->prepare(
+            'UPDATE download_tokens SET used_at = NOW(), used_ip = :ip WHERE id = :id AND used_at IS NULL'
+        );
+        $burn->execute(['ip' => $ip, 'id' => $row['id']]);
+        if ($burn->rowCount() === 0) {
+            $this->deny('This download link has already been used. Request a new one.', 410, ['reason' => 'token_used']);
+        }
         $pdo->prepare('UPDATE licenses SET downloads_used = downloads_used + 1 WHERE id = :id')
             ->execute(['id' => $row['license_id']]);
 
@@ -140,10 +231,7 @@ final class DownloadService
             'ip'         => $ip,
         ]);
 
-        if ($githubUrl !== null) {
-            $this->redirect($githubUrl);
-        }
-        $this->send((string) $path, (string) $row['filename']);
+        return ['github_url' => $githubUrl, 'path' => $path, 'filename' => (string) $row['filename']];
     }
 
     /** @param array<string,mixed> $row */
@@ -213,18 +301,19 @@ final class DownloadService
     }
 
     /**
-     * Guarantees the resolved file really sits inside private-storage.
-     * Without this, a poisoned storage_path ("../../public_html/.env") would
-     * turn the download endpoint into an arbitrary file reader.
+     * Guarantees the resolved file really sits inside private-storage/releases.
+     * Without this, a poisoned storage_path ("../../public_html/.env", or
+     * "../logs/app-….log" next door) would turn the download endpoint into a
+     * file reader for everything else in private storage.
      */
     private function resolvePath(string $storagePath): string
     {
-        $base = realpath(DIWAN_PRIVATE_STORAGE);
+        $base = realpath(DIWAN_PRIVATE_STORAGE . '/releases');
         if ($base === false) {
-            throw new RuntimeException('Private storage directory does not exist on this server');
+            throw new RuntimeException('Private storage releases directory does not exist on this server');
         }
 
-        $full = realpath($base . '/releases/' . ltrim($storagePath, '/'));
+        $full = realpath($base . '/' . ltrim($storagePath, '/'));
         if ($full === false || !is_file($full)) {
             $this->deny('Installer is temporarily unavailable. Please contact support.', 503, [
                 'reason' => 'file_missing',
@@ -271,15 +360,11 @@ final class DownloadService
 
     private function deny(string $message, int $status, array $context = []): never
     {
-        Logger::warning('Download denied', $context + ['status' => $status]);
-        http_response_code($status);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => $message]);
-        exit;
+        throw new DownloadDenied($message, $status, $context);
     }
 
     private function hashToken(string $token): string
     {
-        return hash_hmac('sha256', $token, Env::require('APP_KEY'));
+        return Crypto::hmac($token);
     }
 }

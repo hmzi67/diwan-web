@@ -31,5 +31,15 @@ interface GatewayInterface
     /** Gateway's own transaction id, stored for reconciliation. */
     public function transactionIdFrom(array $payload): ?string;
 
+    /**
+     * Amount the gateway says was paid, in paisa, or null when this gateway's
+     * callback does not carry one in a documented field. A non-null value that
+     * differs from the order's amount stops the order being marked paid.
+     */
+    public function amountPaisaFrom(array $payload): ?int;
+
+    /** Human-readable reason for an unpaid callback, stored on the order. */
+    public function failureReasonFrom(array $payload): string;
+
     public function name(): string;
 }
