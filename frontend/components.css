@@ -939,3 +939,6 @@ a.stat:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, var(--c
 .badge--cash { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 35%, transparent); }
 .badge--card { color: #82aaff; border-color: rgba(130, 170, 255, 0.35); }
 .badge--other { color: var(--color-warn); border-color: var(--color-warn-line); }
+.badge--platform { color: var(--color-warn); border-color: var(--color-warn-line); }
+.badge--split { color: #c3a6ff; border-color: rgba(195, 166, 255, 0.35); }
+.badge--credit { color: var(--color-warn); border-color: var(--color-warn-line); }

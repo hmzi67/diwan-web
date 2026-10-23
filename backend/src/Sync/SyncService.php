@@ -21,7 +21,7 @@ final class SyncService
      * @param list<array<string, mixed>> $dailySummaries Aggregated daily numbers
      * @param array<string, list<array<string, mixed>>> $records Complete POS read model
      * @param int|null $claimedCustomerId Optional user ID sent by client
-     * @return array{status: string, customer_id: int, synced_sales: int, synced_summaries: int, server_time: string}
+     * @return array{status: string, customer_id: int, synced_sales: int, synced_summaries: int, synced_records: int, server_time: string}
      */
     public function sync(
         string $rawKey,
@@ -73,23 +73,31 @@ final class SyncService
             $stmtSale = $pdo->prepare(
                 'INSERT INTO pos_sales (
                     customer_id, device_fingerprint, local_sale_id, order_no,
-                    table_name, cashier_name, total_minor, discount_minor,
-                    tax_minor, payment_method, currency, items_count,
+                    table_name, cashier_name, customer_name, total_minor, discount_minor,
+                    tax_minor, service_charge_minor, payment_method, cash_minor, card_minor,
+                    other_minor, credit_minor, currency, items_count,
                     items_summary, sale_created_at, synced_at
                  ) VALUES (
                     :customer, :device, :sale_id, :order_no,
-                    :table_name, :cashier_name, :total, :discount,
-                    :tax, :payment_method, :currency, :items_count,
+                    :table_name, :cashier_name, :customer_name, :total, :discount,
+                    :tax, :service, :payment_method, :cash, :card,
+                    :other, :credit, :currency, :items_count,
                     :items_summary, :created_at, NOW()
                  )
                  ON DUPLICATE KEY UPDATE
                     order_no = VALUES(order_no),
                     table_name = VALUES(table_name),
                     cashier_name = VALUES(cashier_name),
+                    customer_name = VALUES(customer_name),
                     total_minor = VALUES(total_minor),
                     discount_minor = VALUES(discount_minor),
                     tax_minor = VALUES(tax_minor),
+                    service_charge_minor = VALUES(service_charge_minor),
                     payment_method = VALUES(payment_method),
+                    cash_minor = VALUES(cash_minor),
+                    card_minor = VALUES(card_minor),
+                    other_minor = VALUES(other_minor),
+                    credit_minor = VALUES(credit_minor),
                     currency = VALUES(currency),
                     items_count = VALUES(items_count),
                     items_summary = VALUES(items_summary),
@@ -115,6 +123,13 @@ final class SyncService
                 $currency = (string) ($sale['currency'] ?? 'PKR');
                 $itemsCount = (int) ($sale['items_count'] ?? $sale['itemsCount'] ?? 1);
                 $itemsSummary = (string) ($sale['items_summary'] ?? $sale['itemsSummary'] ?? '');
+                $customerName = $sale['customer_name'] ?? $sale['customerName'] ?? null;
+                // A POS build from before split payments sends no breakdown:
+                // stored as NULL and read through payment_method instead.
+                $tender = static function (string $key) use ($sale): ?int {
+                    $value = $sale[$key] ?? null;
+                    return is_numeric($value) ? (int) $value : null;
+                };
 
                 $stmtSale->execute([
                     'customer'       => $customerId,
@@ -123,10 +138,16 @@ final class SyncService
                     'order_no'       => $orderNo !== null ? (int) $orderNo : null,
                     'table_name'     => is_string($tableName) ? mb_substr($tableName, 0, 100) : null,
                     'cashier_name'   => is_string($cashierName) ? mb_substr($cashierName, 0, 100) : null,
+                    'customer_name'  => is_string($customerName) ? mb_substr($customerName, 0, 100) : null,
                     'total'          => (int) $total,
                     'discount'       => $discount,
                     'tax'            => $tax,
+                    'service'        => $tender('service_charge_minor') ?? 0,
                     'payment_method' => mb_substr($paymentMethod, 0, 20),
+                    'cash'           => $tender('cash_minor'),
+                    'card'           => $tender('card_minor'),
+                    'other'          => $tender('other_minor'),
+                    'credit'         => $tender('credit_minor'),
                     'currency'       => mb_substr($currency, 0, 10),
                     'items_count'    => $itemsCount,
                     'items_summary'  => $itemsSummary !== '' ? $itemsSummary : null,
@@ -167,7 +188,6 @@ final class SyncService
                     continue;
                 }
 
-                $syncedRecords = $this->storeRecords($pdo, $customerId, $fingerprint, $records);
                 $total = (int) ($summary['total_sales_minor'] ?? $summary['totalSalesMinor'] ?? 0);
                 $refunds = (int) ($summary['refunds_minor'] ?? $summary['refundsMinor'] ?? 0);
                 $net = (int) ($summary['net_sales_minor'] ?? $summary['netSalesMinor'] ?? 0);
@@ -193,10 +213,15 @@ final class SyncService
             }
         }
 
+        // 4. Mirror the full read model — once per sync, whether or not any
+        // sales or summaries came with it.
+        $syncedRecords = $this->storeRecords($pdo, $customerId, $fingerprint, $records);
+
         Logger::info('POS Data Synced', [
             'customer_id' => $customerId,
             'sales_count' => $syncedSales,
             'summaries_count' => $syncedSummaries,
+            'records_count' => $syncedRecords,
         ]);
 
         return [
@@ -236,9 +261,11 @@ final class SyncService
                     COALESCE(SUM(discount_minor), 0) AS total_discount_minor,
                     COALESCE(SUM(tax_minor), 0) AS total_tax_minor,
                     COUNT(*) AS transaction_count,
-                    COALESCE(SUM(CASE WHEN payment_method = "cash" THEN total_minor ELSE 0 END), 0) AS cash_minor,
-                    COALESCE(SUM(CASE WHEN payment_method = "card" THEN total_minor ELSE 0 END), 0) AS card_minor,
-                    COALESCE(SUM(CASE WHEN payment_method NOT IN ("cash", "card") THEN total_minor ELSE 0 END), 0) AS other_minor
+                    COALESCE(SUM(COALESCE(cash_minor, CASE WHEN payment_method = "cash" THEN total_minor ELSE 0 END)), 0) AS cash_minor,
+                    COALESCE(SUM(COALESCE(card_minor, CASE WHEN payment_method = "card" THEN total_minor ELSE 0 END)), 0) AS card_minor,
+                    COALESCE(SUM(COALESCE(other_minor, CASE WHEN payment_method NOT IN ("cash", "card") THEN total_minor ELSE 0 END)), 0) AS other_minor,
+                    COALESCE(SUM(credit_minor), 0) AS credit_minor,
+                    COALESCE(SUM(service_charge_minor), 0) AS service_charge_minor
                FROM pos_sales
               WHERE customer_id = :id AND DATE(sale_created_at) = CURRENT_DATE()'
         );
@@ -251,6 +278,8 @@ final class SyncService
             'cash_minor' => 0,
             'card_minor' => 0,
             'other_minor' => 0,
+            'credit_minor' => 0,
+            'service_charge_minor' => 0,
         ];
 
         $stmtMonth = $pdo->prepare(
@@ -275,9 +304,9 @@ final class SyncService
 
         // 3. Recent sales (up to 30)
         $stmtRecent = $pdo->prepare(
-            'SELECT local_sale_id, order_no, table_name, cashier_name, total_minor,
-                    discount_minor, tax_minor, payment_method, currency, items_count,
-                    items_summary, sale_created_at
+            'SELECT local_sale_id, order_no, table_name, cashier_name, customer_name, total_minor,
+                    discount_minor, tax_minor, service_charge_minor, payment_method, credit_minor,
+                    currency, items_count, items_summary, sale_created_at
                FROM pos_sales
               WHERE customer_id = :id
               ORDER BY sale_created_at DESC, id DESC
@@ -306,9 +335,9 @@ final class SyncService
                         0 AS refunds_minor,
                         SUM(total_minor) AS net_sales_minor,
                         COUNT(*) AS transaction_count,
-                        SUM(CASE WHEN payment_method = "cash" THEN total_minor ELSE 0 END) AS cash_minor,
-                        SUM(CASE WHEN payment_method = "card" THEN total_minor ELSE 0 END) AS card_minor,
-                        SUM(CASE WHEN payment_method NOT IN ("cash", "card") THEN total_minor ELSE 0 END) AS other_minor,
+                        SUM(COALESCE(cash_minor, CASE WHEN payment_method = "cash" THEN total_minor ELSE 0 END)) AS cash_minor,
+                        SUM(COALESCE(card_minor, CASE WHEN payment_method = "card" THEN total_minor ELSE 0 END)) AS card_minor,
+                        SUM(COALESCE(other_minor, CASE WHEN payment_method NOT IN ("cash", "card") THEN total_minor ELSE 0 END)) AS other_minor,
                         "PKR" AS currency
                    FROM pos_sales
                   WHERE customer_id = :id
@@ -351,6 +380,8 @@ final class SyncService
                     'cash_minor'        => (int) $today['cash_minor'],
                     'card_minor'        => (int) $today['card_minor'],
                     'other_minor'       => (int) $today['other_minor'],
+                    'credit_minor'      => (int) $today['credit_minor'],
+                    'service_charge_minor' => (int) $today['service_charge_minor'],
                 ],
                 'month'    => [
                     'total_sales_minor' => (int) $month['total_sales_minor'],
@@ -366,10 +397,13 @@ final class SyncService
                 'order_no'        => $s['order_no'] !== null ? (int) $s['order_no'] : null,
                 'table_name'      => $s['table_name'] ?? null,
                 'cashier_name'    => $s['cashier_name'] ?? null,
+                'customer_name'   => $s['customer_name'] ?? null,
                 'total_minor'     => (int) $s['total_minor'],
                 'discount_minor'  => (int) $s['discount_minor'],
                 'tax_minor'       => (int) $s['tax_minor'],
+                'service_charge_minor' => (int) $s['service_charge_minor'],
                 'payment_method'  => (string) $s['payment_method'],
+                'credit_minor'    => (int) ($s['credit_minor'] ?? 0),
                 'currency'        => (string) $s['currency'],
                 'items_count'     => (int) $s['items_count'],
                 'items_summary'   => $s['items_summary'] ?? '',
@@ -391,46 +425,88 @@ final class SyncService
     }
 
     /**
-     * Replaces each entity's records atomically. JSON is intentional here:
-     * the POS schema evolves independently and the dashboard must not lose a
-     * new POS field while waiting for a web migration.
+     * Fields never stored even when a POS sends them: any password/PIN hash.
+     * A 4-6 digit PIN behind a hash falls to an offline brute force, so the
+     * hash is itself the secret. POS builds from before 2026-10 mirrored
+     * app_config whole, including sensitive_area_pin_hash.
+     */
+    private const PRIVATE_FIELD = '/_hash$/';
+
+    /**
+     * Replaces, per entity it sends, this device's mirrored rows — so a row
+     * deleted on the POS disappears here too — inside one transaction. An
+     * entity the POS doesn't send (an older build) is left untouched. JSON is
+     * intentional: the POS schema evolves independently and the dashboard
+     * must not lose a new POS field while waiting for a web migration.
      *
      * @param array<string, list<array<string, mixed>>> $records
      */
     private function storeRecords(PDO $pdo, int $customerId, string $fingerprint, array $records): int
     {
-        $stmt = $pdo->prepare(
+        $valid = array_filter(
+            $records,
+            static fn ($rows, $entity): bool => is_string($entity)
+                && preg_match('/^[a-z_]{1,64}$/', $entity) === 1
+                && is_array($rows),
+            ARRAY_FILTER_USE_BOTH
+        );
+        if ($valid === []) {
+            return 0;
+        }
+
+        $delete = $pdo->prepare(
+            'DELETE FROM pos_records WHERE customer_id = :customer AND device_fingerprint = :device AND entity_name = :entity'
+        );
+        $insert = $pdo->prepare(
             'INSERT INTO pos_records
                 (customer_id, device_fingerprint, entity_name, local_record_id, record_json, synced_at)
              VALUES (:customer, :device, :entity, :record_id, :json, NOW())
-             ON DUPLICATE KEY UPDATE
-                device_fingerprint = VALUES(device_fingerprint),
-                record_json = VALUES(record_json),
-                synced_at = NOW()'
+             ON DUPLICATE KEY UPDATE record_json = VALUES(record_json), synced_at = NOW()'
         );
+
         $count = 0;
-        foreach ($records as $entity => $rows) {
-            if (!is_string($entity) || !preg_match('/^[a-z_]{1,64}$/', $entity) || !is_array($rows)) {
-                continue;
-            }
-            foreach ($rows as $index => $row) {
-                if (!is_array($row)) {
-                    continue;
+        $pdo->beginTransaction();
+        try {
+            foreach ($valid as $entity => $rows) {
+                $delete->execute(['customer' => $customerId, 'device' => $fingerprint, 'entity' => $entity]);
+                foreach ($rows as $index => $row) {
+                    if (!is_array($row)) {
+                        continue;
+                    }
+                    $row = self::withoutPrivateFields($row);
+                    $localId = isset($row['id']) && is_scalar($row['id'])
+                        ? (string) $row['id']
+                        : (string) ($index + 1);
+                    $insert->execute([
+                        'customer' => $customerId,
+                        'device' => $fingerprint,
+                        'entity' => $entity,
+                        'record_id' => mb_substr($localId, 0, 100),
+                        'json' => json_encode($row, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+                    ]);
+                    $count++;
                 }
-                $localId = isset($row['id']) && is_scalar($row['id'])
-                    ? (string) $row['id']
-                    : (string) ($index + 1);
-                $stmt->execute([
-                    'customer' => $customerId,
-                    'device' => $fingerprint,
-                    'entity' => $entity,
-                    'record_id' => mb_substr($localId, 0, 100),
-                    'json' => json_encode($row, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
-                ]);
-                $count++;
             }
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
         }
         return $count;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private static function withoutPrivateFields(array $row): array
+    {
+        foreach (array_keys($row) as $field) {
+            if (is_string($field) && preg_match(self::PRIVATE_FIELD, $field) === 1) {
+                unset($row[$field]);
+            }
+        }
+        return $row;
     }
 
     private static bool $tablesVerified = false;
@@ -469,10 +545,16 @@ final class SyncService
                   order_no            INT             NULL,
                   table_name          VARCHAR(100)    NULL,
                   cashier_name        VARCHAR(100)    NULL,
+                  customer_name       VARCHAR(100)    NULL,
                   total_minor         BIGINT          NOT NULL,
                   discount_minor      BIGINT          NOT NULL DEFAULT 0,
                   tax_minor           BIGINT          NOT NULL DEFAULT 0,
+                  service_charge_minor BIGINT         NOT NULL DEFAULT 0,
                   payment_method      VARCHAR(20)     NOT NULL DEFAULT "cash",
+                  cash_minor          BIGINT          NULL,
+                  card_minor          BIGINT          NULL,
+                  other_minor         BIGINT          NULL,
+                  credit_minor        BIGINT          NULL,
                   currency            VARCHAR(10)     NOT NULL DEFAULT "PKR",
                   items_count         INT             NOT NULL DEFAULT 1,
                   items_summary       TEXT            NULL,
@@ -517,9 +599,36 @@ final class SyncService
                     FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ');
+            $this->ensurePosSalesColumns($pdo);
             self::$tablesVerified = true;
         } catch (\Throwable $e) {
             Logger::warning('ensureTablesExist check failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Migration 015's pos_sales columns, added here too when a deploy lands
+     * before the migration was applied by hand — otherwise every sync would
+     * fail on the new INSERT columns.
+     */
+    private function ensurePosSalesColumns(PDO $pdo): void
+    {
+        $columns = [
+            'customer_name'        => 'VARCHAR(100) NULL AFTER cashier_name',
+            'service_charge_minor' => 'BIGINT NOT NULL DEFAULT 0 AFTER tax_minor',
+            'cash_minor'           => 'BIGINT NULL AFTER payment_method',
+            'card_minor'           => 'BIGINT NULL AFTER cash_minor',
+            'other_minor'          => 'BIGINT NULL AFTER card_minor',
+            'credit_minor'         => 'BIGINT NULL AFTER other_minor',
+        ];
+        $existing = $pdo->query(
+            "SELECT COLUMN_NAME FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pos_sales'"
+        )->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($columns as $name => $definition) {
+            if (!in_array($name, $existing, true)) {
+                $pdo->exec("ALTER TABLE pos_sales ADD COLUMN {$name} {$definition}");
+            }
         }
     }
 }

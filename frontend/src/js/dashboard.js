@@ -645,7 +645,9 @@ function renderStoreRecords(pos, customerId) {
   setTxt('[data-pos-alltime-sales]', money(allTime.total_sales_minor, 'PKR'));
   setTxt('[data-pos-alltime-txns]', `${allTime.transaction_count || 0} orders`);
   setTxt('[data-pos-cash-sales]', `Cash: ${money(today.cash_minor, 'PKR')}`);
-  setTxt('[data-pos-card-sales]', `Card: ${money(today.card_minor, 'PKR')}`);
+  setTxt('[data-pos-card-sales]', `Card: ${money(today.card_minor, 'PKR')}${
+    today.credit_minor > 0 ? ` · Pay later: ${money(today.credit_minor, 'PKR')}` : ''
+  }`);
 
   // Devices List
   const devicesList = document.getElementById('pos-devices-list');
@@ -675,7 +677,11 @@ function renderStoreRecords(pos, customerId) {
         <td><small>${escapeHtml(s.sale_created_at)}</small></td>
         <td>${escapeHtml(s.cashier_name || '—')}${s.table_name ? ` <small style="color:var(--color-muted);">(${escapeHtml(s.table_name)})</small>` : ''}</td>
         <td><strong>${s.items_count} items</strong>${s.items_summary ? `<br><small style="color:var(--color-muted); font-size: 0.78rem;">${escapeHtml(s.items_summary)}</small>` : ''}</td>
-        <td><span class="badge--method badge--${s.payment_method}">${escapeHtml(s.payment_method)}</span></td>
+        <td>
+          <span class="badge--method badge--${escapeHtml(s.payment_method)}">${escapeHtml(POS_METHOD_LABELS[s.payment_method] || s.payment_method)}</span>
+          ${s.credit_minor > 0 ? `<br><small style="color:var(--color-warn);">${money(s.credit_minor, s.currency)} on credit</small>` : ''}
+          ${s.customer_name ? `<br><small style="color:var(--color-muted);">${escapeHtml(s.customer_name)}</small>` : ''}
+        </td>
         <td style="text-align: right; font-weight: 700;">${money(s.total_minor, s.currency)}</td>
       </tr>
     `).join('') || '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--color-muted);">No transactions recorded yet.</td></tr>';
@@ -700,6 +706,10 @@ function renderStoreRecords(pos, customerId) {
 }
 
 const posRecordState = { records: {}, entity: '', search: '', from: '', to: '' };
+
+/** Display names for a synced sale's payment_method ("split" = several
+ * tenders, "credit" = pay later). Anything else is shown as sent. */
+const POS_METHOD_LABELS = { split: 'Split', credit: 'Pay later', platform: 'Platform' };
 
 function posRecordLabel(entity) {
   return entity.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());

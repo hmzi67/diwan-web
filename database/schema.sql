@@ -345,10 +345,19 @@ CREATE TABLE IF NOT EXISTS pos_sales (
   order_no            INT             NULL,
   table_name          VARCHAR(100)    NULL,
   cashier_name        VARCHAR(100)    NULL,
+  customer_name       VARCHAR(100)    NULL,
   total_minor         BIGINT          NOT NULL,
   discount_minor      BIGINT          NOT NULL DEFAULT 0,
   tax_minor           BIGINT          NOT NULL DEFAULT 0,
+  service_charge_minor BIGINT         NOT NULL DEFAULT 0,
+  -- 'cash' | 'card' | 'other' | 'platform', or 'split' / 'credit' (pay later).
   payment_method      VARCHAR(20)     NOT NULL DEFAULT 'cash',
+  -- Tender breakdown (migration 015). NULL on rows synced before it: read
+  -- those through payment_method instead. credit_minor is the pay-later part.
+  cash_minor          BIGINT          NULL,
+  card_minor          BIGINT          NULL,
+  other_minor         BIGINT          NULL,
+  credit_minor        BIGINT          NULL,
   currency            VARCHAR(10)     NOT NULL DEFAULT 'PKR',
   items_count         INT             NOT NULL DEFAULT 1,
   items_summary       TEXT            NULL,
@@ -383,6 +392,8 @@ CREATE TABLE IF NOT EXISTS pos_daily_summaries (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- pos_records — forward-compatible mirror of all non-sensitive POS entities.
+-- Each sync replaces a device's rows per entity it sends; any *_hash field is
+-- dropped on ingest (SyncService::PRIVATE_FIELD), so no PIN hash is stored.
 -- The POS application evolves independently, so the dashboard stores the
 -- original row as JSON while indexing the tenant/entity/local id for lookup.
 CREATE TABLE IF NOT EXISTS pos_records (

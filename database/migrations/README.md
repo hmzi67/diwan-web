@@ -58,3 +58,13 @@ Apply `012_linux_platform.sql` before deploying the dashboard's Linux option,
 then re-run `scripts/sync-github-release.php <tag> --sql` and import its output:
 it now registers Linux (`appimage` / `deb` / `rpm`) and both Windows builds
 (`x64` / `x86`).
+
+## 015 — POS tender breakdown and record privacy
+
+Apply `015_pos_tenders_and_record_privacy.sql` alongside the POS release that
+adds split payments and pay-later sales. It adds the per-sale tender columns
+to `pos_sales` (older rows stay NULL and keep being read through
+`payment_method`) and removes the area-PIN hash from `app_config` records that
+older POS builds mirrored. `SyncService` also adds the columns itself if a
+deploy lands first, and drops any `*_hash` field on ingest from now on.
+
