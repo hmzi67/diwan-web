@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — Diwan POS</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/theme.js"></script>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+</head>
+<!--
+  Private admin panel. This page is static and public on purpose: it holds no
+  data and grants nothing. Every figure and action comes from /api/admin-*.php,
+  which refuses anything without an administrator session (and, for changes,
+  the session's CSRF token). See backend/src/Admin/.
+-->
+<body class="app admin">
+  <a class="skip" href="#admin-main">Skip to content</a>
+
+  <!-- ===== Sign in ===== -->
+  <main class="admin-login" id="admin-login" hidden>
+    <form class="admin-login__card" id="login-form" novalidate>
+      <a class="brand" href="/"><img class="brand__mark" src="/assets/logo.png" alt="" width="30" height="30">Diwan</a>
+      <h1>Admin sign in</h1>
+      <p>For Diwan platform administrators only.</p>
+      <label class="field">Email<input class="input" type="email" name="email" autocomplete="username" required></label>
+      <label class="field">Password<input class="input" type="password" name="password" autocomplete="current-password" required></label>
+      <p class="admin-login__status" id="login-status" role="status" aria-live="polite"></p>
+      <button class="btn btn--primary btn--lg" type="submit">Sign in</button>
+    </form>
+  </main>
+
+  <!-- ===== App ===== -->
+  <div class="app-shell" id="admin-app" hidden>
+    <aside class="sidebar" aria-label="Admin navigation">
+      <div class="sidebar__top" data-theme-slot>
+        <a class="brand" href="/"><img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">Diwan <span class="admin-tag">Admin</span></a>
+      </div>
+      <nav class="sidebar__nav">
+        <p class="sidebar__label">Platform</p>
+        <a href="#overview" data-nav="overview"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</a>
+        <a href="#users" data-nav="users"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 8M22 21a7 7 0 0 0-5-6.7"/></svg>Users</a>
+        <a href="#requests" data-nav="requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.2z"/><path d="M8 9h8M8 12h5"/></svg>License Requests <span class="sidebar__pill" data-count="pending_requests" hidden></span></a>
+        <a href="#licenses" data-nav="licenses"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16 7l3 3M14 9l2 2"/></svg>Licenses</a>
+        <a href="#businesses" data-nav="businesses"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9h18M9 20v-6h6v6"/></svg>Businesses &amp; Counters <span class="sidebar__pill" data-count="open_sync_conflicts" hidden></span></a>
+        <a href="#plans" data-nav="plans"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Plans &amp; Features</a>
+        <p class="sidebar__label">Insight</p>
+        <a href="#downloads" data-nav="downloads"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Downloads &amp; Analytics</a>
+        <a href="#versions" data-nav="versions"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Application Versions</a>
+        <a href="#notifications" data-nav="notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Notifications <span class="sidebar__pill" data-count="unread_notifications" hidden></span></a>
+        <a href="#audit" data-nav="audit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l1 2h3v16H5V5h3z"/><path d="M9 12h6M9 16h6"/></svg>Audit Logs</a>
+        <a href="#settings" data-nav="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>Admin Settings</a>
+      </nav>
+      <div class="sidebar__account">
+        <span class="avatar" data-avatar aria-hidden="true"></span>
+        <div class="sidebar__who"><strong data-admin-name>Administrator</strong><span data-admin-email></span></div>
+        <button class="icon-btn" type="button" data-logout aria-label="Sign out" title="Sign out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+        </button>
+      </div>
+    </aside>
+    <div class="app-main">
+      <header class="topbar">
+        <div class="topbar__row">
+          <a class="brand" href="/"><img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">Diwan <span class="admin-tag">Admin</span></a>
+          <div class="topbar__actions" data-theme-slot>
+            <button class="btn btn--ghost btn--sm" type="button" data-logout>Sign out</button>
+          </div>
+        </div>
+        <nav class="tabbar" aria-label="Admin sections">
+          <a href="#overview" data-nav="overview">Overview</a>
+          <a href="#users" data-nav="users">Users</a>
+          <a href="#requests" data-nav="requests">License Requests</a>
+          <a href="#licenses" data-nav="licenses">Licenses</a>
+          <a href="#businesses" data-nav="businesses">Businesses &amp; Counters</a>
+          <a href="#plans" data-nav="plans">Plans &amp; Features</a>
+          <a href="#downloads" data-nav="downloads">Downloads &amp; Analytics</a>
+          <a href="#versions" data-nav="versions">Application Versions</a>
+          <a href="#notifications" data-nav="notifications">Notifications</a>
+          <a href="#audit" data-nav="audit">Audit Logs</a>
+          <a href="#settings" data-nav="settings">Admin Settings</a>
+        </nav>
+      </header>
+      <main class="dash admin-main" id="admin-main" tabindex="-1" aria-live="polite"></main>
+    </div>
+  </div>
+
+  <dialog class="admin-dialog" id="admin-dialog" aria-labelledby="dialog-title">
+    <form method="dialog" id="dialog-form" novalidate>
+      <h2 id="dialog-title"></h2>
+      <div id="dialog-body"></div>
+      <p class="admin-dialog__error" id="dialog-error" role="alert"></p>
+      <div class="admin-dialog__actions">
+        <button class="btn btn--ghost btn--sm" type="button" value="cancel" data-dialog-cancel>Cancel</button>
+        <button class="btn btn--primary btn--sm" type="submit" value="ok" id="dialog-ok">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/plans.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

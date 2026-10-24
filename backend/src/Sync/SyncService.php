@@ -20,7 +20,7 @@ final class SyncService
      * @param list<array<string, mixed>> $sales Recent/unsynced sale transactions
      * @param list<array<string, mixed>> $dailySummaries Aggregated daily numbers
      * @param array<string, list<array<string, mixed>>> $records Complete POS read model
-     * @param int|null $claimedCustomerId Optional user ID sent by client
+     * @param int|null $claimedCustomerId Ignored (kept for older POS builds); the licence decides the account
      * @return array{status: string, customer_id: int, synced_sales: int, synced_summaries: int, synced_records: int, server_time: string}
      */
     public function sync(
@@ -39,11 +39,10 @@ final class SyncService
             throw new \RuntimeException('Invalid or unactivated licence key for this device.');
         }
 
+        // Only the licence decides whose dashboard this is. The client's
+        // `customer_id` used to fill in for a licence with no account, which
+        // let any activated device write into any customer's records.
         $customerId = $license['customer_id'];
-        if ($customerId === null && $claimedCustomerId !== null) {
-            $customerId = $claimedCustomerId;
-        }
-
         if ($customerId === null) {
             throw new \RuntimeException('This licence is not associated with a customer account.');
         }
@@ -366,6 +365,14 @@ final class SyncService
             $records[$entity][] = $decoded;
         }
 
+        // A business whose counters share a workspace: read its records from
+        // there. Every counter holds the whole business, so the per-device
+        // mirrors would repeat each record once per counter.
+        $workspaceRecords = $this->workspaceRecords($pdo, $customerId);
+        if ($workspaceRecords !== null) {
+            $records = $workspaceRecords;
+        }
+
         return [
             'has_synced_data' => !empty($devices) || !empty($recentSales),
             'devices'         => array_map(static fn (array $d): array => [
@@ -507,6 +514,50 @@ final class SyncService
             }
         }
         return $row;
+    }
+
+    /**
+     * The shared records of the customer's business workspaces, in the
+     * mirror's shape (`id` is the record's gid), or null when the customer
+     * has no workspace with data. Staff accounts are never included, and
+     * hashes are stripped like every mirrored row.
+     *
+     * @return array<string, list<array<string, mixed>>>|null
+     */
+    private function workspaceRecords(PDO $pdo, int $customerId): ?array
+    {
+        if (!self::tableExists($pdo, 'businesses')) {
+            return null;   // migration 017 not applied yet
+        }
+        $stmt = $pdo->prepare('SELECT id FROM businesses WHERE customer_id = :c AND seed_completed_at IS NOT NULL ORDER BY id');
+        $stmt->execute(['c' => $customerId]);
+        $businessIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        if ($businessIds === []) {
+            return null;
+        }
+        $records = [];
+        $rows = $pdo->prepare(
+            "SELECT entity, gid, data FROM sync_rows
+              WHERE business_id = :b AND deleted = 0 AND entity <> 'users'
+              ORDER BY entity, version"
+        );
+        foreach ($businessIds as $businessId) {
+            $rows->execute(['b' => $businessId]);
+            foreach ($rows->fetchAll() as $row) {
+                $decoded = json_decode((string) $row['data'], true);
+                if (is_array($decoded)) {
+                    $records[(string) $row['entity']][] = ['id' => (string) $row['gid']] + self::withoutPrivateFields($decoded);
+                }
+            }
+        }
+        return $records;
+    }
+
+    private static function tableExists(PDO $pdo, string $table): bool
+    {
+        $stmt = $pdo->prepare('SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t');
+        $stmt->execute(['t' => $table]);
+        return $stmt->fetchColumn() !== false;
     }
 
     private static bool $tablesVerified = false;

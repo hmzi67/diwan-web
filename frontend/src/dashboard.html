@@ -31,6 +31,11 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
           Overview
         </a>
+        <a href="#plan" data-nav="plan">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v5c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V7l-8-4z"/><path d="m9 12 2 2 4-4"/></svg>
+          Plan &amp; access
+          <span class="sidebar__pill" data-unread hidden></span>
+        </a>
         <a href="#records" data-nav="records">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Store records
@@ -86,6 +91,7 @@
         </div>
         <nav class="tabbar" aria-label="Account sections">
           <a href="#overview" data-nav="overview">Overview</a>
+          <a href="#plan" data-nav="plan">Plan &amp; access</a>
           <a href="#records" data-nav="records">Store records</a>
           <a href="#licences" data-nav="licences">Licences</a>
           <a href="#setup" data-nav="setup">Get started</a>
@@ -150,7 +156,7 @@
                 <section class="panel" aria-labelledby="progress-title">
                   <h2 id="progress-title">Your progress</h2>
                   <ol class="dash-steps" data-steps>
-                    <li data-step="key"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Get your licence key</strong><small>Start a trial or buy a licence</small></div></li>
+                    <li data-step="key"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Get your licence key</strong><small>Request a plan; we approve it</small></div></li>
                     <li data-step="download"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Download &amp; install</strong><small>Windows, macOS, Linux or Android</small></div></li>
                     <li data-step="activate"><span class="dash-steps__dot" aria-hidden="true"></span><div><strong>Activate on your device</strong><small>Paste your key when Diwan asks</small></div></li>
                   </ol>
@@ -158,10 +164,48 @@
                 </section>
 
                 <section class="panel panel--upgrade" data-upgrade hidden aria-labelledby="upgrade-title">
-                  <p class="panel__kicker">Enjoying the trial?</p>
-                  <h2 id="upgrade-title">Keep Diwan forever</h2>
-                  <p>One payment, no subscription. Your data and settings carry straight over.</p>
-                  <a class="btn btn--primary btn--sm" href="#pricing">See lifetime plans</a>
+                  <p class="panel__kicker" data-upgrade-kicker>Ready for more?</p>
+                  <h2 id="upgrade-title">Choose your plan</h2>
+                  <p>Request BASIC, ADVANCE or ALL-IN-ONE — no online payment. Your data and settings carry straight over.</p>
+                  <a class="btn btn--primary btn--sm" href="#plan">Request a plan</a>
+                </section>
+              </aside>
+            </div>
+          </section>
+
+
+          <!-- ============================ Plan & access ============================ -->
+          <section class="view" data-view="plan" hidden aria-labelledby="plan-title">
+            <header class="view-head">
+              <div>
+                <h1 id="plan-title" tabindex="-1">Plan &amp; access</h1>
+                <p>Your plan, what it unlocks in Diwan, and your requests. There is no online payment — every plan is approved by the Diwan team.</p>
+              </div>
+            </header>
+
+            <div class="dash-grid">
+              <div class="dash-main">
+                <div class="dash-section__head"><h2>Current plan</h2></div>
+                <div id="plan-current"></div>
+
+                <div class="dash-section__head dash-section__head--spaced"><h2 id="request-title">Request a plan</h2></div>
+                <div id="plan-request"></div>
+
+                <div class="dash-section__head dash-section__head--spaced"><h2>Your requests</h2></div>
+                <div id="plan-requests"></div>
+              </div>
+
+              <aside class="dash-side">
+                <section class="panel" aria-labelledby="notices-title">
+                  <div class="dash-section__head">
+                    <h2 id="notices-title">Notifications</h2>
+                    <button class="dash-link" type="button" data-mark-read hidden>Mark all read</button>
+                  </div>
+                  <ul class="notices" id="notices"></ul>
+                </section>
+                <section class="panel" aria-labelledby="my-downloads-title">
+                  <h2 id="my-downloads-title">Your downloads</h2>
+                  <ul class="notices" id="my-downloads"></ul>
                 </section>
               </aside>
             </div>
@@ -323,7 +367,7 @@
                 <h1 id="licences-title" tabindex="-1">Your licences</h1>
                 <p>Keys, activation status, downloads and device changes for every licence on this account.</p>
               </div>
-              <a class="btn btn--ghost btn--sm" href="#pricing">Buy another licence</a>
+              <a class="btn btn--ghost btn--sm" href="#plan">Request a plan</a>
             </header>
             <div id="orders" class="orders"></div>
             <div id="no-orders" class="dash-empty" hidden>
@@ -331,10 +375,10 @@
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16 7l3 3M14 9l2 2"/></svg>
               </div>
               <h3>No licences yet</h3>
-              <p>Start a free 30-day trial or pick a lifetime licence — your key will appear here.</p>
+              <p>Request a plan — once our team approves it, your key appears here.</p>
               <div class="dash-empty__cta">
-                <button class="btn btn--primary btn--sm" type="button" data-start-trial>Start free trial</button>
-                <a class="btn btn--ghost btn--sm" href="#pricing">See pricing</a>
+                <a class="btn btn--primary btn--sm" href="#plan">Request a plan</a>
+                <a class="btn btn--ghost btn--sm" href="#pricing">Compare plans</a>
               </div>
             </div>
           </section>
@@ -408,63 +452,24 @@
           <section class="view" data-view="products" hidden aria-labelledby="products-title">
             <header class="view-head">
               <div>
-                <h1 id="products-title" tabindex="-1">Products &amp; editions</h1>
-                <p>Diwan POS is sold as a one-time licence in three editions. Every licence covers all platforms, activation, updates and support.</p>
+                <h1 id="products-title" tabindex="-1">Products &amp; plans</h1>
+                <p>Diwan POS comes in three monthly plans. Every licence includes activation, updates and support; the plan decides which modules and apps it unlocks.</p>
               </div>
               <a class="btn btn--primary btn--sm" href="#pricing">Compare pricing</a>
             </header>
 
             <div class="catgroup catgroup--dash">
               <div class="catgroup__head">
-                <h2>Licence editions</h2>
-                <span class="catgroup__tag catgroup__tag--buy">Purchasable</span>
+                <h2>Plans</h2>
+                <span class="catgroup__tag catgroup__tag--buy">Request access</span>
               </div>
-              <div class="catgrid">
-                <article class="item" data-edition="starter">
-                  <p class="item__no">Product 01</p>
-                  <h3>Starter Licence</h3>
-                  <p>For a single counter just getting started. One terminal at one branch.</p>
-                  <p class="item__price"><span class="item__amount">Rs 8,000</span><span class="item__period">one-time</span></p>
-                  <ul class="item__spec">
-                    <li>1 terminal, 1 branch</li>
-                    <li>Core billing &amp; inventory</li>
-                    <li>Offline-first sync</li>
-                    <li>Email support</li>
-                  </ul>
-                  <a class="btn btn--ghost item__cta" href="/checkout.html?plan=diwan-pos-starter" data-plan-cta="starter">Buy Starter</a>
-                </article>
-                <article class="item" data-edition="standard">
-                  <p class="item__no">Product 02</p>
-                  <h3>Standard Licence</h3>
-                  <p>For growing shops running a few counters. Up to three terminals at one branch.</p>
-                  <p class="item__price"><span class="item__amount">Rs 12,000</span><span class="item__period">one-time</span></p>
-                  <ul class="item__spec">
-                    <li>Up to 3 terminals, 1 branch</li>
-                    <li>All core modules + reporting</li>
-                    <li>Receipt &amp; kitchen printer support</li>
-                    <li>Priority email support</li>
-                  </ul>
-                  <a class="btn btn--primary item__cta" href="/checkout.html?plan=diwan-pos-standard" data-plan-cta="standard">Buy Standard</a>
-                </article>
-                <article class="item" data-edition="enterprise">
-                  <p class="item__no">Product 03</p>
-                  <h3>Enterprise Licence</h3>
-                  <p>For multi-branch chains. Unlimited terminals across multiple locations.</p>
-                  <p class="item__price"><span class="item__amount">Rs 25,000</span><span class="item__period">one-time</span></p>
-                  <ul class="item__spec">
-                    <li>Unlimited terminals, multi-branch</li>
-                    <li>All modules + multi-branch sync</li>
-                    <li>Priority phone &amp; email support</li>
-                  </ul>
-                  <a class="btn btn--ghost item__cta" href="/checkout.html?plan=diwan-pos-enterprise" data-plan-cta="enterprise">Buy Enterprise</a>
-                </article>
-              </div>
+              <div class="pricing__grid pricing__grid--dash" data-dash-plans></div>
             </div>
 
             <div class="catgroup catgroup--dash">
               <div class="catgroup__head">
                 <h2>Platform builds</h2>
-                <span class="catgroup__tag">Included with every licence</span>
+                <span class="catgroup__tag">Desktop on every plan · mobile where included</span>
               </div>
               <div class="catgrid">
                 <article class="item">
@@ -544,68 +549,17 @@
           <section class="view" data-view="pricing" hidden aria-labelledby="pricing-title">
             <header class="view-head view-head--center">
               <div>
-                <h1 id="pricing-title" tabindex="-1">Simple, one-time pricing</h1>
-                <p>Pay once, own it forever. No subscription, no renewal — pick the plan that matches how many counters you run.</p>
+                <h1 id="pricing-title" tabindex="-1">Simple monthly plans</h1>
+                <p>No online payment: request the plan you want and our team approves it and switches on your licence.</p>
               </div>
             </header>
 
-            <div class="pricing__grid pricing__grid--dash">
-              <article class="plan" data-edition="starter">
-                <div class="plan__head">
-                  <h3>Starter</h3>
-                  <p class="plan__desc">For a single counter just getting started.</p>
-                </div>
-                <p class="plan__price"><span class="plan__amount">Rs 8,000</span><span class="plan__period">one-time</span></p>
-                <a class="btn btn--ghost plan__cta" href="/checkout.html?plan=diwan-pos-starter" data-plan-cta="starter">Buy Starter</a>
-                <div class="plan__divider"></div>
-                <ul class="plan__features">
-                  <li>1 terminal licence</li>
-                  <li>Core billing &amp; inventory</li>
-                  <li>Offline-first sync</li>
-                  <li>Email support</li>
-                  <li>Free software updates</li>
-                </ul>
-              </article>
-
-              <article class="plan plan--popular" data-edition="standard">
-                <p class="plan__badge">Most popular</p>
-                <div class="plan__head">
-                  <h3>Standard</h3>
-                  <p class="plan__desc">For growing shops running a few counters.</p>
-                </div>
-                <p class="plan__price"><span class="plan__amount">Rs 12,000</span><span class="plan__period">one-time</span></p>
-                <a class="btn btn--primary plan__cta" href="/checkout.html?plan=diwan-pos-standard" data-plan-cta="standard">Buy Standard</a>
-                <div class="plan__divider"></div>
-                <ul class="plan__features">
-                  <li>Up to 3 terminals, 1 branch</li>
-                  <li>All core modules + reporting</li>
-                  <li>Receipt &amp; kitchen printer support</li>
-                  <li>Priority email support</li>
-                  <li>Free software updates</li>
-                </ul>
-              </article>
-
-              <article class="plan" data-edition="enterprise">
-                <div class="plan__head">
-                  <h3>Enterprise</h3>
-                  <p class="plan__desc">For multi-branch chains.</p>
-                </div>
-                <p class="plan__price"><span class="plan__amount">Rs 25,000</span><span class="plan__period">one-time</span></p>
-                <a class="btn btn--ghost plan__cta" href="/checkout.html?plan=diwan-pos-enterprise" data-plan-cta="enterprise">Buy Enterprise</a>
-                <div class="plan__divider"></div>
-                <ul class="plan__features">
-                  <li>Unlimited terminals, multi-branch</li>
-                  <li>All modules + multi-branch sync</li>
-                  <li>Priority phone &amp; email support</li>
-                  <li>Free software updates</li>
-                </ul>
-              </article>
-            </div>
+            <div class="pricing__grid pricing__grid--dash" data-dash-plans></div>
 
             <ul class="assure">
-              <li><strong>One-time payment</strong><span>No subscription or renewal fees</span></li>
-              <li><strong>14-day refund</strong><span>Full refund if your key isn&rsquo;t activated</span></li>
-              <li><strong>Every platform</strong><span>Windows, macOS, Linux and Android included</span></li>
+              <li><strong>No card form</strong><span>Nothing is paid online — we approve every plan</span></li>
+              <li><strong>Upgrade any time</strong><span>Same key and devices, new plan</span></li>
+              <li><strong>Desktop &amp; mobile</strong><span>Windows, macOS, Linux; mobile where your plan includes it</span></li>
               <li><strong>Free updates</strong><span>Downloaded with your existing key</span></li>
             </ul>
           </section>
@@ -722,6 +676,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="/js/api.js"></script>
+  <script src="/js/plans.js"></script>
   <script src="/js/dashboard.js"></script>
   <script src="/js/contact.js"></script>
 </body>

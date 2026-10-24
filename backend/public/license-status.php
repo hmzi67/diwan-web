@@ -14,9 +14,10 @@
  *
  * where the JSON is
  *
- *   { v, kid, license_key, status, issued_at, expires_at, device_fingerprint, max_offline_days }
+ *   { v, kid, license_key, status, issued_at, expires_at, device_fingerprint, max_offline_days,
+ *     plan, entitlements, upgrade }
  *
- *   status             active | revoked | expired
+ *   status             active | suspended | revoked | expired
  *   issued_at          server unix time — the app's monotonic floor for its
  *                      own clock, and how it orders competing payloads
  *   expires_at         unix time, or null for a perpetual licence
@@ -26,6 +27,14 @@
  *   max_offline_days   how long the app may go without a successful refresh
  *                      before it insists on one — server-controlled so the
  *                      policy can change without an app release
+ *   plan               {code, name} of the licence's plan, or null for a
+ *                      licence issued before plans existed
+ *   entitlements       sorted POS module/capability keys the plan unlocks
+ *                      (Diwan\Plan\PlanCatalog), or null = unrestricted.
+ *                      The app enforces this list in Rust on every command;
+ *                      builds older than plans ignore the field.
+ *   upgrade            {key: plan name} — the cheapest plan that unlocks each
+ *                      key this licence lacks, for the app's upgrade message
  *
  * Who gets an answer: only the device the key is bound to. A wrong key, a
  * key bound elsewhere, and a revoked key from a stranger all produce the
@@ -46,6 +55,7 @@ use Diwan\Database\Database;
 use Diwan\License\ActivationThrottle;
 use Diwan\License\LicenseService;
 use Diwan\License\LicenseSigner;
+use Diwan\Plan\PlanCatalog;
 use Diwan\Support\DeviceInput;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
@@ -84,6 +94,17 @@ switch ($outcome['result']) {
         // no break
 }
 
+$plan = null;
+$entitlements = null;
+$upgrade = new stdClass();
+if ($outcome['plan_id'] !== null) {
+    $catalog = new PlanCatalog();
+    $planRow = $catalog->findById($outcome['plan_id']);
+    $plan = ['code' => $planRow['code'], 'name' => $planRow['name']];
+    $entitlements = $catalog->entitlementsForPlan($outcome['plan_id']);
+    $upgrade = (object) $catalog->upgradeHints($entitlements);
+}
+
 $signed = (new LicenseSigner())->sign([
     'license_key'        => $licenses->normalizeKey($key),
     'status'             => $outcome['status'],
@@ -91,6 +112,9 @@ $signed = (new LicenseSigner())->sign([
     'expires_at'         => $outcome['expires_at'],
     'device_fingerprint' => $fingerprint,
     'max_offline_days'   => Env::int('LICENSE_MAX_OFFLINE_DAYS', 30),
+    'plan'               => $plan,
+    'entitlements'       => $entitlements,
+    'upgrade'            => $upgrade,
 ]);
 
 $throttle->record('status_' . $outcome['status']);

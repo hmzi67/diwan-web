@@ -1,14 +1,14 @@
 # Diwan POS
 
-> Diwan POS is keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies. It is sold as a one-time licence (no subscription) and runs on Windows, macOS, Linux and Android from a single licence key.
+> Diwan POS is keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies. It is offered as three monthly plans and runs on Windows, macOS and Linux, with Android and iOS apps on plans that include the mobile application.
 
 Key facts:
 
-- Editions (prices in Pakistani Rupees): Starter Rs 8,000 (1 terminal), Standard Rs 12,000 (up to 3 terminals, 1 branch), Enterprise Rs 25,000 (unlimited terminals, multi-branch). All are one-time payments with free software updates.
-- Free trial: 30 days on one device, no payment required, one trial per account. Start it from the customer dashboard after creating an account at https://diwan.codehunts.co.uk/auth/signup.html.
-- Platforms: Windows 10+ (64-bit or 32-bit, .exe), macOS 11+ (separate Apple Silicon and Intel builds, .dmg), Linux x86_64 (.AppImage, .deb or .rpm) and Android 8.0+ (.apk). One licence key unlocks every platform.
+- Plans: BASIC, ADVANCE and ALL-IN-ONE, billed monthly in Pakistani Rupees. Current prices and what each plan includes are published at https://diwan.codehunts.co.uk/pricing.html (and as JSON at https://diwan.codehunts.co.uk/api/plans.php).
+- No online payment: create an account at https://diwan.codehunts.co.uk/auth/signup.html, request a plan from the dashboard, and the Diwan team approves it and issues the licence.
+- Platforms: Windows 10+ (64-bit or 32-bit, .exe), macOS 11+ (separate Apple Silicon and Intel builds, .dmg), Linux x86_64 (.AppImage, .deb or .rpm) and Android 8.0+ (.apk). The desktop builds come with every plan; the mobile apps with plans that include them.
 - Works offline: an internet connection is needed once, for activation. Billing, stock tracking and printing continue without a connection, and sync resumes automatically.
-- Delivery: the licence key and installer link are emailed within about a minute of confirmed payment and stay available in the customer dashboard. There is no physical product.
+- Delivery: once a request is approved, the licence key appears in the customer dashboard and is emailed. There is no physical product.
 - Refunds: full refund within 14 days of purchase if the licence key has not been activated.
 - Operator: Diwan is a sole proprietorship run by Hamza Waheed, I-10/2, Islamabad 44000, Pakistan. Support: hamzawaheed057@gmail.com, +92 314 3288112, Monday to Saturday 10:00am–7:00pm PKT.
 

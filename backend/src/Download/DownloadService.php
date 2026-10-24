@@ -55,6 +55,9 @@ final class DownloadService
      */
     private const TOKEN_TTL_MINUTES = 15;
 
+    /** The token being redeemed, once known — so a refusal can be recorded against it. */
+    private ?int $tokenId = null;
+
     /**
      * $variant picks one build when a platform ships several (macOS
      * 'apple-silicon' / 'intel', Windows 'x64' / 'x86', Linux 'appimage' /
@@ -97,8 +100,13 @@ final class DownloadService
         return true;
     }
 
-    public function issueToken(int $licenseId, string $platform, string $ip, string $variant = ''): array
+    /**
+     * $license is the licence row (findActive()); $channel says where the
+     * request came from, for download analytics only.
+     */
+    public function issueToken(array $license, string $platform, string $ip, string $variant = '', string $channel = 'other'): array
     {
+        $licenseId = (int) $license['id'];
         $release = $this->activeRelease($platform, $variant);
 
         $ttlMinutes = Env::int('DOWNLOAD_LINK_TTL_MINUTES', self::TOKEN_TTL_MINUTES);
@@ -122,6 +130,7 @@ final class DownloadService
             'ttl'     => $ttlMinutes,
         ]);
         $expiresAt = new DateTimeImmutable('+' . $ttlMinutes . ' minutes');
+        DownloadEvents::requested((int) Database::pdo()->lastInsertId(), $license, $release, $channel);
 
         return [
             'token'      => $token,
@@ -149,7 +158,7 @@ final class DownloadService
         if ($target['github_url'] !== null) {
             $this->redirect($target['github_url']);
         }
-        $this->send((string) $target['path'], $target['filename']);
+        $this->send((string) $target['path'], $target['filename'], $target['token_id']);
     }
 
     /**
@@ -157,7 +166,7 @@ final class DownloadService
      * DownloadDenied for every refusal; nothing is burned or counted unless
      * the installer can actually be served.
      *
-     * @return array{github_url:?string, path:?string, filename:string}
+     * @return array{github_url:?string, path:?string, filename:string, token_id:int}
      */
     public function redeem(string $token, string $ip): array
     {
@@ -182,6 +191,7 @@ final class DownloadService
         if (!$row) {
             $this->deny('Invalid download link.', 404, ['reason' => 'token_not_found', 'ip' => $ip]);
         }
+        $this->tokenId = (int) $row['id'];
         if ($row['used_at'] !== null) {
             $this->deny('This download link has already been used. Request a new one.', 410, ['reason' => 'token_used']);
         }
@@ -223,6 +233,7 @@ final class DownloadService
         $pdo->prepare('UPDATE licenses SET downloads_used = downloads_used + 1 WHERE id = :id')
             ->execute(['id' => $row['license_id']]);
 
+        DownloadEvents::mark((int) $row['id'], 'served');
         Logger::info('Download served', [
             'license_id' => $row['license_id'],
             'file'       => $row['filename'],
@@ -231,7 +242,7 @@ final class DownloadService
             'ip'         => $ip,
         ]);
 
-        return ['github_url' => $githubUrl, 'path' => $path, 'filename' => (string) $row['filename']];
+        return ['github_url' => $githubUrl, 'path' => $path, 'filename' => (string) $row['filename'], 'token_id' => (int) $row['id']];
     }
 
     /** @param array<string,mixed> $row */
@@ -329,8 +340,10 @@ final class DownloadService
         return $full;
     }
 
-    private function send(string $path, string $filename): never
+    private function send(string $path, string $filename, int $tokenId): never
     {
+        // Keep running after a disconnect so the outcome can be recorded.
+        ignore_user_abort(true);
         // Discard any buffered output so the binary is not corrupted by stray bytes.
         while (ob_get_level() > 0) {
             ob_end_clean();
@@ -350,16 +363,23 @@ final class DownloadService
             throw new RuntimeException('Unable to open installer for reading');
         }
         set_time_limit(0);
-        while (!feof($handle)) {
+        while (!feof($handle) && !connection_aborted()) {
             echo fread($handle, 8192);
             flush();
         }
+        $complete = feof($handle) && !connection_aborted();
         fclose($handle);
+        DownloadEvents::mark($tokenId, $complete ? 'completed' : 'failed', $complete ? null : 'interrupted');
         exit;
     }
 
     private function deny(string $message, int $status, array $context = []): never
     {
+        // A refused redemption is a failed attempt — unless the token had
+        // already been used, which is a repeat click, not a new attempt.
+        if ($this->tokenId !== null && ($context['reason'] ?? '') !== 'token_used') {
+            DownloadEvents::mark($this->tokenId, 'failed', (string) ($context['reason'] ?? 'denied'));
+        }
         throw new DownloadDenied($message, $status, $context);
     }
 

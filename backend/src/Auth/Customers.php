@@ -19,7 +19,7 @@ final class Customers
     public static function findByEmail(string $email): ?array
     {
         $stmt = Database::pdo()->prepare(
-            'SELECT id, email, password_hash, session_epoch, email_verified_at, apple_sub
+            'SELECT id, email, status, password_hash, session_epoch, email_verified_at, apple_sub
                FROM customers WHERE email = :email LIMIT 1'
         );
         $stmt->execute(['email' => self::normalizeEmail($email)]);
@@ -31,6 +31,18 @@ final class Customers
         $stmt = Database::pdo()->prepare('SELECT id, email, name FROM customers WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $customerId]);
         return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Records that the customer was active, at most every five minutes so a
+     * busy dashboard does not turn every request into a write.
+     */
+    public static function touch(int $customerId): void
+    {
+        Database::pdo()->prepare(
+            'UPDATE customers SET last_active_at = NOW()
+              WHERE id = :id AND (last_active_at IS NULL OR last_active_at < NOW() - INTERVAL 5 MINUTE)'
+        )->execute(['id' => $customerId]);
     }
 
     public static function create(PDO $pdo, string $email, string $passwordHash): int

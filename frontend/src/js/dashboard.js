@@ -1,8 +1,8 @@
 // Customer dashboard: fetch everything from dashboard-data.php, render it,
 // and gate the whole page behind a valid session — no session, no dashboard.
 //
-// The page is a set of views (Overview, Licences, Get started, Products,
-// Pricing, Help) switched by the URL hash, so every sidebar/tab link stays
+// The page is a set of views (Overview, Plan & access, Licences, Get started,
+// Products, Pricing, Help) switched by the URL hash, so every sidebar/tab link stays
 // inside the dashboard and the browser back button still works.
 const platforms = { windows: 'Windows', macos: 'macOS', linux: 'Linux', android: 'Android' };
 const requestedPlatform = new URLSearchParams(window.location.search).get('platform');
@@ -37,6 +37,7 @@ const DAY_MS = 86400000;
 
 const VIEWS = {
   overview: 'Overview',
+  plan: 'Plan & access',
   records: 'Store records',
   licences: 'Licences',
   setup: 'Get started',
@@ -104,12 +105,10 @@ function supportMailto(subject, order) {
   return `mailto:hamzawaheed057@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-// Which paid edition a licence is, from its product name (dashboard-data.php
-// does not return the SKU). Trials and App Store purchases map to none.
-function editionOf(order) {
-  if (!order || order.gateway === 'trial') return null;
-  const name = (order.product_name || '').toLowerCase();
-  return ['enterprise', 'standard', 'starter'].find((e) => name.includes(e)) || null;
+// What a licence card is called: the plan for an approved plan licence, the
+// product otherwise (licences bought or trialled before plans existed).
+function productLabel(order) {
+  return order.plan_name ? `Diwan POS — ${order.plan_name} plan` : order.product_name;
 }
 
 let toastTimer;
@@ -225,7 +224,7 @@ function renderStats(licensed, primary) {
   }));
 
   if (!primary) {
-    cards.push(stat({ iconName: 'clock', label: 'Time left', value: '—', sub: 'No licence yet', href: '#pricing' }));
+    cards.push(stat({ iconName: 'clock', label: 'Time left', value: '—', sub: 'No licence yet', href: '#plan' }));
   } else if (primary.expires_at === null) {
     cards.push(stat({ iconName: 'clock', label: 'Time left', value: 'Lifetime', sub: 'Never expires', tone: 'ok', href: '#licences' }));
   } else {
@@ -238,7 +237,7 @@ function renderStats(licensed, primary) {
       sub: `${left ? 'Ends' : 'Ended'} ${unixDate(primary.expires_at)}`,
       tone: left === 0 ? 'bad' : left <= 7 ? 'warn' : 'ok',
       visual: ring(left / total),
-      href: primary.gateway === 'trial' ? '#pricing' : '#licences',
+      href: primary.gateway === 'trial' || primary.plan_name ? '#plan' : '#licences',
     }));
   }
 
@@ -295,14 +294,16 @@ function renderProgress(primary) {
 
 // --- Shared licence pieces --------------------------------------------------
 function badgeFor(order) {
+  if (order.license_status === 'suspended') return '<span class="badge badge--failed">Suspended</span>';
   if (order.gateway === 'trial') {
     if (order.license_status === 'expired') return '<span class="badge badge--failed">Trial ended</span>';
     return '<span class="badge badge--trial">Free trial</span>';
   }
   if (order.license_status === 'expired') return '<span class="badge badge--failed">Expired</span>';
   if (order.license_status === 'revoked') return '<span class="badge badge--failed">Revoked</span>';
-  const s = order.order_status;
-  return `<span class="badge badge--${s}">${s.charAt(0).toUpperCase()}${s.slice(1)}</span>`;
+  const s = order.gateway === 'admin' ? 'paid' : order.order_status;
+  const label = order.gateway === 'admin' ? 'Active' : `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
+  return `<span class="badge badge--${s}">${label}</span>`;
 }
 
 function noteFor(order) {
@@ -310,6 +311,9 @@ function noteFor(order) {
     if (order.license_status === 'expired') return 'Your free trial has ended. This account has already used its trial.';
     if (order.license_status === 'revoked') return 'This trial licence has been revoked.';
     return '30-day free trial · One device · No payment required';
+  }
+  if (order.gateway === 'admin') {
+    return `${order.plan_name || 'Plan'} licence · approved by the Diwan team · up to ${plural(Number(order.max_devices || 1), 'device')}`;
   }
   if (order.gateway === 'apple') {
     return order.license_status === 'revoked'
@@ -430,7 +434,7 @@ function renderOrder(order) {
         <div class="order-card__title">
           <span class="order-card__icon">${icon('key', 20)}</span>
           <div>
-            <h3 class="order-card__product">${escapeHtml(order.product_name)}</h3>
+            <h3 class="order-card__product">${escapeHtml(productLabel(order))}</h3>
             <div class="order-card__meta">${date(order.created_at)} · ${money(order.amount_paisa, order.currency)}</div>
           </div>
         </div>
@@ -447,10 +451,10 @@ function renderCurrent(primary) {
     el.innerHTML = `
       <div class="dash-empty dash-empty--compact">
         <h3>No licence yet</h3>
-        <p>Start a free 30-day trial, or buy a lifetime licence.</p>
+        <p>Request a plan — once our team approves it, your licence key appears here.</p>
         <div class="dash-empty__cta">
-          <button class="btn btn--primary btn--sm" type="button" data-start-trial>Start free trial</button>
-          <a class="btn btn--ghost btn--sm" href="#pricing">See pricing</a>
+          <a class="btn btn--primary btn--sm" href="#plan">Request a plan</a>
+          <a class="btn btn--ghost btn--sm" href="#pricing">Compare plans</a>
         </div>
       </div>`;
     return;
@@ -461,7 +465,7 @@ function renderCurrent(primary) {
         <div class="order-card__title">
           <span class="order-card__icon">${icon('key', 20)}</span>
           <div>
-            <h3 class="order-card__product">${escapeHtml(primary.product_name)}</h3>
+            <h3 class="order-card__product">${escapeHtml(productLabel(primary))}</h3>
             <div class="order-card__meta">${date(primary.created_at)} · ${money(primary.amount_paisa, primary.currency)}</div>
           </div>
         </div>
@@ -493,9 +497,12 @@ function renderQuick(primary) {
   if (primary) {
     tiles.push(tile({ iconName: 'swap', title: 'Change device', sub: 'Move your licence to a new PC', href: supportMailto('Move my Diwan licence to a new device', primary) }));
   }
-  if (!primary || primary.gateway === 'trial') {
-    tiles.push(tile({ iconName: 'star', title: 'Upgrade to lifetime', sub: 'One payment, no subscription', href: '#pricing' }));
-  }
+  tiles.push(tile({
+    iconName: 'star',
+    title: primary && primary.plan_name ? 'Change plan' : 'Request a plan',
+    sub: 'No online payment — we approve it',
+    href: '#plan',
+  }));
   tiles.push(tile({ iconName: 'help', title: 'Get help', sub: 'Reply within 1 business day', href: '#help' }));
 
   document.getElementById('quick').innerHTML = tiles.join('');
@@ -508,7 +515,7 @@ function renderSetup(primary) {
   const activateEl = document.getElementById('activate-status');
 
   if (!primary) {
-    keyEl.innerHTML = `<div class="dash-empty dash-empty--compact"><p>You don&rsquo;t have a licence yet.</p><div class="dash-empty__cta"><button class="btn btn--primary btn--sm" type="button" data-start-trial>Start free trial</button><a class="btn btn--ghost btn--sm" href="#pricing">Buy a licence</a></div></div>`;
+    keyEl.innerHTML = `<div class="dash-empty dash-empty--compact"><p>You don&rsquo;t have a licence yet.</p><div class="dash-empty__cta"><a class="btn btn--primary btn--sm" href="#plan">Request a plan</a></div></div>`;
     dlEl.innerHTML = '<p class="guide__note">Downloads unlock once you have a licence key.</p>';
     activateEl.textContent = '';
     return;
@@ -517,7 +524,7 @@ function renderSetup(primary) {
   keyEl.innerHTML = `${keybox(primary)}${primary.can_resend ? `<div class="license-actions">${resendButton(primary)}</div>` : ''}`;
   dlEl.innerHTML = primary.license_status === 'active'
     ? downloadPanel(primary, { title: false })
-    : `<p class="guide__note">This licence is ${escapeHtml(primary.license_status)}, so downloads are unavailable. <a href="#pricing">See plans</a> or <a href="#help">contact support</a>.</p>`;
+    : `<p class="guide__note">This licence is ${escapeHtml(primary.license_status)}, so downloads are unavailable. <a href="#plan">See your plan</a> or <a href="#help">contact support</a>.</p>`;
 
   if (primary.activation_status === 'activated') {
     activateEl.innerHTML = `${icon('check', 16)} Activated on <b>${escapeHtml(primary.activated_machine_hint || 'your device')}</b>${primary.activated_at ? ` since ${date(primary.activated_at)}` : ''}.`;
@@ -578,20 +585,190 @@ async function detectVariants() {
   }
 }
 
-// --- Products / Pricing: mark the plan this account already owns ------------
-function renderPlans(licensed) {
-  const owned = new Set(licensed.filter((o) => o.license_status === 'active').map(editionOf).filter(Boolean));
-  document.querySelectorAll('[data-edition]').forEach((card) => {
-    const isOwned = owned.has(card.dataset.edition);
-    card.classList.toggle('is-owned', isOwned);
-    const cta = card.querySelector('[data-plan-cta]');
-    if (!cta) return;
-    if (isOwned) {
-      cta.textContent = 'Your current plan';
-      cta.setAttribute('aria-disabled', 'true');
-      cta.removeAttribute('href');
-    }
+// --- Plan & access ------------------------------------------------------------
+// Everything here comes from dashboard-data.php's `plan`, `notifications`
+// and `downloads`. Requests go to license-requests.php; nothing on this page
+// can issue or change a licence — only an administrator's approval does.
+const REQUEST_BADGE = {
+  pending: ['pending', 'Waiting for approval'],
+  approved: ['paid', 'Approved'],
+  rejected: ['failed', 'Not approved'],
+  cancelled: ['refunded', 'Cancelled'],
+};
+const PLAN_BADGE = {
+  active: ['paid', 'Active'],
+  suspended: ['failed', 'Suspended'],
+  expired: ['failed', 'Expired'],
+};
+const AVAILABILITY = { app: 'In the Diwan app', service: 'From the Diwan team', planned: 'Coming soon' };
+const DOWNLOAD_STATUS = { requested: 'Link issued', served: 'Downloaded', completed: 'Downloaded', failed: 'Not completed' };
+let requestedPlan = new URLSearchParams(window.location.search).get('request');
+
+function badge([tone, label]) {
+  return `<span class="badge badge--${tone}">${label}</span>`;
+}
+
+function renderPlanCurrent(current) {
+  const el = document.getElementById('plan-current');
+  if (!current) {
+    el.innerHTML = `
+      <div class="dash-empty dash-empty--compact">
+        <h3>No plan yet</h3>
+        <p>Choose a plan below and send a request. Once it is approved, your licence key appears under Licences.</p>
+      </div>`;
+    return;
+  }
+  const groups = Object.entries(AVAILABILITY).map(([key, title]) => {
+    const items = current.features.filter((f) => f.availability === key);
+    return items.length ? `
+      <div class="feature-group feature-group--${key}">
+        <h4>${title}</h4>
+        <ul class="plan__features">${items.map((f) => `<li title="${escapeHtml(f.description || '')}">${escapeHtml(f.name)}</li>`).join('')}</ul>
+      </div>` : '';
+  }).join('');
+  const expiry = current.expires_at === null
+    ? 'No expiry date'
+    : `${current.status === 'expired' ? 'Expired' : 'Renews or expires'} ${unixDate(current.expires_at)}`;
+  el.innerHTML = `
+    <article class="plan-summary plan--${escapeHtml(current.theme)}">
+      <header class="plan-summary__head">
+        <div>
+          <p class="plan__tag">${escapeHtml(current.plan_name)}</p>
+          <p class="plan-summary__meta">${expiry} · ${current.devices_used} of ${plural(current.max_devices, 'device')} in use${current.activated ? '' : ' · not activated yet'}</p>
+        </div>
+        ${badge(PLAN_BADGE[current.status] || ['failed', escapeHtml(current.status)])}
+      </header>
+      ${current.status === 'suspended' ? '<p class="order-note">This licence is suspended, so the app has stopped billing. Please <a href="#help">contact support</a>.</p>' : ''}
+      ${current.status === 'expired' ? '<p class="order-note">This plan has expired. Request a renewal below to switch billing back on.</p>' : ''}
+      <div class="feature-groups">${groups}</div>
+    </article>`;
+}
+
+function renderPlanRequest(plan) {
+  const el = document.getElementById('plan-request');
+  const pending = plan.requests.find((r) => r.status === 'pending');
+  if (pending) {
+    el.innerHTML = `
+      <article class="order-card">
+        <header class="order-card__head">
+          <div class="order-card__title">
+            <span class="order-card__icon">${icon('clock', 20)}</span>
+            <div>
+              <h3 class="order-card__product">${escapeHtml(pending.plan_name)} plan requested</h3>
+              <div class="order-card__meta">Sent ${date(pending.created_at)}</div>
+            </div>
+          </div>
+          ${badge(REQUEST_BADGE.pending)}
+        </header>
+        <p class="order-note">Our team is reviewing your request — we'll notify you here and by email. Nothing is charged online.</p>
+        <div class="license-actions">
+          <button class="btn btn--ghost btn--sm" type="button" data-cancel-request="${pending.id}">Cancel request</button>
+        </div>
+      </article>`;
+    return;
+  }
+  const currentCode = plan.current && plan.current.status !== 'expired' ? plan.current.plan_code : null;
+  const choice = plan.plans.some((p) => p.code === requestedPlan) ? requestedPlan
+    : (plan.current ? plan.current.plan_code : plan.plans[0]?.code);
+  el.innerHTML = `
+    <form class="panel request-form" data-plan-request novalidate>
+      <fieldset class="plan-pick">
+        <legend class="sr-only">Plan</legend>
+        ${plan.plans.map((p) => `
+          <label class="plan-pick__opt plan--${escapeHtml(p.theme)}">
+            <input type="radio" name="plan" value="${escapeHtml(p.code)}" ${p.code === choice ? 'checked' : ''}>
+            <span>
+              <strong>${escapeHtml(p.name)}${p.code === currentCode ? ' <small>(current — renew)</small>' : ''}</strong>
+              <small>${DiwanPlans.formatPrice(p.price_minor, p.currency)} per ${escapeHtml(p.billing_period)}</small>
+            </span>
+          </label>`).join('')}
+      </fieldset>
+      <div class="request-form__row">
+        <label class="field">Business name
+          <input class="input" name="business_name" maxlength="160" autocomplete="organization">
+        </label>
+        <label class="field">Phone (optional)
+          <input class="input" name="contact_phone" maxlength="20" inputmode="tel" autocomplete="tel">
+        </label>
+      </div>
+      <label class="field">Anything we should know? (optional)
+        <textarea class="input" name="message" rows="3" maxlength="1000"></textarea>
+      </label>
+      <div class="request-form__foot">
+        <p class="panel__note">No payment is taken online. We'll review your request and contact you.</p>
+        <button class="btn btn--primary" type="submit">Send request</button>
+      </div>
+    </form>`;
+}
+
+function renderPlanRequests(requests) {
+  const el = document.getElementById('plan-requests');
+  if (!requests.length) {
+    el.innerHTML = '<p class="order-note">No requests yet.</p>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Plan</th><th>Sent</th><th>Status</th><th>Note from Diwan</th></tr></thead>
+        <tbody>${requests.map((r) => `
+          <tr>
+            <td>${escapeHtml(r.plan_name)}</td>
+            <td>${date(r.created_at)}</td>
+            <td>${badge(REQUEST_BADGE[r.status] || ['refunded', escapeHtml(r.status)])}</td>
+            <td>${r.decision_note ? escapeHtml(r.decision_note) : '<span class="text-faint">—</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderNotices(notifications) {
+  const list = document.getElementById('notices');
+  list.innerHTML = notifications.items.length
+    ? notifications.items.map((n) => `
+        <li class="notice${n.is_read ? '' : ' is-unread'}">
+          <strong>${escapeHtml(n.title)}</strong>
+          <p>${escapeHtml(n.body).replace(/\n/g, '<br>')}</p>
+          <small>${date(n.created_at)}</small>
+        </li>`).join('')
+    : '<li class="notice"><p>Nothing yet. Updates about your plan appear here.</p></li>';
+  document.querySelector('[data-mark-read]').hidden = !notifications.unread;
+  document.querySelectorAll('[data-unread]').forEach((el) => {
+    el.textContent = String(notifications.unread);
+    el.hidden = !notifications.unread;
   });
+}
+
+function renderMyDownloads(downloads) {
+  document.getElementById('my-downloads').innerHTML = downloads.length
+    ? downloads.map((d) => `
+        <li class="notice">
+          <strong>${escapeHtml(platforms[d.platform] || d.platform || '')}${d.variant ? ` · ${escapeHtml(d.variant)}` : ''}${d.version ? ` · ${escapeHtml(d.version)}` : ''}</strong>
+          <small>${DOWNLOAD_STATUS[d.status] || escapeHtml(d.status)} · ${date(d.created_at)}</small>
+        </li>`).join('')
+    : '<li class="notice"><p>No downloads yet.</p></li>';
+}
+
+// Products and Pricing show the same live cards; the button opens the request
+// form with that plan picked.
+function renderPlanCards(plan) {
+  const current = plan.current && plan.current.status === 'active' ? plan.current.plan_code : null;
+  document.querySelectorAll('[data-dash-plans]').forEach((container) => {
+    DiwanPlans.render(container, plan.plans, {
+      current,
+      cta: (p) => ({ href: '#plan', label: plan.current ? `Switch to ${p.name}` : p.cta_label, attrs: `data-request-plan="${escapeHtml(p.code)}"` }),
+    });
+  });
+}
+
+function renderPlanView(data) {
+  renderPlanCurrent(data.plan.current);
+  renderPlanRequest(data.plan);
+  renderPlanRequests(data.plan.requests);
+  renderNotices(data.notifications);
+  renderMyDownloads(data.downloads);
+  renderPlanCards(data.plan);
 }
 
 // --- Help: prefill the contact form -----------------------------------------
@@ -785,15 +962,16 @@ async function load() {
     renderQuick(primary);
     renderSetup(primary);
     renderStoreRecords(data.pos, data.customer_id);
-    renderPlans(licensed);
+    renderPlanView(data);
     prefillContact(data, primary);
     selectHowto(platform);
     detectVariants();
 
-    document.querySelectorAll('[data-upgrade]').forEach((el) => {
-      el.hidden = !(primary && primary.gateway === 'trial')
-        || licensed.some((o) => o.gateway !== 'trial' && o.license_status === 'active');
-    });
+    // "Choose your plan" until there is an active plan licence or a request
+    // already waiting.
+    const hasPlan = data.plan.current && data.plan.current.status === 'active';
+    const waiting = data.plan.requests.some((r) => r.status === 'pending');
+    document.querySelectorAll('[data-upgrade]').forEach((el) => { el.hidden = hasPlan || waiting; });
 
     document.querySelectorAll('[data-licence-count]').forEach((el) => {
       el.textContent = String(data.orders.length);
@@ -855,23 +1033,37 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
-  const trialBtn = e.target.closest('[data-start-trial]');
-  if (trialBtn) {
-    if (trialBtn.disabled) return;
-    trialBtn.disabled = true;
+  const requestCard = e.target.closest('[data-request-plan]');
+  if (requestCard) {
+    // The link's href (#plan) switches the view; pick the plan in the form.
+    requestedPlan = requestCard.dataset.requestPlan;
+    const radio = document.querySelector(`[data-plan-request] input[name="plan"][value="${CSS.escape(requestedPlan)}"]`);
+    if (radio) radio.checked = true;
+    return;
+  }
+
+  const cancelBtn = e.target.closest('[data-cancel-request]');
+  if (cancelBtn) {
+    if (cancelBtn.disabled) return;
+    cancelBtn.disabled = true;
     try {
-      const { status } = await DiwanApi.postJson('/start-trial.php');
-      if (status === 'issued' || status === 'existing_trial' || status === 'paid_license') {
-        window.location.reload();   // the new licence renders on the next load
-        return;
-      }
-      toast(status === 'disabled'
-        ? 'Free trials are paused right now — see Pricing for a lifetime licence.'
-        : 'Could not start your trial. Please contact support.', 'error');
+      await DiwanApi.postJson('/license-requests.php', { action: 'cancel', id: Number(cancelBtn.dataset.cancelRequest) });
+      toast('Request cancelled', 'ok');
+      await load();
     } catch (err) {
-      toast(err.message || 'Could not start your trial. Please try again.', 'error');
-    } finally {
-      trialBtn.disabled = false;
+      toast(err.message || 'Could not cancel the request.', 'error');
+      cancelBtn.disabled = false;
+    }
+    return;
+  }
+
+  const markRead = e.target.closest('[data-mark-read]');
+  if (markRead) {
+    try {
+      const notifications = await DiwanApi.postJson('/notifications.php', {});
+      renderNotices({ items: notifications.notifications, unread: notifications.unread });
+    } catch (err) {
+      toast(err.message || 'Could not update notifications.', 'error');
     }
     return;
   }
@@ -902,6 +1094,25 @@ document.addEventListener('change', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
+  const requestForm = e.target.closest('[data-plan-request]');
+  if (requestForm) {
+    e.preventDefault();
+    const button = requestForm.querySelector('button[type="submit"]');
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+      const body = Object.fromEntries(new FormData(requestForm));
+      const { request } = await DiwanApi.postJson('/license-requests.php', body);
+      toast(`Request for ${request.plan_name} sent — we'll be in touch`, 'ok');
+      requestedPlan = null;
+      await load();
+    } catch (err) {
+      toast(err.message || 'Could not send your request. Please try again.', 'error');
+      button.disabled = false;
+    }
+    return;
+  }
+
   const form = e.target.closest('[data-download]');
   if (!form) return;
   e.preventDefault();

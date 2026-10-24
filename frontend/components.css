@@ -210,6 +210,51 @@
   font-size: .64rem; font-weight: 700;
 }
 
+/* Plan colours (migration 016): each card takes its tint from the plan's
+   `theme` in the database — blue, green or purple — through one variable, so
+   the price, ticks, top edge and button all follow it in both themes. */
+.plan--blue   { --plan-tint: #4f8dff; --plan-tint-ink: #04112a; }
+.plan--green  { --plan-tint: var(--color-accent); --plan-tint-ink: var(--color-accent-ink); }
+.plan--purple { --plan-tint: #a87bff; --plan-tint-ink: #170733; }
+.plan--slate  { --plan-tint: var(--color-muted); --plan-tint-ink: var(--color-canvas); }
+:root[data-theme="light"] .plan--blue   { --plan-tint: #1f5fd6; --plan-tint-ink: #ffffff; }
+:root[data-theme="light"] .plan--purple { --plan-tint: #6d3fd4; --plan-tint-ink: #ffffff; }
+.plan[class*="plan--"]:not(.plan--popular) {
+  border-color: color-mix(in srgb, var(--plan-tint) 32%, var(--color-line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--plan-tint) 9%, transparent), transparent 42%),
+    var(--color-surface);
+}
+.plan[class*="plan--"]::before {
+  content: "";
+  position: absolute; inset: 0 1.5rem auto; height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--plan-tint);
+}
+[class*="plan--"] .plan__tag {
+  align-self: flex-start;
+  margin: 0 0 1rem; padding: .3rem .7rem;
+  border-radius: var(--radius-pill);
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--plan-tint);
+  background: color-mix(in srgb, var(--plan-tint) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--plan-tint) 35%, transparent);
+}
+.plan[class*="plan--"] .plan__amount { color: var(--color-ink); }
+.plan[class*="plan--"] .plan__currency { font-size: 1rem; font-weight: 600; color: var(--plan-tint); margin-right: .15rem; }
+.plan[class*="plan--"] .plan__features li::before {
+  background: color-mix(in srgb, var(--plan-tint) 12%, transparent);
+  border-color: color-mix(in srgb, var(--plan-tint) 55%, transparent);
+  color: var(--plan-tint);
+}
+.plan[class*="plan--"] .plan__cta {
+  background: var(--plan-tint); color: var(--plan-tint-ink); border-color: transparent;
+}
+.plan[class*="plan--"] .plan__cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.plan__note { margin: .75rem 0 0; text-align: center; font-size: .78rem; color: var(--color-faint); }
+.plan.is-current { box-shadow: 0 0 0 2px var(--plan-tint, var(--color-accent-dim)); }
+.plans-status { grid-column: 1 / -1; text-align: center; color: var(--color-muted); padding: 2rem 0; }
+
 .pricing__more { text-align: center; margin-top: 2.75rem; }
 .pricing__more a { color: var(--color-muted); font-size: .9rem; }
 .pricing__more a:hover { color: var(--color-accent); }
@@ -942,3 +987,216 @@ a.stat:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, var(--c
 .badge--platform { color: var(--color-warn); border-color: var(--color-warn-line); }
 .badge--split { color: #c3a6ff; border-color: rgba(195, 166, 255, 0.35); }
 .badge--credit { color: var(--color-warn); border-color: var(--color-warn-line); }
+
+/* ==========================================================================
+   Plan & access (dashboard) — current plan summary, the request form and the
+   notification list. The plan tint comes from .plan--<theme> above.
+   ========================================================================== */
+.plan-summary {
+  position: relative;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--plan-tint, var(--color-accent)) 35%, var(--color-line));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--plan-tint, var(--color-accent)) 10%, transparent), transparent 55%),
+    var(--color-surface);
+}
+.plan-summary .plan__tag { margin-bottom: .5rem; }
+.plan-summary__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.plan-summary__meta { margin: 0; color: var(--color-muted); font-size: .88rem; }
+.feature-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem 2rem; margin-top: 1.25rem; }
+.feature-group h4 { margin: 0 0 .75rem; font-size: .76rem; letter-spacing: .1em; text-transform: uppercase; color: var(--color-faint); }
+.plan-summary .plan__features li::before {
+  background: color-mix(in srgb, var(--plan-tint, var(--color-accent)) 12%, transparent);
+  border-color: color-mix(in srgb, var(--plan-tint, var(--color-accent)) 55%, transparent);
+  color: var(--plan-tint, var(--color-accent));
+}
+
+.request-form { display: flex; flex-direction: column; gap: 1rem; }
+.request-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.request-form__foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.request-form__foot .panel__note { margin: 0; }
+.request-form textarea.input { resize: vertical; min-height: 4.5rem; font: inherit; }
+.plan-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; border: 0; margin: 0; padding: 0; }
+.plan-pick__opt {
+  position: relative; display: flex; gap: .7rem; align-items: flex-start;
+  padding: .9rem 1rem; border-radius: var(--radius-md); cursor: pointer;
+  border: 1px solid var(--color-line); background: var(--color-elevated);
+  transition: border-color .15s, box-shadow .15s;
+}
+.plan-pick__opt input { margin-top: .2rem; accent-color: var(--plan-tint); }
+.plan-pick__opt strong { display: block; font-size: .95rem; color: var(--plan-tint); letter-spacing: .02em; }
+.plan-pick__opt strong small { color: var(--color-faint); font-weight: 500; letter-spacing: 0; }
+.plan-pick__opt span > small { color: var(--color-muted); font-size: .8rem; }
+.plan-pick__opt:has(input:checked) {
+  border-color: var(--plan-tint);
+  box-shadow: 0 0 0 1px var(--plan-tint), 0 10px 30px -18px var(--plan-tint);
+}
+.plan-pick__opt:has(input:focus-visible) { outline: 2px solid var(--plan-tint); outline-offset: 2px; }
+
+.notices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.notice { padding: .8rem 0; border-top: 1px solid var(--color-line); }
+.notice:first-child { border-top: 0; padding-top: 0; }
+.notice strong { display: block; font-size: .88rem; }
+.notice p { margin: .3rem 0; font-size: .84rem; color: var(--color-muted); line-height: 1.55; }
+.notice small { color: var(--color-faint); font-size: .76rem; }
+.notice.is-unread strong::before {
+  content: ""; display: inline-block; width: 7px; height: 7px; margin-right: .45rem;
+  border-radius: 50%; background: var(--color-accent); vertical-align: middle;
+}
+button.dash-link { background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
+
+@media (max-width: 760px) {
+  .plan-pick, .request-form__row { grid-template-columns: 1fr; }
+  .plan-summary__head { flex-direction: column; }
+}
+
+/* ==========================================================================
+   Admin panel (/admin/). Builds on the dashboard shell above (app-shell,
+   sidebar, panel, stat, data-table, badge); these are only the pieces the
+   admin views add: filters, pagination, charts, dialogs and editors.
+   ========================================================================== */
+:root { --chart-mark: #00a874; }                       /* validated: L 0.48–0.67 on #121a17 */
+:root[data-theme="light"] { --chart-mark: #00875f; }   /* validated on #ffffff */
+
+.muted { color: var(--color-faint); }
+.admin-tag {
+  margin-left: .4rem; padding: .15rem .5rem; border-radius: var(--radius-pill);
+  font-size: .66rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color-accent); background: var(--color-glow-soft); border: 1px solid var(--color-accent-dim);
+}
+.admin-main { outline: none; }
+.admin-main > .panel, .admin-main > .admin-grid, .admin-main > .kpis { margin-top: 1.25rem; }
+.admin-main .view-head { margin-bottom: 1.25rem; }
+.head-actions { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
+.back { display: inline-block; margin-bottom: 1rem; }
+
+.btn--danger { background: transparent; color: var(--color-danger); border: 1px solid var(--color-danger-line); }
+.btn--danger:hover { background: var(--color-danger-soft); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Sign-in */
+.admin-login { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+.admin-login__card {
+  width: min(400px, 100%); display: flex; flex-direction: column; gap: 1rem;
+  padding: 2rem; border-radius: var(--radius-lg); background: var(--color-surface); border: 1px solid var(--color-line);
+  box-shadow: 0 30px 60px -30px var(--shadow-strong);
+}
+.admin-login__card h1 { margin: .5rem 0 0; font-size: 1.5rem; letter-spacing: -.02em; }
+.admin-login__card > p { margin: 0; color: var(--color-muted); font-size: .9rem; }
+.admin-login__status { min-height: 1.3em; color: var(--color-danger-text); font-size: .88rem; margin: 0; }
+
+/* KPI tiles and layout */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.kpis--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.kpi .stat__value { font-size: 1.7rem; margin: .4rem 0 .2rem; }
+.admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+.admin-grid__wide { grid-column: 1 / -1; }
+.panel__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+.panel__head h2 { margin: 0; }
+.panel .dash-link { display: inline-block; margin-top: .75rem; }
+.notice-bar { margin: 0 0 1rem; padding: .8rem 1rem; border-radius: var(--radius-md); font-size: .88rem; color: var(--color-warn); background: var(--color-warn-soft); border: 1px solid var(--color-warn-line); }
+
+/* Filters: one row above the content */
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; margin-bottom: 1rem; }
+.filter { display: flex; flex-direction: column; gap: .3rem; min-width: 9rem; font-size: .74rem; font-weight: 600; color: var(--color-muted); }
+.filter--grow { flex: 1 1 14rem; }
+.filter .input, .filters .input { padding: .55rem .75rem; font-size: .88rem; }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: .6rem; margin-top: 1rem; font-size: .84rem; }
+
+/* Tables */
+.admin-table td { vertical-align: top; }
+.admin-table td.wrap { white-space: normal; min-width: 14rem; max-width: 28rem; }
+.admin-table td.actions { text-align: right; }
+.admin-table td.actions .btn + .btn { margin-left: .35rem; }
+.admin-table tr[data-href] { cursor: pointer; }
+.admin-table tr.is-dim td { opacity: .55; }
+.cell-sub { display: block; margin-top: .2rem; font-size: .76rem; color: var(--color-faint); white-space: normal; }
+.admin-details { margin: 0 0 1rem; }
+.admin-details div { display: flex; flex-direction: column; gap: .2rem; }
+.admin-details span { font-size: .72rem; color: var(--color-faint); text-transform: uppercase; letter-spacing: .06em; }
+.admin-details strong { font-size: .9rem; font-weight: 500; overflow-wrap: anywhere; }
+.admin-details--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-details--2 div:nth-child(3n) { border-right: 1px solid var(--color-line); }
+.admin-details--2 div:nth-child(2n) { border-right: 0; }
+.key-tag { display: inline-block; margin: .1rem 0; padding: .15rem .5rem; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: .72rem; color: var(--color-muted); background: var(--color-surface-hi); border: 1px solid var(--color-line); }
+
+.history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .7rem; font-size: .86rem; }
+.history__details, .admin-table code.history__details { display: block; margin-top: .3rem; font-family: var(--font-mono); font-size: .74rem; color: var(--color-muted); white-space: pre-wrap; word-break: break-word; }
+
+/* Charts: one series, one validated accent. Grid and ticks stay recessive. */
+.chart { position: relative; }
+.chart__plot { position: relative; height: 200px; margin-left: 2.25rem; }
+.chart__grid { position: absolute; left: 0; right: 0; border-top: 1px solid var(--color-line); }
+.chart__grid span { position: absolute; right: calc(100% + .5rem); top: -.55rem; font-size: .72rem; color: var(--color-faint); font-variant-numeric: tabular-nums; }
+.chart__cols { position: absolute; inset: 0; display: flex; align-items: flex-end; }
+.chart__col { flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; border-radius: 4px 4px 0 0; }
+.chart__col.is-hot { background: var(--color-surface-hi); }
+.chart__bar { width: min(60%, 14px); min-height: 2px; border-radius: 4px 4px 0 0; background: var(--chart-mark); }
+.chart__axis { display: flex; justify-content: space-between; margin: .4rem 0 0 2.25rem; font-size: .72rem; color: var(--color-faint); }
+.chart__tip {
+  position: absolute; left: 0; top: 0; pointer-events: none; z-index: 2;
+  padding: .35rem .6rem; border-radius: var(--radius-sm); font-size: .8rem; white-space: nowrap;
+  color: var(--color-ink); background: var(--color-elevated); border: 1px solid var(--color-line-hi);
+  box-shadow: 0 10px 30px -12px var(--shadow);
+}
+.chart__table { margin-top: .5rem; font-size: .82rem; color: var(--color-muted); }
+.chart__table summary { cursor: pointer; }
+.barlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .65rem; }
+.barlist li { display: grid; grid-template-columns: minmax(6rem, 34%) 1fr auto; align-items: center; gap: .75rem; font-size: .86rem; }
+.barlist__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-muted); }
+.barlist__track { height: 10px; border-radius: 0 4px 4px 0; background: var(--color-surface-hi); overflow: hidden; }
+.barlist__bar { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--chart-mark); }
+.barlist__value { font-variant-numeric: tabular-nums; color: var(--color-ink); }
+
+/* Forms in panels and the dialog */
+.form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .9rem; }
+.form-grid__wide { grid-column: 1 / -1; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+.form-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.field.check { flex-direction: row; align-items: center; gap: .55rem; color: var(--color-ink); }
+.input--sm { padding: .4rem .6rem; font-size: .84rem; }
+.input--num { width: 5rem; }
+.plan-editor { margin-top: 1.25rem; border-color: color-mix(in srgb, var(--plan-tint, var(--color-line)) 35%, var(--color-line)); }
+.plan-editor h2 { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.plan-editor .plan__tag { display: inline-block; margin: 0; }
+.plan-editor h3 { margin: 1.5rem 0 .25rem; font-size: .95rem; }
+.feature-form .data-table td { padding: .5rem .7rem; }
+.unlocks { margin: 1.25rem 0 .5rem; font-size: .84rem; line-height: 1.9; }
+.feature-editor { margin-top: .75rem; border-top: 1px solid var(--color-line); padding-top: .75rem; }
+.feature-editor > summary { cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--color-accent); }
+.key-picker { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; padding: .75rem; border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.key-picker legend { padding: 0 .3rem; font-size: .8rem; color: var(--color-muted); }
+.key-pick { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .6rem; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: .76rem; background: var(--color-surface-hi); border: 1px solid var(--color-line); cursor: pointer; }
+.key-pick:has(input:checked) { border-color: var(--color-accent-dim); color: var(--color-accent); }
+
+.admin-dialog {
+  margin: auto; inset: 0; max-height: calc(100vh - 2rem); overflow-y: auto;
+  width: min(520px, calc(100vw - 2rem)); padding: 0; color: var(--color-ink);
+  background: var(--color-surface); border: 1px solid var(--color-line-hi); border-radius: var(--radius-lg);
+  box-shadow: 0 40px 80px -30px var(--shadow-strong);
+}
+.admin-dialog::backdrop { background: rgb(0 0 0 / .55); backdrop-filter: blur(3px); }
+.admin-dialog form { display: flex; flex-direction: column; gap: .9rem; padding: 1.5rem; }
+.admin-dialog h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.01em; }
+.admin-dialog p { margin: 0; color: var(--color-muted); font-size: .9rem; line-height: 1.6; }
+.admin-dialog #dialog-body { display: flex; flex-direction: column; gap: .9rem; }
+.admin-dialog .filter { min-width: 0; }
+.admin-dialog__error { color: var(--color-danger-text) !important; min-height: 1em; }
+.admin-dialog__actions { display: flex; justify-content: flex-end; gap: .5rem; }
+
+@media (max-width: 1180px) {
+  .kpis, .kpis--5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .admin-grid, .form-row { grid-template-columns: minmax(0, 1fr); }
+  .head-actions { justify-content: flex-start; }
+  .filter { flex: 1 1 100%; }
+}
+@media (max-width: 480px) {
+  .kpis, .kpis--5, .form-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.settings-form { display: flex; flex-direction: column; gap: .9rem; }
+.feature-group--planned .plan__features li { color: var(--color-muted); }
+.plan-summary .feature-group--planned .plan__features li::before { content: ""; background: transparent; border-style: dashed; }

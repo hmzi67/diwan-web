@@ -104,9 +104,16 @@ if ($customer['email_verified_at'] === null) {
     ], 403);
 }
 
+// Also after the password check, for the same reason as above.
+if ($customer['status'] === 'suspended') {
+    Logger::info('Sign-in blocked: account suspended', ['customer_id' => $customerId]);
+    Http::fail('This account has been suspended. Please contact support.', 403);
+}
+
 // Epoch comes from the row already read above, so starting the session costs
 // no extra query.
 Session::start($customerId, (int) $customer['session_epoch']);
+Customers::touch($customerId);
 
 Logger::info('Customer signed in', ['customer_id' => $customerId]);
 

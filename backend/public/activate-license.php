@@ -56,9 +56,12 @@ switch ($outcome['result']) {
     case 'device_mismatch':
         $throttle->record('already_bound');
         Logger::warning('Licence activation refused: bound to another device', ['ip' => $ip, 'prefix' => $prefix]);
+        $limit = (int) ($outcome['max_devices'] ?? 1);
         Http::fail(
-            'This licence key is already activated on another device. '
-            . 'Sign in to your account to move it to a new device, or contact support.',
+            ($limit > 1
+                ? "This licence key is already active on its maximum of {$limit} devices. "
+                : 'This licence key is already activated on another device. ')
+            . 'Contact support to release a device.',
             409
         );
         // no break

@@ -209,7 +209,10 @@ jobs:
           CFG_DB_USER: ${{ secrets.DB_USER }}
           CFG_DB_PASS: ${{ secrets.DB_PASS }}
           CFG_LICENSE_VALIDITY_DAYS: ${{ vars.LICENSE_VALIDITY_DAYS || 0 }}
-          CFG_TRIAL_SIGNUP_ENABLED: ${{ vars.TRIAL_SIGNUP_ENABLED || 'true' }}
+          # Off unless a repo variable says otherwise: licences are issued only
+          # when an administrator approves a plan request (migration 016).
+          CFG_TRIAL_SIGNUP_ENABLED: ${{ vars.TRIAL_SIGNUP_ENABLED || 'false' }}
+          CFG_PAYMENTS_ENABLED: ${{ vars.PAYMENTS_ENABLED || 'false' }}
           CFG_LICENSE_SIGNING_KEY_ID: ${{ vars.LICENSE_SIGNING_KEY_ID || 'default' }}
           CFG_LICENSE_SIGNING_PRIVATE_KEY: ${{ secrets.LICENSE_SIGNING_PRIVATE_KEY }}
           CFG_LICENSE_MAX_OFFLINE_DAYS: ${{ vars.LICENSE_MAX_OFFLINE_DAYS || 30 }}
@@ -259,6 +262,7 @@ jobs:
             DB_PASS
             LICENSE_VALIDITY_DAYS
             TRIAL_SIGNUP_ENABLED
+            PAYMENTS_ENABLED
             LICENSE_SIGNING_KEY_ID
             LICENSE_SIGNING_PRIVATE_KEY
             LICENSE_MAX_OFFLINE_DAYS

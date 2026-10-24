@@ -18,13 +18,21 @@ function fixtureRelease(string $platform = 'windows', string $variant = ''): int
     return (int) TestKit::scalar('SELECT id FROM releases WHERE version = :v', ['v' => $version]);
 }
 
+/** The licence row issueToken() takes, as issue-download.php passes it. */
+function licenseRow(int $licenseId): array
+{
+    $stmt = Diwan\Database\Database::pdo()->prepare('SELECT * FROM licenses WHERE id = :id');
+    $stmt->execute(['id' => $licenseId]);
+    return $stmt->fetch();
+}
+
 /** A licence id with downloads available, plus a token for it. */
 function issuedDownload(): array
 {
     fixtureRelease();
     [$order] = TestKit::paidLicense(TestKit::customer());
     $licenseId = (int) TestKit::scalar('SELECT id FROM licenses WHERE order_id = :id', ['id' => $order['id']]);
-    $issued = (new DownloadService())->issueToken($licenseId, 'windows', TestKit::ip());
+    $issued = (new DownloadService())->issueToken(licenseRow($licenseId), 'windows', TestKit::ip());
     return [$licenseId, $issued['token']];
 }
 
@@ -109,11 +117,11 @@ return [
         [$order] = TestKit::paidLicense(TestKit::customer());
         $licenseId = (int) TestKit::scalar('SELECT id FROM licenses WHERE order_id = :id', ['id' => $order['id']]);
         $service = new DownloadService();
-        $service->issueToken($licenseId, 'macos', TestKit::ip(), 'intel');
+        $service->issueToken(licenseRow($licenseId), 'macos', TestKit::ip(), 'intel');
         TestKit::same($intel, (int) TestKit::scalar(
             'SELECT release_id FROM download_tokens WHERE license_id = :id ORDER BY id DESC LIMIT 1', ['id' => $licenseId]
         ), 'intel build chosen');
-        TestKit::throws(RuntimeException::class, static fn () => $service->issueToken($licenseId, 'android', TestKit::ip()),
+        TestKit::throws(RuntimeException::class, static fn () => $service->issueToken(licenseRow($licenseId), 'android', TestKit::ip()),
             'a platform with no release has nothing to issue', 'No active release');
     },
 ];

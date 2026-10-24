@@ -9,8 +9,11 @@ declare(strict_types=1);
 
 require __DIR__ . '/_bootstrap.php';
 
+use Diwan\Auth\Session;
 use Diwan\Config\Env;
+use Diwan\Download\DownloadEvents;
 use Diwan\Download\DownloadService;
+use Diwan\Plan\PlanCatalog;
 use Diwan\License\LicenseService;
 use Diwan\Support\Http;
 use Diwan\Support\Logger;
@@ -55,8 +58,25 @@ if (!$licenses->hasDownloadsLeft($license)) {
     Http::fail('Download limit reached for this licence. Contact support.', 403);
 }
 
+// Analytics only: whether the owner asked from their signed-in dashboard or
+// someone used the bare key. Never affects what is allowed.
+$channel = $license['customer_id'] !== null && Session::customerId() === (int) $license['customer_id']
+    ? 'dashboard'
+    : 'licence_key';
+
+// The mobile app is a plan feature: a plan licence without it gets no
+// Android installer. Pre-plan licences (plan_id NULL) keep every platform.
+if ($platform === 'android' && $license['plan_id'] !== null) {
+    $catalog = new PlanCatalog();
+    if (!in_array('mobile', $catalog->entitlementsForPlan((int) $license['plan_id']), true)) {
+        DownloadEvents::refused($license, $platform, $variant, $channel, 'plan_excludes_platform');
+        $needs = $catalog->upgradeHints($catalog->entitlementsForPlan((int) $license['plan_id']))['mobile'] ?? null;
+        Http::fail('The Android app is not part of your plan' . ($needs !== null ? " — it is included in {$needs}." : '.'), 403);
+    }
+}
+
 try {
-    $issued = $downloads->issueToken((int) $license['id'], $platform, $ip, $variant);
+    $issued = $downloads->issueToken($license, $platform, $ip, $variant, $channel);
 } catch (RuntimeException $e) {
     Logger::warning('No active release', ['platform' => $platform, 'variant' => $variant, 'reason' => $e->getMessage()]);
     Http::fail('That installer is not available yet.', 404);

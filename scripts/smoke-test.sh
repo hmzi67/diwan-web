@@ -183,7 +183,18 @@ expect      "$BASE/api/payment-return.php?order_id=NONE"      200 "payment-retur
 expect      "$BASE/api/payment-webhook.php"                   405 "payment-webhook.php refuses GET"
 expect_post "$BASE/api/payment-webhook.php" '{}'              400 "payment-webhook.php refuses an unsigned call"
 expect      "$BASE/api/dashboard-data.php"                    401 "dashboard-data.php needs a session"
-expect_post "$BASE/api/checkout.php" '{}'                     401 "checkout.php needs a session"
+expect_post "$BASE/api/checkout.php" '{}'                     410 "checkout.php is closed (plans need admin approval)"
+expect      "$BASE/api/plans.php"                             200 "plans.php lists the plans"
+expect      "$BASE/api/license-requests.php"                  401 "license-requests.php needs a session"
+expect_post "$BASE/api/license-requests.php" '{"plan":"basic"}' 401 "a plan request needs a session"
+expect      "$BASE/api/notifications.php"                     401 "notifications.php needs a session"
+expect_post "$BASE/api/admin-login.php" '{}'                  422 "admin-login.php rejects an empty form"
+for admin_get in admin-session admin-dashboard admin-users admin-license-requests admin-licenses \
+                 admin-plans admin-downloads admin-releases admin-notifications admin-audit-logs admin-settings; do
+  expect    "$BASE/api/${admin_get}.php"                      401 "${admin_get}.php needs an admin session"
+done
+expect_post "$BASE/api/admin-license-requests.php" '{"id":1,"action":"approve"}' 401 "approving needs an admin session"
+expect_post "$BASE/api/admin-plans.php" '{"action":"update_plan","id":1}'     401 "plan edits need an admin session"
 expect_post "$BASE/api/resend-license-email.php" '{}'         401 "resend-license-email.php needs a session"
 expect_post "$BASE/api/sign-in.php" '{}'                      422 "sign-in.php rejects an empty form"
 expect_post "$BASE/api/activate-license.php" '{}'             422 "activate-license.php rejects an empty key"

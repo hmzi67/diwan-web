@@ -151,13 +151,17 @@ final class Session
     }
 
     /**
-     * Reads the customer's current epoch. Missing row returns -1, which can
-     * never equal a stored epoch (UNSIGNED), so a deleted account's cookie
-     * stops working immediately.
+     * Reads the customer's current epoch. Missing (or suspended) returns -1,
+     * which can never equal a stored epoch (UNSIGNED), so a deleted or
+     * suspended account's cookie stops working immediately.
      */
     private static function epochFor(int $customerId): int
     {
-        $stmt = Database::pdo()->prepare('SELECT session_epoch FROM customers WHERE id = :id LIMIT 1');
+        // A suspended account reads as missing: every cookie and app token
+        // it holds stops working at once, and reactivating restores them.
+        $stmt = Database::pdo()->prepare(
+            "SELECT session_epoch FROM customers WHERE id = :id AND status = 'active' LIMIT 1"
+        );
         $stmt->execute(['id' => $customerId]);
         $epoch = $stmt->fetchColumn();
 

@@ -46,3 +46,11 @@ if ! bash "$ROOT/scripts/smoke-test.sh" --local "http://127.0.0.1:${PORT}"; then
   cat "$WORK/server.log"
   exit 1
 fi
+
+# Plan licensing end to end: customer request, admin approval with CSRF,
+# POS activation and the signed payload. Uses the same database and config.
+if ! php "$ROOT/scripts/tests/http-flow.php" "http://127.0.0.1:${PORT}" "$WORK/app/config/.env"; then
+  echo "--- php -S log ---"
+  cat "$WORK/server.log"
+  exit 1
+fi

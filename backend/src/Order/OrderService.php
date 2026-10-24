@@ -61,7 +61,7 @@ final class OrderService
         $stmt = Database::pdo()->prepare(
             'SELECT o.id AS order_id, o.order_ref, o.amount_paisa, o.currency, o.status AS order_status,
                     o.created_at, o.paid_at, o.gateway,
-                    p.name AS product_name,
+                    p.name AS product_name, pl.name AS plan_name, pl.code AS plan_code, l.max_devices,
                     l.id AS license_id, l.license_key_prefix, l.license_key_encrypted,
                     CASE WHEN l.status = "active" AND l.expires_at <= NOW() THEN "expired"
                          ELSE l.status END AS license_status,
@@ -72,6 +72,7 @@ final class OrderService
                FROM orders o
                JOIN products p ON p.id = o.product_id
           LEFT JOIN licenses l ON l.order_id = o.id
+          LEFT JOIN plans pl ON pl.id = l.plan_id
               WHERE o.customer_id = :id
               ORDER BY o.created_at DESC'
         );

@@ -9,7 +9,8 @@ use RuntimeException;
 /**
  * Sends outbound mail (login links, licence keys).
  *
- * Two drivers, chosen by MAIL_DRIVER:
+ * Drivers, chosen by MAIL_DRIVER (plus "log" for local development, see
+ * sendToFile()):
  *
  *  - "sendmail" (default): PHP's built-in mail(), which shells out to the
  *    local MTA. This is what shared hosting (Hostinger et al.) already has
@@ -30,6 +31,23 @@ use RuntimeException;
 final class Mailer
 {
     /**
+     * Whether outbound mail has been set up at all: a From address, plus a
+     * host when the driver is SMTP. Callers that record what happened to an
+     * email use this to say "not configured" instead of claiming a send.
+     */
+    public static function isConfigured(): bool
+    {
+        if (Env::get('MAIL_FROM') === null) {
+            return false;
+        }
+        $driver = strtolower(Env::get('MAIL_DRIVER', 'sendmail') ?? 'sendmail');
+        if ($driver === 'log') {
+            return !Env::isProduction();
+        }
+        return $driver !== 'smtp' || Env::get('MAIL_HOST') !== null;
+    }
+
+    /**
      * $replyTo must already be a validated address (FILTER_VALIDATE_EMAIL
      * rejects CR/LF, so it cannot inject extra headers). $from is the From
      * header's value ("Name <addr>" or "addr"), defaulting to MAIL_FROM.
@@ -44,9 +62,34 @@ final class Mailer
         $from ??= Env::get('MAIL_FROM', 'no-reply@localhost');
         $driver = strtolower(Env::get('MAIL_DRIVER', 'sendmail') ?? 'sendmail');
 
-        return $driver === 'smtp'
-            ? self::sendSmtp($to, $subject, $body, $from, $replyTo)
-            : mail($to, $subject, $body, "From: {$from}" . ($replyTo !== null ? "\r\nReply-To: <{$replyTo}>" : ''));
+        return match ($driver) {
+            'smtp' => self::sendSmtp($to, $subject, $body, $from, $replyTo),
+            'log'  => self::sendToFile($to, $subject, $body, $from, $replyTo),
+            default => mail($to, $subject, $body, "From: {$from}" . ($replyTo !== null ? "\r\nReply-To: <{$replyTo}>" : '')),
+        };
+    }
+
+    /**
+     * MAIL_DRIVER=log — development only. Writes each message to
+     * private-storage/mail/ instead of sending it, so verification links,
+     * approvals and licence emails can be opened on a laptop with no mail
+     * server (macOS ships `sendmail` but no running MTA, so mail() "succeeds"
+     * and nothing arrives). Refused in production, where it would silently
+     * swallow customer email.
+     */
+    private static function sendToFile(string $to, string $subject, string $body, string $from, ?string $replyTo): bool
+    {
+        if (Env::isProduction() || !defined('DIWAN_PRIVATE_STORAGE')) {
+            return false;
+        }
+        $dir = DIWAN_PRIVATE_STORAGE . '/mail';
+        if (!is_dir($dir) && !@mkdir($dir, 0700, true)) {
+            return false;
+        }
+        $file = sprintf('%s/%s-%s.txt', $dir, gmdate('Ymd-His'), bin2hex(random_bytes(3)));
+        $message = "From: {$from}\nTo: {$to}\n" . ($replyTo !== null ? "Reply-To: {$replyTo}\n" : '')
+            . "Subject: {$subject}\nDate: " . gmdate('r') . "\n\n{$body}\n";
+        return file_put_contents($file, $message) !== false;
     }
 
     private static function sendSmtp(

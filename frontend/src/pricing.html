@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pricing — One-Time POS Licence from Rs 8,000 | Diwan POS</title>
+    <title>Pricing — Monthly POS Plans | Diwan POS</title>
     <meta
       name="description"
-      content="Diwan POS pricing: one-time licences — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscription. Free 30-day trial, no payment required."
+      content="Diwan POS plans — BASIC, ADVANCE and ALL-IN-ONE, billed monthly in PKR. Request access online with no online payment; our team approves every licence."
     />
     <link rel="canonical" href="https://diwan.codehunts.co.uk/pricing.html" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Diwan POS" />
-    <meta property="og:title" content="Pricing — One-Time POS Licence from Rs 8,000 | Diwan POS" />
-    <meta property="og:description" content="Diwan POS pricing: one-time licences — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscription. Free 30-day trial, no payment required." />
+    <meta property="og:title" content="Pricing — Monthly POS Plans | Diwan POS" />
+    <meta property="og:description" content="Diwan POS plans — BASIC, ADVANCE and ALL-IN-ONE, billed monthly in PKR. Request access online with no online payment; our team approves every licence." />
     <meta property="og:url" content="https://diwan.codehunts.co.uk/pricing.html" />
     <meta property="og:image" content="https://diwan.codehunts.co.uk/assets/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
@@ -29,8 +29,8 @@
             "@type": "WebPage",
             "@id": "https://diwan.codehunts.co.uk/pricing.html#webpage",
             "url": "https://diwan.codehunts.co.uk/pricing.html",
-            "name": "Pricing — One-Time POS Licence from Rs 8,000 | Diwan POS",
-            "description": "Diwan POS pricing: one-time licences — Starter Rs 8,000, Standard Rs 12,000, Enterprise Rs 25,000. No subscription. Free 30-day trial, no payment required.",
+            "name": "Pricing — Monthly POS Plans | Diwan POS",
+            "description": "Diwan POS plans — BASIC, ADVANCE and ALL-IN-ONE, billed monthly in PKR. Request access online with no online payment; our team approves every licence.",
             "inLanguage": "en",
             "isPartOf": {
               "@id": "https://diwan.codehunts.co.uk/#website"
@@ -73,45 +73,7 @@
             "image": "https://diwan.codehunts.co.uk/assets/og-image.jpg",
             "publisher": {
               "@id": "https://diwan.codehunts.co.uk/#organization"
-            },
-            "offers": [
-              {
-                "@type": "Offer",
-                "name": "Diwan POS Starter",
-                "description": "1 terminal licence, core billing and inventory, offline-first sync, email support.",
-                "price": "8000",
-                "priceCurrency": "PKR",
-                "availability": "https://schema.org/InStock",
-                "url": "https://diwan.codehunts.co.uk/pricing.html",
-                "seller": {
-                  "@id": "https://diwan.codehunts.co.uk/#organization"
-                }
-              },
-              {
-                "@type": "Offer",
-                "name": "Diwan POS Standard",
-                "description": "Up to 3 terminals at 1 branch, all core modules and reporting, receipt and kitchen printer support.",
-                "price": "12000",
-                "priceCurrency": "PKR",
-                "availability": "https://schema.org/InStock",
-                "url": "https://diwan.codehunts.co.uk/pricing.html",
-                "seller": {
-                  "@id": "https://diwan.codehunts.co.uk/#organization"
-                }
-              },
-              {
-                "@type": "Offer",
-                "name": "Diwan POS Enterprise",
-                "description": "Unlimited terminals across multiple branches, multi-branch sync, priority phone and email support.",
-                "price": "25000",
-                "priceCurrency": "PKR",
-                "availability": "https://schema.org/InStock",
-                "url": "https://diwan.codehunts.co.uk/pricing.html",
-                "seller": {
-                  "@id": "https://diwan.codehunts.co.uk/#organization"
-                }
-              }
-            ]
+            }
           }
         ]
       }
@@ -216,138 +178,25 @@
     </header>
 
     <main id="main">
-      <!-- Prices and inclusions below are the ones published on products.html and
-         referenced by the refund and terms pages. Change all four together, plus
-         the products table seed in database/schema.sql. -->
+      <!-- The plan cards are rendered by js/plans.js from GET /api/plans.php (the
+         same tables that decide what a licence unlocks). Edit plans in the admin
+         panel, never in this page. -->
       <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]">
         <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
           <div class="mx-auto mb-14 max-w-[620px] text-center">
             <h1
               class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]"
             >
-              Simple pricing, one licence.
+              Simple monthly plans.
             </h1>
             <p class="text-[1.02rem] text-muted">
-              Pick the plan that matches how many counters you run. One-time
-              payment — no subscriptions, no surprise renewals.
+              Three monthly plans, from a single shop to your whole business.
+              There is no online payment: choose a plan, send a request, and we
+              review it and switch on your licence.
             </p>
           </div>
 
-          <div
-            class="grid grid-cols-3 items-start gap-6 max-[900px]:mx-auto max-[900px]:grid-cols-1 max-[900px]:max-w-[420px]"
-          >
-            <article
-              class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8"
-            >
-              <div>
-                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Starter</h3>
-                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
-                  For a single counter just getting started.
-                </p>
-              </div>
-              <p class="mb-6 flex items-baseline gap-2">
-                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
-                  >Rs 8,000</span
-                >
-                <span class="text-[.85rem] text-faint">one-time</span>
-              </p>
-              <a
-                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
-                href="auth/login.html?plan=diwan-pos-starter"
-                data-plan="diwan-pos-starter"
-                >Get Started</a
-              >
-              <div class="mt-7 mb-5 h-px bg-line"></div>
-              <p class="mb-4 text-[.82rem] font-semibold text-muted">
-                Everything in Starter includes:
-              </p>
-              <ul
-                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
-              >
-                <li>1 terminal licence</li>
-                <li>Core billing &amp; inventory</li>
-                <li>Offline-first sync</li>
-                <li>Email support</li>
-                <li>Free software updates</li>
-              </ul>
-            </article>
-
-            <article
-              class="relative flex flex-col rounded-lg border border-accent-dim bg-elevated px-7 py-8 shadow-[0_0_0_1px_var(--color-accent-dim),0_30px_60px_-30px_rgba(0,0,0,.8),0_0_60px_-20px_var(--color-glow)] max-[900px]:translate-y-0 max-[900px]:shadow-none -translate-y-4"
-            >
-              <p
-                class="absolute -top-[.85rem] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-[.9rem] py-[.35rem] text-[.72rem] font-bold uppercase tracking-[.03em] text-accent-ink shadow-[0_8px_20px_-6px_var(--color-accent)]"
-              >
-                Most popular
-              </p>
-              <div>
-                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Standard</h3>
-                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
-                  For growing shops running a few counters.
-                </p>
-              </div>
-              <p class="mb-6 flex items-baseline gap-2">
-                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
-                  >Rs 12,000</span
-                >
-                <span class="text-[.85rem] text-faint">one-time</span>
-              </p>
-              <a
-                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
-                href="auth/login.html?plan=diwan-pos-standard"
-                data-plan="diwan-pos-standard"
-                >Get Started</a
-              >
-              <div class="mt-7 mb-5 h-px bg-line"></div>
-              <p class="mb-4 text-[.82rem] font-semibold text-muted">
-                Everything in Standard includes:
-              </p>
-              <ul
-                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
-              >
-                <li>Up to 3 terminals, 1 branch</li>
-                <li>All core modules + reporting</li>
-                <li>Receipt &amp; kitchen printer support</li>
-                <li>Priority email support</li>
-                <li>Free software updates</li>
-              </ul>
-            </article>
-
-            <article
-              class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8"
-            >
-              <div>
-                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Enterprise</h3>
-                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
-                  For multi-branch chains.
-                </p>
-              </div>
-              <p class="mb-6 flex items-baseline gap-2">
-                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
-                  >Rs 25,000</span
-                >
-                <span class="text-[.85rem] text-faint">one-time</span>
-              </p>
-              <a
-                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
-                href="auth/login.html?plan=diwan-pos-enterprise"
-                data-plan="diwan-pos-enterprise"
-                >Get Started</a
-              >
-              <div class="mt-7 mb-5 h-px bg-line"></div>
-              <p class="mb-4 text-[.82rem] font-semibold text-muted">
-                Everything in Enterprise includes:
-              </p>
-              <ul
-                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
-              >
-                <li>Unlimited terminals, multi-branch</li>
-                <li>All modules + multi-branch sync</li>
-                <li>Priority phone &amp; email support</li>
-                <li>Free software updates</li>
-              </ul>
-            </article>
-          </div>
+          <div class="pricing__grid" data-plans aria-live="polite"></div>
 
           <p class="mt-11 text-center">
             <a
@@ -357,8 +206,9 @@
             >
           </p>
           <p class="mx-auto mt-8 max-w-[62ch] text-center text-[.92rem] leading-[1.7] text-muted">
-            Not ready to buy? <a class="font-semibold text-accent hover:underline" href="/auth/signup.html">Start a free 30-day trial</a>
-            — one device, no payment required, one trial per account.
+            How it works: <a class="font-semibold text-accent hover:underline" href="/auth/signup.html">create an account</a>,
+            request the plan you want, and we approve it — usually within one
+            business day. Your licence key then appears in your dashboard.
           </p>
         </div>
       </section>
@@ -459,15 +309,15 @@
           class="mx-auto grid w-full max-w-[1180px] grid-cols-4 gap-8 px-[clamp(1.25rem,4vw,2rem)] py-10 max-[760px]:grid-cols-2 max-[760px]:gap-y-7"
         >
           <div>
-            <p class="text-[1.5rem] font-bold tracking-[-.02em]">One-time</p>
+            <p class="text-[1.5rem] font-bold tracking-[-.02em]">Monthly</p>
             <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
-              Pay once in Rupees. No subscription, no automatic renewal.
+              Billed per month in Rupees. No online payment — approved by our team.
             </p>
           </div>
           <div>
             <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
             <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
-              Windows, macOS, Linux and Android, unlocked by one licence key.
+              Desktop builds on every plan; Android and iOS where your plan includes the app.
             </p>
           </div>
           <div>
@@ -515,7 +365,7 @@
               <summary
                 class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
               >
-                Is there a subscription?<span
+                How does billing work?<span
                   aria-hidden="true"
                   class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
                   >+</span
@@ -524,10 +374,10 @@
               <p
                 class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
               >
-                No. Diwan is a one-time purchase — Rs 8,000, Rs 12,000 or Rs
-                25,000 depending on the edition — with no automatic renewal.
-                Updates are downloaded later with the key you already own, at no
-                extra cost.
+                Each plan is priced per month. There is no online payment: you
+                request a plan, our team approves it and agrees the payment with
+                you directly, and your licence runs for the approved period.
+                Renew from your dashboard; updates come with the same key.
               </p>
             </details>
 
@@ -623,11 +473,10 @@
               <p
                 class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
               >
-                Ask for a full refund within 14 days of purchase, as long as the
-                key has not been activated. You may download and inspect the
-                software first — only activation closes the window, and no
-                reason is required. Or try it first with a free 30-day trial on one
-                device, no payment required.
+                Talk to us before you commit — nothing is charged online, and a
+                request can be cancelled from your dashboard while it is still
+                waiting for approval. For licences already issued, see the
+                refund policy.
               </p>
             </details>
 
@@ -667,6 +516,7 @@
     </main>
 
     <script src="/js/api.js"></script>
+    <script src="/js/plans.js"></script>
     <script src="/js/main.js"></script>
 
     <footer class="border-t border-line bg-elevated py-14 pb-8">
@@ -684,7 +534,7 @@
             </a>
             <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">
               Keyboard-first point of sale for retail, restaurants and
-              pharmacies. One-time licence, works offline.
+              pharmacies. Monthly plans, works offline.
             </p>
           </div>
 

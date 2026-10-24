@@ -90,6 +90,7 @@ foreach (glob(__DIR__ . '/*.test.php') as $file) {
 
 $passed = 0;
 $failed = [];
+TestKit::begin();
 try {
     foreach ($tests as $name => $test) {
         if ($filter !== '' && stripos($name, $filter) === false) {

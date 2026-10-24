@@ -4,23 +4,22 @@
 // declares (`params`, `form`, …) — a duplicate `const` throws SyntaxError and
 // the page script dies with it.
 
-// Pricing cards: "Get Started" needs a session before it can reach checkout.
-// The href on each card already points at /auth/login.html?plan=X, so anyone
-// without JS (or if this fetch fails) still lands somewhere correct — this
-// listener just skips the login hop for someone already signed in.
-document.querySelectorAll('.plan__cta[data-plan]').forEach((link) => {
-  link.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const plan = link.dataset.plan;
-    try {
-      const { ok } = await DiwanApi.get('/dashboard-data.php');
-      window.location.href = ok
-        ? `/checkout.html?plan=${encodeURIComponent(plan)}`
-        : `/auth/login.html?plan=${encodeURIComponent(plan)}`;
-    } catch {
-      window.location.href = `/auth/login.html?plan=${encodeURIComponent(plan)}`;
-    }
-  });
+// Pricing cards (rendered by plans.js, so delegated): "Request Access" needs
+// a session. Each card's href already points at /auth/login.html?plan=X, so
+// without JS (or if this fetch fails) the visitor still lands somewhere
+// correct — this only skips the login hop for someone already signed in,
+// taking them straight to the request form in their dashboard.
+document.addEventListener('click', async (e) => {
+  const link = e.target.closest('.plan__cta[data-plan]');
+  if (!link || link.closest('.app')) return;   // the dashboard handles its own cards
+  e.preventDefault();
+  const plan = encodeURIComponent(link.dataset.plan);
+  try {
+    const { ok } = await DiwanApi.get('/dashboard-data.php');
+    window.location.href = ok ? `/dashboard.html?request=${plan}#plan` : `/auth/login.html?plan=${plan}`;
+  } catch {
+    window.location.href = `/auth/login.html?plan=${plan}`;
+  }
 });
 
 const downloadForm = document.getElementById('download-form');

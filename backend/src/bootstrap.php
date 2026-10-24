@@ -63,6 +63,12 @@ ini_set('error_log', DIWAN_PRIVATE_STORAGE . '/logs/php-error.log');
 error_reporting(E_ALL);
 
 set_exception_handler(static function (Throwable $e) use ($debug): void {
+    // A refusal written for the client (see UserFacingException): its message
+    // is safe to show, and its code is the HTTP status (422 when unset).
+    if ($e instanceof Diwan\Support\UserFacingException) {
+        $status = $e->getCode() >= 400 && $e->getCode() < 500 ? $e->getCode() : 422;
+        Diwan\Support\Http::fail($e->getMessage(), $status);
+    }
     Logger::exception('Unhandled exception', $e);
     if (!headers_sent()) {
         http_response_code(500);

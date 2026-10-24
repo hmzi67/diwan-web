@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS customers (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   email           VARCHAR(190)    NOT NULL,
   name            VARCHAR(160)    NULL,
+  status          ENUM('active','suspended') NOT NULL DEFAULT 'active' COMMENT 'Suspended by an administrator (016): no sign-in, no licence check-ins',
+  suspended_at    DATETIME        NULL,
+  business_name   VARCHAR(160)    NULL,
+  phone           VARCHAR(20)     NULL,
   password_hash   VARCHAR(255)    NULL COMMENT 'password_hash() output. NULL = predates password auth, must set one via the reset flow.',
   password_set_at DATETIME        NULL COMMENT 'When the current password was set. Support/audit only.',
   session_epoch   INT UNSIGNED    NOT NULL DEFAULT 0 COMMENT 'Bumped on password reset; signed into the session cookie to revoke older ones.',
@@ -44,8 +48,10 @@ CREATE TABLE IF NOT EXISTS customers (
   app_account_token CHAR(36)      NULL COMMENT 'StoreKit appAccountToken (UUID) for purchases made while signed in',
   deleted_at      DATETIME        NULL COMMENT 'Account deleted by its owner; personal data already scrubbed',
   created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_active_at  DATETIME        NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_customers_email (email),
+  KEY idx_customers_status (status, created_at),
   UNIQUE KEY uq_customers_apple_sub (apple_sub),
   UNIQUE KEY uq_customers_app_account_token (app_account_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -109,6 +115,112 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
+-- plans / features / plan_features (migration 016) — the one source of truth
+-- for the public pricing cards (GET /api/plans.php) and for what a licence
+-- unlocks in the POS (the signed `entitlements` list). Seeded at the bottom.
+-- admin_users are platform administrators, never customers.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS plans (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  code           VARCHAR(40)  NOT NULL COMMENT 'Stable identifier, e.g. basic. Never shown as a price.',
+  name           VARCHAR(80)  NOT NULL,
+  tagline        VARCHAR(190) NULL,
+  price_minor    BIGINT UNSIGNED NOT NULL COMMENT 'Integer paisa per billing period. Never FLOAT.',
+  currency       CHAR(3)      NOT NULL DEFAULT 'PKR',
+  billing_period ENUM('month','year') NOT NULL DEFAULT 'month',
+  theme          ENUM('blue','green','purple','slate') NOT NULL DEFAULT 'slate',
+  cta_label      VARCHAR(40)  NOT NULL DEFAULT 'Request Access',
+  max_devices    SMALLINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Devices a new licence on this plan may activate on',
+  sort_order     SMALLINT     NOT NULL DEFAULT 0,
+  is_active      TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '0 = hidden from pricing, no new requests; existing licences unaffected',
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_plans_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS features (
+  id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  code             VARCHAR(60)  NOT NULL COMMENT 'Stable identifier, e.g. inventory_full',
+  name             VARCHAR(120) NOT NULL,
+  description      VARCHAR(500) NULL,
+  -- Comma-separated POS module/capability keys this feature unlocks in the
+  -- app (db::modules::key in the POS, plus capabilities such as
+  -- inventory_advanced). Empty = nothing in the app (a service, or a
+  -- feature not built into the app yet — see `availability`).
+  pos_entitlements VARCHAR(500) NOT NULL DEFAULT '',
+  availability     ENUM('app','service','planned') NOT NULL DEFAULT 'app'
+                   COMMENT 'app = enforced in the POS; service = delivered by the Diwan team; planned = not built yet',
+  is_active        TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_features_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- A plan's entitlement is every row here; `show_on_card` picks the ones the
+-- public pricing card lists (in sort_order, under `display_label`). Rows with
+-- show_on_card = 0 are features deliberately carried up from a lower tier.
+CREATE TABLE IF NOT EXISTS plan_features (
+  plan_id       INT UNSIGNED NOT NULL,
+  feature_id    INT UNSIGNED NOT NULL,
+  display_label VARCHAR(120) NULL COMMENT 'Card wording when it differs from features.name',
+  show_on_card  TINYINT(1)   NOT NULL DEFAULT 1,
+  sort_order    SMALLINT     NOT NULL DEFAULT 0,
+  PRIMARY KEY (plan_id, feature_id),
+  KEY idx_plan_features_feature (feature_id),
+  CONSTRAINT fk_plan_features_plan FOREIGN KEY (plan_id) REFERENCES plans (id) ON DELETE CASCADE,
+  CONSTRAINT fk_plan_features_feature FOREIGN KEY (feature_id) REFERENCES features (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admin_users (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email         VARCHAR(190) NOT NULL,
+  name          VARCHAR(120) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL COMMENT 'password_hash() output',
+  session_epoch INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Bumped to sign the admin out everywhere',
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  last_login_at DATETIME     NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_admin_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admin_login_attempts (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ip           VARCHAR(45)     NOT NULL,
+  email_hash   CHAR(64)        NULL,
+  result       ENUM('ok','failed','rate_limited') NOT NULL,
+  attempted_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_admin_login_attempts_ip_time (ip, attempted_at),
+  KEY idx_admin_login_attempts_email_time (email_hash, attempted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS license_requests (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  customer_id    BIGINT UNSIGNED NOT NULL,
+  plan_id        INT UNSIGNED    NOT NULL,
+  status         ENUM('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+  business_name  VARCHAR(160)    NULL,
+  contact_phone  VARCHAR(20)     NULL,
+  message        VARCHAR(1000)   NULL,
+  decision_note  VARCHAR(1000)   NULL COMMENT 'Shown to the customer on approval/rejection',
+  decided_by     INT UNSIGNED    NULL,
+  decided_at     DATETIME        NULL,
+  license_id     BIGINT UNSIGNED NULL COMMENT 'Set on approval; the licence it produced (no FK: licences reference requests)',
+  created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME        NULL,
+  PRIMARY KEY (id),
+  KEY idx_license_requests_status_created (status, created_at),
+  KEY idx_license_requests_customer (customer_id, created_at),
+  KEY idx_license_requests_license (license_id),
+  CONSTRAINT fk_license_requests_customer FOREIGN KEY (customer_id) REFERENCES customers (id),
+  CONSTRAINT fk_license_requests_plan FOREIGN KEY (plan_id) REFERENCES plans (id),
+  CONSTRAINT fk_license_requests_admin FOREIGN KEY (decided_by) REFERENCES admin_users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
 -- orders — checkout attempts and zero-value fulfilled trial grants.
 -- gateway=trial is never paid, and never carries a payment transaction.
 -- -----------------------------------------------------------------------------
@@ -149,15 +261,21 @@ CREATE TABLE IF NOT EXISTS licenses (
   id                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   order_id               BIGINT UNSIGNED NOT NULL,
   customer_id            BIGINT UNSIGNED NULL,
+  plan_id                INT UNSIGNED    NULL COMMENT 'NULL = pre-plan licence (before 016): every POS module stays available',
+  license_request_id     BIGINT UNSIGNED NULL COMMENT 'The approved request that produced this licence',
+  issued_by              INT UNSIGNED    NULL COMMENT 'Approving administrator',
   license_key_hash       CHAR(64)        NOT NULL COMMENT 'hash_hmac(sha256, key, APP_KEY) — sole source of truth for lookups',
   license_key_encrypted  VARCHAR(255)    NULL COMMENT 'AES-256-GCM(key), reversible, for owner dashboard and email recovery — see migration 002',
   license_key_prefix     VARCHAR(16)     NOT NULL COMMENT 'First group only, for support lookup',
   customer_email         VARCHAR(190)    NOT NULL,
-  status                 ENUM('active','revoked','expired') NOT NULL DEFAULT 'active',
+  status                 ENUM('active','suspended','revoked','expired') NOT NULL DEFAULT 'active',
+  status_changed_at      DATETIME        NULL,
+  status_reason          VARCHAR(255)    NULL,
   activation_status      ENUM('unused','activated') NOT NULL DEFAULT 'unused',
   activated_machine_hash CHAR(64)        NULL COMMENT 'sha256(machine id), never the raw fingerprint',
   activated_machine_hint VARCHAR(64)     NULL COMMENT 'e.g. "Windows 11 x64", for admin display only',
   activated_at           DATETIME        NULL,
+  max_devices            SMALLINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Devices this licence may be active on (see license_activations)',
   last_reactivated_at    DATETIME        NULL COMMENT 'throttles self-service device moves to once/30 days',
   reactivated_count      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   max_downloads          SMALLINT UNSIGNED NOT NULL DEFAULT 20,
@@ -169,8 +287,29 @@ CREATE TABLE IF NOT EXISTS licenses (
   UNIQUE KEY uq_licenses_order (order_id) COMMENT 'Hard guarantee: one licence per order',
   KEY idx_licenses_email (customer_email),
   KEY idx_licenses_activation_status (activation_status),
+  UNIQUE KEY uq_licenses_request (license_request_id),
+  KEY idx_licenses_plan (plan_id, status),
   CONSTRAINT fk_licenses_order FOREIGN KEY (order_id) REFERENCES orders (id),
-  CONSTRAINT fk_licenses_customer FOREIGN KEY (customer_id) REFERENCES customers (id)
+  CONSTRAINT fk_licenses_customer FOREIGN KEY (customer_id) REFERENCES customers (id),
+  CONSTRAINT fk_licenses_plan FOREIGN KEY (plan_id) REFERENCES plans (id),
+  CONSTRAINT fk_licenses_request FOREIGN KEY (license_request_id) REFERENCES license_requests (id),
+  CONSTRAINT fk_licenses_issued_by FOREIGN KEY (issued_by) REFERENCES admin_users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- One row per device a licence is bound to (016). `licenses.activated_machine_*`
+-- still records the first binding for older readers.
+CREATE TABLE IF NOT EXISTS license_activations (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  license_id     BIGINT UNSIGNED NOT NULL,
+  machine_hash   CHAR(64)        NOT NULL COMMENT 'sha256(machine fingerprint), never the raw value',
+  machine_hint   VARCHAR(64)     NULL,
+  activated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_seen_at   DATETIME        NULL COMMENT 'Last licence-status check from this device',
+  deactivated_at DATETIME        NULL COMMENT 'Set when an administrator frees the slot',
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_license_activations_device (license_id, machine_hash),
+  KEY idx_license_activations_active (license_id, deactivated_at),
+  CONSTRAINT fk_license_activations_license FOREIGN KEY (license_id) REFERENCES licenses (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Permanent trial eligibility ledger. Retain expired/revoked grants.
@@ -290,7 +429,8 @@ CREATE TABLE IF NOT EXISTS license_activation_attempts (
   -- activated..rate_limited: activate-license.php. status_*: license-status.php
   -- (migration 006) — both endpoints share this table via ActivationThrottle.
   result              ENUM('activated','reactivated','already_bound','invalid_key','rate_limited',
-                           'status_refused','status_not_activated','status_active','status_revoked','status_expired') NOT NULL,
+                           'status_refused','status_not_activated','status_active','status_revoked','status_expired',
+                           'status_suspended') NOT NULL,
   attempted_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_activation_attempts_ip_time (ip, attempted_at),
@@ -411,6 +551,82 @@ CREATE TABLE IF NOT EXISTS pos_records (
   CONSTRAINT fk_pos_records_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  actor_type  ENUM('admin','customer','system','terminal') NOT NULL,
+  actor_id    BIGINT UNSIGNED NULL,
+  actor_label VARCHAR(190)    NULL COMMENT 'Email at the time, so the log survives account changes',
+  action      VARCHAR(64)     NOT NULL COMMENT 'e.g. license_request.approve',
+  target_type VARCHAR(40)     NULL,
+  target_id   BIGINT UNSIGNED NULL,
+  details     TEXT            NULL COMMENT 'JSON; never secrets or full licence keys',
+  ip          VARCHAR(45)     NULL,
+  created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_audit_logs_created (created_at),
+  KEY idx_audit_logs_target (target_type, target_id, created_at),
+  KEY idx_audit_logs_action (action, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  audience     ENUM('customer','admin') NOT NULL,
+  customer_id  BIGINT UNSIGNED NULL COMMENT 'Set when audience = customer',
+  type         VARCHAR(48)     NOT NULL COMMENT 'e.g. license.approved',
+  title        VARCHAR(190)    NOT NULL,
+  body         VARCHAR(2000)   NOT NULL,
+  link         VARCHAR(255)    NULL,
+  -- What actually happened to the email copy. 'not_configured' is recorded
+  -- honestly when MAIL_* is unset, never reported as sent.
+  email_status ENUM('none','sent','failed','not_configured') NOT NULL DEFAULT 'none',
+  dedupe_key   VARCHAR(120)    NULL COMMENT 'Stops a cron re-run sending the same reminder twice',
+  read_at      DATETIME        NULL,
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_notifications_dedupe (dedupe_key),
+  KEY idx_notifications_customer (customer_id, read_at, created_at),
+  KEY idx_notifications_audience (audience, read_at, created_at),
+  CONSTRAINT fk_notifications_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- One row per download attempt. `requested` = a link was issued; `served`
+-- = the link was redeemed and the bytes started (or GitHub's signed URL was
+-- handed over); `completed` = PHP streamed the whole file without the client
+-- disconnecting (only measurable for locally stored installers); `failed` =
+-- refused or interrupted. A page refresh creates nothing.
+CREATE TABLE IF NOT EXISTS download_events (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_uid      CHAR(32)        NOT NULL COMMENT 'Opaque event identifier',
+  token_id       BIGINT UNSIGNED NULL COMMENT 'The download_tokens row this attempt used',
+  customer_id    BIGINT UNSIGNED NULL,
+  license_id     BIGINT UNSIGNED NULL,
+  plan_id        INT UNSIGNED    NULL COMMENT 'Licence plan at download time (NULL = pre-plan licence)',
+  release_id     INT UNSIGNED    NULL,
+  version        VARCHAR(32)     NULL,
+  platform       VARCHAR(16)     NULL,
+  variant        VARCHAR(32)     NULL,
+  channel        ENUM('dashboard','licence_key','other') NOT NULL DEFAULT 'other',
+  status         ENUM('requested','served','completed','failed') NOT NULL,
+  failure_reason VARCHAR(64)     NULL,
+  license_status VARCHAR(16)     NULL COMMENT 'Licence status at download time',
+  created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME        NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_download_events_uid (event_uid),
+  KEY idx_download_events_created (created_at),
+  KEY idx_download_events_customer (customer_id, created_at),
+  KEY idx_download_events_token (token_id),
+  KEY idx_download_events_status (status, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admin_settings (
+  setting_key   VARCHAR(64)  NOT NULL,
+  setting_value VARCHAR(500) NOT NULL,
+  updated_by    INT UNSIGNED NULL,
+  updated_at    DATETIME     NULL,
+  PRIMARY KEY (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- -----------------------------------------------------------------------------
 -- Seed data
 --
@@ -439,3 +655,255 @@ INSERT INTO products (sku, name, description, price_paisa, currency, is_active)
 VALUES ('diwan-pos-trial', 'Diwan POS — 30-day free trial',
         'One trial per account, one device, 30 days from issuance. No payment.', 0, 'PKR', 0)
 ON DUPLICATE KEY UPDATE sku = VALUES(sku);
+
+-- Plans, features and admin settings (migration 016). INSERT IGNORE: a
+-- re-import never overwrites what an administrator has edited since.
+INSERT IGNORE INTO plans (code, name, tagline, price_minor, currency, billing_period, theme, cta_label, max_devices, sort_order)
+VALUES
+  ('basic',      'BASIC',      'Everything a single shop needs to start selling.',        1000000, 'PKR', 'month', 'blue',   'Request Access', 1, 1),
+  ('advance',    'ADVANCE',    'For growing businesses with a team and a warehouse.',     1500000, 'PKR', 'month', 'green',  'Request Access', 3, 2),
+  ('all_in_one', 'ALL-IN-ONE', 'Your whole business: branches, website, app and orders.', 2000000, 'PKR', 'month', 'purple', 'Request Access', 10, 3);
+
+INSERT IGNORE INTO features (code, name, description, pos_entitlements, availability)
+VALUES
+  ('pos_core',                  'POS System',                       'Billing, receipts, shifts and settings.',                               'billing,shifts,settings,users', 'app'),
+  ('pos_complete',              'Complete POS System',              'Adds dine-in tables and kitchen tokens to the POS.',                    'tables',                        'app'),
+  ('inventory_basic',           'Inventory Management',             'Items, categories, stock levels and adjustments.',                      'inventory',                     'app'),
+  ('inventory_full',            'Full Inventory Management',        'Adds stock takes, CSV import and barcode label printing.',              'inventory,inventory_advanced',  'app'),
+  ('sales_purchase_reports',    'Sales & Purchase Reports',         'Sales, product, category and refund reports.',                         'reports',                       'app'),
+  ('expense_management',        'Expense Management',               'Record and review business expenses.',                                  'expenses',                      'app'),
+  ('daily_sales_tracking',      'Daily Sales Tracking',             'Today''s takings on the dashboard and the daily sales report.',         'dashboard,reports',             'app'),
+  ('dashboard',                 'User-Friendly Dashboard',          'At-a-glance business dashboard.',                                       'dashboard',                     'app'),
+  ('basic_support',             'Basic Customer Support',           'Email support during business hours.',                                  '',                              'service'),
+  ('warehouse_management',      'Warehouse Management',             'Stock across warehouses. Not built into the app yet.',                  '',                              'planned'),
+  ('advanced_analytics',        'Advanced Reports & Analytics',     'Profit & loss, order profit, tax, voids, stock usage and expiry.',      'reports,reports_advanced',      'app'),
+  ('ai_features',               'AI Features',                      'AI-assisted insights. Not built into the app yet.',                     '',                              'planned'),
+  ('multi_user_access',         'Multi-User Access',                'More than one staff login, plus employees, attendance and salary.',     'multi_user,employees,attendance,salary', 'app'),
+  ('purchase_sales_management', 'Purchase & Sales Management',      'Suppliers, purchase orders, goods received and the ledger.',            'purchasing,ledger',             'app'),
+  ('priority_support',          'Priority Support',                 'Faster response from the support team.',                                '',                              'service'),
+  ('supply_chain_management',   'Complete Supply Chain Management', 'Purchasing and supplier ledger today; wider supply chain planned.',     'purchasing,ledger',             'app'),
+  ('branch_management',         'Warehouse & Branch Management',    'Several branches under one account. Not built into the app yet.',      '',                              'planned'),
+  ('business_website',          'Business Website',                 'A website for your business, set up by the Diwan team.',               '',                              'service'),
+  ('mobile_application',        'Mobile Application (Android / iOS)', 'Run Diwan on Android phones and tablets, and on iOS.',                'mobile',                        'app'),
+  ('online_order_management',   'Online Order Management',          'Delivery and online orders.',                                           'delivery',                      'app'),
+  ('customer_management',       'Customer Management System',       'Customer accounts, pay-later sales and installments.',                  'customers',                     'app'),
+  ('dedicated_support',         'Dedicated Technical Support',      'A named support contact for your business.',                           '',                              'service');
+
+-- (plan code, feature code, card label, shown on card, order)
+INSERT IGNORE INTO plan_features (plan_id, feature_id, display_label, show_on_card, sort_order)
+SELECT p.id, f.id, s.label, s.shown, s.ord
+  FROM (
+            SELECT 'basic' AS plan, 'pos_core' AS feature, NULL AS label, 1 AS shown, 1 AS ord
+  UNION ALL SELECT 'basic', 'inventory_basic', NULL, 1, 2
+  UNION ALL SELECT 'basic', 'sales_purchase_reports', NULL, 1, 3
+  UNION ALL SELECT 'basic', 'expense_management', NULL, 1, 4
+  UNION ALL SELECT 'basic', 'daily_sales_tracking', NULL, 1, 5
+  UNION ALL SELECT 'basic', 'dashboard', NULL, 1, 6
+  UNION ALL SELECT 'basic', 'basic_support', NULL, 1, 7
+
+  UNION ALL SELECT 'advance', 'pos_complete', NULL, 1, 1
+  UNION ALL SELECT 'advance', 'inventory_full', NULL, 1, 2
+  UNION ALL SELECT 'advance', 'warehouse_management', NULL, 1, 3
+  UNION ALL SELECT 'advance', 'advanced_analytics', NULL, 1, 4
+  UNION ALL SELECT 'advance', 'ai_features', NULL, 1, 5
+  UNION ALL SELECT 'advance', 'multi_user_access', NULL, 1, 6
+  UNION ALL SELECT 'advance', 'purchase_sales_management', NULL, 1, 7
+  UNION ALL SELECT 'advance', 'expense_management', 'Expense Tracking', 1, 8
+  UNION ALL SELECT 'advance', 'priority_support', NULL, 1, 9
+  UNION ALL SELECT 'advance', 'pos_core', NULL, 0, 20
+  UNION ALL SELECT 'advance', 'inventory_basic', NULL, 0, 21
+  UNION ALL SELECT 'advance', 'sales_purchase_reports', NULL, 0, 22
+  UNION ALL SELECT 'advance', 'daily_sales_tracking', NULL, 0, 23
+  UNION ALL SELECT 'advance', 'dashboard', NULL, 0, 24
+
+  UNION ALL SELECT 'all_in_one', 'supply_chain_management', NULL, 1, 1
+  UNION ALL SELECT 'all_in_one', 'branch_management', NULL, 1, 2
+  UNION ALL SELECT 'all_in_one', 'business_website', NULL, 1, 3
+  UNION ALL SELECT 'all_in_one', 'mobile_application', NULL, 1, 4
+  UNION ALL SELECT 'all_in_one', 'online_order_management', NULL, 1, 5
+  UNION ALL SELECT 'all_in_one', 'customer_management', NULL, 1, 6
+  UNION ALL SELECT 'all_in_one', 'dedicated_support', NULL, 1, 7
+  UNION ALL SELECT 'all_in_one', 'pos_core', NULL, 0, 20
+  UNION ALL SELECT 'all_in_one', 'pos_complete', NULL, 0, 21
+  UNION ALL SELECT 'all_in_one', 'inventory_basic', NULL, 0, 22
+  UNION ALL SELECT 'all_in_one', 'inventory_full', NULL, 0, 23
+  UNION ALL SELECT 'all_in_one', 'sales_purchase_reports', NULL, 0, 24
+  UNION ALL SELECT 'all_in_one', 'expense_management', NULL, 0, 25
+  UNION ALL SELECT 'all_in_one', 'daily_sales_tracking', NULL, 0, 26
+  UNION ALL SELECT 'all_in_one', 'dashboard', NULL, 0, 27
+  UNION ALL SELECT 'all_in_one', 'warehouse_management', NULL, 0, 28
+  UNION ALL SELECT 'all_in_one', 'advanced_analytics', NULL, 0, 29
+  UNION ALL SELECT 'all_in_one', 'ai_features', NULL, 0, 30
+  UNION ALL SELECT 'all_in_one', 'multi_user_access', NULL, 0, 31
+  UNION ALL SELECT 'all_in_one', 'purchase_sales_management', NULL, 0, 32
+       ) s
+  JOIN plans p ON p.code = s.plan
+  JOIN features f ON f.code = s.feature;
+
+INSERT INTO products (sku, name, description, price_paisa, currency, is_active)
+VALUES ('diwan-plan-licence', 'Diwan POS — Plan licence',
+        'Issued by an administrator after approving a plan request. The plan is recorded on the licence.', 0, 'PKR', 0)
+ON DUPLICATE KEY UPDATE sku = VALUES(sku);
+
+INSERT IGNORE INTO admin_settings (setting_key, setting_value) VALUES
+  ('license_period_days', '30'),
+  ('expiry_reminder_days', '7'),
+  ('allow_request_after_rejection', '1'),
+  ('admin_notification_email', '');
+
+-- =============================================================================
+-- Business workspaces and multi-counter sync (migration 017) — see
+-- docs/MULTI-COUNTER.md.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS businesses (
+  id                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  license_id             BIGINT UNSIGNED NOT NULL,
+  customer_id            BIGINT UNSIGNED NULL COMMENT 'Owner account; NULL for a licence with no account',
+  name                   VARCHAR(120)    NOT NULL,
+  sync_version           BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  seeded_by_terminal_id  BIGINT UNSIGNED NULL COMMENT 'The counter whose existing data started the workspace',
+  seed_started_at        DATETIME        NULL,
+  seed_completed_at      DATETIME        NULL COMMENT 'Other counters may join only after this',
+  pin_key_check          CHAR(16)        NULL COMMENT 'Id of the key counters seal staff PIN hashes with (never the key)',
+  created_at             DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at             DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_businesses_license (license_id),
+  KEY idx_businesses_customer (customer_id),
+  CONSTRAINT fk_businesses_license FOREIGN KEY (license_id) REFERENCES licenses (id),
+  CONSTRAINT fk_businesses_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS pos_terminals (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  business_id    BIGINT UNSIGNED NOT NULL,
+  activation_id  BIGINT UNSIGNED NOT NULL COMMENT 'The device slot this counter occupies',
+  code           CHAR(8)         NOT NULL COMMENT 'Short public id shown in reports',
+  name           VARCHAR(60)     NOT NULL,
+  install_id     CHAR(16)        NOT NULL COMMENT 'Prefix of the gids this counter mints',
+  token_hash     CHAR(64)        NOT NULL COMMENT 'sha256 of the bearer token; the token itself is never stored',
+  status         ENUM('active','revoked') NOT NULL DEFAULT 'active',
+  platform       VARCHAR(20)     NULL,
+  app_version    VARCHAR(32)     NULL,
+  joined_at      DATETIME        NULL COMMENT 'Set once the counter holds the business data; it may push only after this',
+  last_seen_at   DATETIME        NULL,
+  last_push_at   DATETIME        NULL,
+  last_pull_at   DATETIME        NULL,
+  pending_count  INT UNSIGNED    NULL COMMENT 'Changes waiting on the counter, as it last reported',
+  last_error     VARCHAR(255)    NULL COMMENT 'The counter''s last sync failure, as it reported',
+  last_error_at  DATETIME        NULL,
+  created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  revoked_at     DATETIME        NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pos_terminals_activation (activation_id),
+  UNIQUE KEY uq_pos_terminals_code (code),
+  UNIQUE KEY uq_pos_terminals_token (token_hash),
+  KEY idx_pos_terminals_business (business_id, status),
+  KEY idx_pos_terminals_install (business_id, install_id),
+  CONSTRAINT fk_pos_terminals_business FOREIGN KEY (business_id) REFERENCES businesses (id),
+  CONSTRAINT fk_pos_terminals_activation FOREIGN KEY (activation_id) REFERENCES license_activations (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sync_rows (
+  business_id        BIGINT UNSIGNED NOT NULL,
+  entity             VARCHAR(40)     NOT NULL,
+  gid                VARCHAR(64)     NOT NULL,
+  data               MEDIUMTEXT      NOT NULL COMMENT 'JSON; foreign keys are gids',
+  field_versions     MEDIUMTEXT      NULL COMMENT 'JSON {field: [version, terminal id]}',
+  deleted            TINYINT(1)      NOT NULL DEFAULT 0,
+  version            BIGINT UNSIGNED NOT NULL,
+  origin_terminal_id BIGINT UNSIGNED NULL COMMENT 'Counter that first sent this record',
+  updated_by_terminal_id BIGINT UNSIGNED NULL,
+  created_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (business_id, entity, gid),
+  KEY idx_sync_rows_version (business_id, version),
+  CONSTRAINT fk_sync_rows_business FOREIGN KEY (business_id) REFERENCES businesses (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sync_stock (
+  business_id  BIGINT UNSIGNED NOT NULL,
+  item_gid     VARCHAR(64)     NOT NULL,
+  qty          DECIMAL(18,4)   NOT NULL DEFAULT 0,
+  version      BIGINT UNSIGNED NOT NULL,
+  updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (business_id, item_gid),
+  KEY idx_sync_stock_version (business_id, version),
+  CONSTRAINT fk_sync_stock_business FOREIGN KEY (business_id) REFERENCES businesses (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS stock_ledger (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  business_id    BIGINT UNSIGNED NOT NULL,
+  event_key      VARCHAR(100)    NOT NULL COMMENT 'Unique per business and item: a replayed change is ignored',
+  item_gid       VARCHAR(64)     NOT NULL,
+  qty_change     DECIMAL(18,4)   NOT NULL,
+  balance_after  DECIMAL(18,4)   NOT NULL,
+  kind           ENUM('change','reservation','release') NOT NULL,
+  terminal_id    BIGINT UNSIGNED NULL,
+  created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_stock_ledger_event (business_id, event_key, item_gid),
+  KEY idx_stock_ledger_item (business_id, item_gid, id),
+  CONSTRAINT fk_stock_ledger_business FOREIGN KEY (business_id) REFERENCES businesses (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS stock_reservations (
+  business_id     BIGINT UNSIGNED NOT NULL,
+  reservation_key VARCHAR(100)    NOT NULL,
+  terminal_id     BIGINT UNSIGNED NOT NULL,
+  status          ENUM('committed','released') NOT NULL DEFAULT 'committed',
+  `lines`         TEXT            NOT NULL COMMENT 'JSON {item_gid: qty} actually taken',
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  released_at     DATETIME        NULL,
+  PRIMARY KEY (business_id, reservation_key),
+  CONSTRAINT fk_stock_reservations_business FOREIGN KEY (business_id) REFERENCES businesses (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sync_conflicts (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  business_id  BIGINT UNSIGNED NOT NULL,
+  terminal_id  BIGINT UNSIGNED NULL,
+  kind         VARCHAR(40)     NOT NULL COMMENT 'negative_stock | rejected_change | counter_reported',
+  entity       VARCHAR(40)     NULL,
+  gid          VARCHAR(64)     NULL,
+  detail       VARCHAR(500)    NOT NULL,
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  resolved_at  DATETIME        NULL,
+  resolved_by  BIGINT UNSIGNED NULL COMMENT 'admin_users.id',
+  PRIMARY KEY (id),
+  KEY idx_sync_conflicts_open (business_id, resolved_at),
+  CONSTRAINT fk_sync_conflicts_business FOREIGN KEY (business_id) REFERENCES businesses (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sync_media (
+  business_id  BIGINT UNSIGNED NOT NULL,
+  name         VARCHAR(100)    NOT NULL COMMENT 'File name the counters use (items.image_path / app_config.logo_path)',
+  bytes        INT UNSIGNED    NOT NULL,
+  terminal_id  BIGINT UNSIGNED NULL COMMENT 'Counter that uploaded it',
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (business_id, name),
+  CONSTRAINT fk_sync_media_business FOREIGN KEY (business_id) REFERENCES businesses (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sync_load (
+  hour_start  DATETIME     NOT NULL,
+  endpoint    VARCHAR(24)  NOT NULL COMMENT 'push | pull | reserve | media',
+  requests    INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (hour_start, endpoint)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS business_sales (
+  business_id    BIGINT UNSIGNED NOT NULL,
+  sale_gid       VARCHAR(64)     NOT NULL,
+  terminal_id    BIGINT UNSIGNED NULL COMMENT 'Counter that rang it up',
+  cashier_gid    VARCHAR(64)     NULL,
+  total_minor    BIGINT          NOT NULL,
+  payment_method VARCHAR(20)     NOT NULL,
+  sold_at        DATETIME        NOT NULL COMMENT 'The counter''s local time of sale',
+  deleted        TINYINT(1)      NOT NULL DEFAULT 0,
+  PRIMARY KEY (business_id, sale_gid),
+  KEY idx_business_sales_time (business_id, sold_at),
+  KEY idx_business_sales_terminal (business_id, terminal_id, sold_at),
+  CONSTRAINT fk_business_sales_business FOREIGN KEY (business_id) REFERENCES businesses (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

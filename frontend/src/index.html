@@ -111,14 +111,6 @@
             "image": "https://diwan.codehunts.co.uk/assets/og-image.jpg",
             "publisher": {
               "@id": "https://diwan.codehunts.co.uk/#organization"
-            },
-            "offers": {
-              "@type": "AggregateOffer",
-              "lowPrice": "8000",
-              "highPrice": "25000",
-              "priceCurrency": "PKR",
-              "offerCount": "3",
-              "url": "https://diwan.codehunts.co.uk/pricing.html"
             }
           }
         ]
@@ -269,7 +261,7 @@
             >
           </div>
           <p class="mt-4 text-[.84rem] text-faint">
-            One-time licence · Works offline · Windows, macOS, Linux &amp; Android
+            Monthly plans · Works offline · Windows, macOS, Linux &amp; Android
           </p>
 
           <!-- Product mockup: no image asset, drawn in CSS to keep page weight down -->
@@ -412,15 +404,15 @@
           class="mx-auto grid w-full max-w-[1180px] grid-cols-4 gap-8 px-[clamp(1.25rem,4vw,2rem)] py-10 max-[760px]:grid-cols-2 max-[760px]:gap-y-7"
         >
           <div>
-            <p class="text-[1.5rem] font-bold tracking-[-.02em]">One-time</p>
+            <p class="text-[1.5rem] font-bold tracking-[-.02em]">Monthly</p>
             <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
-              Pay once in Rupees. No subscription, no automatic renewal.
+              Billed per month in Rupees. No online payment — approved by our team.
             </p>
           </div>
           <div>
             <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
             <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
-              Windows, macOS, Linux and Android, unlocked by one licence key.
+              Desktop builds on every plan; Android and iOS where your plan includes the app.
             </p>
           </div>
           <div>
@@ -510,12 +502,12 @@
                 03
               </p>
               <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
-                One payment, then it's yours
+                Monthly plans, no card form
               </h3>
               <p class="text-[.88rem] leading-[1.65] text-muted">
-                A one-time licence in Rupees, updates downloaded with the same
-                key you already own, and a full refund within 14 days as long as
-                the key is still unactivated.
+                Pick a plan and our team approves it — nothing is paid online.
+                Updates download with the same key for as long as your plan is
+                active.
               </p>
             </article>
 
@@ -625,7 +617,7 @@
               </h3>
               <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
                 Customer receipts and kitchen chits from the same terminal, on
-                USB or network printers. Standard edition and up.
+                USB or network printers, on every plan.
               </p>
               <ul
                 class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
@@ -649,7 +641,7 @@
               </h3>
               <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
                 Every sale decrements stock as it is rung up. Core billing and
-                inventory are in the Starter edition, not an upgrade.
+                inventory are in every plan, not an upgrade.
               </p>
               <ul
                 class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
@@ -703,10 +695,10 @@
           >
             <li>
               <div>
-                <b>Choose your plan</b
+                <b>Request a plan</b
                 ><span
-                  >One-time payment in Rupees at checkout — Starter, Standard or
-                  Enterprise.</span
+                  >Pick the plan that fits and send a request — no online
+                  payment. We review it and approve your access.</span
                 >
               </div>
             </li>
@@ -714,8 +706,8 @@
               <div>
                 <b>Get your licence key</b
                 ><span
-                  >Emailed with your installer within about a minute, also kept
-                  in your dashboard.</span
+                  >As soon as your request is approved it appears in your
+                  dashboard, and we email you too.</span
                 >
               </div>
             </li>
@@ -754,9 +746,9 @@
               One key, four platforms.
             </h2>
             <p class="text-[1rem] leading-[1.7] text-muted">
-              The builds are not sold separately — a single licence key unlocks
-              all four, so Windows or Linux can run the counter while a handheld
-              runs Android. The network is required once, for activation; not to
+              The builds are not sold separately — the desktop builds come with
+              every plan, and the Android and iOS apps with plans that include
+              the mobile application. The network is required once, for activation; not to
               sell.
             </p>
           </div>
@@ -892,18 +884,11 @@
       </section>
 
       <!-- =========================================================
-         Pricing and download below are UNCHANGED in behaviour —
-         same form id, same fields, same API call, same data-plan
-         links. See js/main.js.
-
-         "Get Started" no longer checks out directly: it hands off to
-         /auth/login.html (which links on to signup), or straight to
-         checkout.html if already signed in, carrying the chosen plan
-         along either way.
-
-         Prices and inclusions here are duplicated on pricing.html and
-         products.html and quoted in terms.html. Change all four
-         together, plus the products table seed in database/schema.sql.
+         Pricing cards are rendered by js/plans.js from GET /api/plans.php —
+         the plans/features tables that also decide what a licence unlocks in
+         the app. Never type a price or a plan feature into this page; change
+         it in the admin panel (Plans & Features). "Request Access" goes to
+         sign-in, then to the request form in the dashboard (js/main.js).
          ========================================================= -->
 
       <!-- ================= 7. PRICING ================= -->
@@ -921,129 +906,16 @@
             <h2
               class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]"
             >
-              Simple pricing, one licence.
+              Simple monthly plans.
             </h2>
             <p class="text-[1.02rem] text-muted">
-              Pick the plan that matches how many counters you run. One-time
-              payment — no subscriptions, no surprise renewals.
+              Three monthly plans, from a single shop to your whole business.
+              There is no online payment: choose a plan, send a request, and we
+              review it and switch on your licence.
             </p>
           </div>
 
-          <div
-            class="grid grid-cols-3 items-start gap-6 max-[900px]:mx-auto max-[900px]:grid-cols-1 max-[900px]:max-w-[420px]"
-          >
-            <article
-              class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8"
-            >
-              <div>
-                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Starter</h3>
-                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
-                  For a single counter just getting started.
-                </p>
-              </div>
-              <p class="mb-6 flex items-baseline gap-2">
-                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
-                  >Rs 8,000</span
-                >
-                <span class="text-[.85rem] text-faint">one-time</span>
-              </p>
-              <a
-                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
-                href="auth/login.html?plan=diwan-pos-starter"
-                data-plan="diwan-pos-starter"
-                >Get Started</a
-              >
-              <div class="mt-7 mb-5 h-px bg-line"></div>
-              <p class="mb-4 text-[.82rem] font-semibold text-muted">
-                Everything in Starter includes:
-              </p>
-              <ul
-                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
-              >
-                <li>1 terminal licence</li>
-                <li>Core billing &amp; inventory</li>
-                <li>Offline-first sync</li>
-                <li>Email support</li>
-                <li>Free software updates</li>
-              </ul>
-            </article>
-
-            <article
-              class="relative flex flex-col rounded-lg border border-accent-dim bg-elevated px-7 py-8 shadow-[0_0_0_1px_var(--color-accent-dim),0_30px_60px_-30px_rgba(0,0,0,.8),0_0_60px_-20px_var(--color-glow)] max-[900px]:translate-y-0 max-[900px]:shadow-none -translate-y-4"
-            >
-              <p
-                class="absolute -top-[.85rem] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-[.9rem] py-[.35rem] text-[.72rem] font-bold uppercase tracking-[.03em] text-accent-ink shadow-[0_8px_20px_-6px_var(--color-accent)]"
-              >
-                Most popular
-              </p>
-              <div>
-                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Standard</h3>
-                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
-                  For growing shops running a few counters.
-                </p>
-              </div>
-              <p class="mb-6 flex items-baseline gap-2">
-                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
-                  >Rs 12,000</span
-                >
-                <span class="text-[.85rem] text-faint">one-time</span>
-              </p>
-              <a
-                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
-                href="auth/login.html?plan=diwan-pos-standard"
-                data-plan="diwan-pos-standard"
-                >Get Started</a
-              >
-              <div class="mt-7 mb-5 h-px bg-line"></div>
-              <p class="mb-4 text-[.82rem] font-semibold text-muted">
-                Everything in Standard includes:
-              </p>
-              <ul
-                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
-              >
-                <li>Up to 3 terminals, 1 branch</li>
-                <li>All core modules + reporting</li>
-                <li>Receipt &amp; kitchen printer support</li>
-                <li>Priority email support</li>
-                <li>Free software updates</li>
-              </ul>
-            </article>
-
-            <article
-              class="relative flex flex-col rounded-lg border border-line bg-surface px-7 py-8"
-            >
-              <div>
-                <h3 class="mb-1 text-[1.2rem] tracking-[-.01em]">Enterprise</h3>
-                <p class="mb-6 min-h-[2.6em] text-[.88rem] text-muted">
-                  For multi-branch chains.
-                </p>
-              </div>
-              <p class="mb-6 flex items-baseline gap-2">
-                <span class="text-[2.2rem] font-bold tracking-[-.03em]"
-                  >Rs 25,000</span
-                >
-                <span class="text-[.85rem] text-faint">one-time</span>
-              </p>
-              <a
-                class="inline-flex w-full items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-6 py-[.8rem] text-[.95rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
-                href="auth/login.html?plan=diwan-pos-enterprise"
-                data-plan="diwan-pos-enterprise"
-                >Get Started</a
-              >
-              <div class="mt-7 mb-5 h-px bg-line"></div>
-              <p class="mb-4 text-[.82rem] font-semibold text-muted">
-                Everything in Enterprise includes:
-              </p>
-              <ul
-                class="checks flex flex-col gap-3 [&>li]:flex [&>li]:items-start [&>li]:gap-[.65rem] [&>li]:text-[.88rem]"
-              >
-                <li>Unlimited terminals, multi-branch</li>
-                <li>All modules + multi-branch sync</li>
-                <li>Priority phone &amp; email support</li>
-                <li>Free software updates</li>
-              </ul>
-            </article>
-          </div>
+          <div class="pricing__grid" data-plans aria-live="polite"></div>
 
           <p class="mt-11 text-center">
             <a
@@ -1053,8 +925,9 @@
             >
           </p>
           <p class="mx-auto mt-8 max-w-[62ch] text-center text-[.92rem] leading-[1.7] text-muted">
-            Not ready to buy? <a class="font-semibold text-accent hover:underline" href="/auth/signup.html">Start a free 30-day trial</a>
-            — one device, no payment required, one trial per account.
+            How it works: <a class="font-semibold text-accent hover:underline" href="/auth/signup.html">create an account</a>,
+            request the plan you want, and we approve it — usually within one
+            business day. Your licence key then appears in your dashboard.
           </p>
         </div>
       </section>
@@ -1127,7 +1000,7 @@
               >
                 <li>Downloaded with your existing key</li>
                 <li>Free software updates</li>
-                <li>One-time payment, no renewal</li>
+                <li>Monthly plans, no online payment</li>
               </ul>
             </article>
 
@@ -1145,9 +1018,9 @@
               <ul
                 class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
               >
-                <li>Email support — all editions</li>
-                <li>Priority email — Standard and up</li>
-                <li>Phone support — Enterprise</li>
+                <li>Basic support — BASIC</li>
+                <li>Priority support — ADVANCE</li>
+                <li>Dedicated technical support — ALL-IN-ONE</li>
               </ul>
             </article>
 
@@ -1201,7 +1074,7 @@
               <summary
                 class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden"
               >
-                Is there a subscription?<span
+                How does billing work?<span
                   aria-hidden="true"
                   class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45"
                   >+</span
@@ -1210,10 +1083,7 @@
               <p
                 class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
               >
-                No. Diwan is a one-time purchase — Rs 8,000, Rs 12,000 or Rs
-                25,000 depending on the edition — with no automatic renewal.
-                Updates are downloaded later with the key you already own, at no
-                extra cost.
+                Each plan is priced per month. There is no online payment: you request a plan, our team approves it and agrees payment with you directly, and your licence runs for the approved period. Renew from your dashboard; updates come with the same key.
               </p>
             </details>
 
@@ -1312,8 +1182,7 @@
                 Ask for a full refund within 14 days of purchase, as long as the
                 key has not been activated. You may download and inspect the
                 software first — only activation closes the window, and no
-                reason is required. Or try it first with a free 30-day trial on one
-                device, no payment required.
+                reason is required.
               </p>
             </details>
 
@@ -1445,6 +1314,7 @@
     </main>
 
     <script src="/js/api.js"></script>
+    <script src="/js/plans.js"></script>
     <script src="/js/main.js"></script>
 
     <footer class="border-t border-line bg-elevated py-14 pb-8">
@@ -1462,7 +1332,7 @@
             </a>
             <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">
               Keyboard-first point of sale for retail, restaurants and
-              pharmacies. One-time licence, works offline.
+              pharmacies. Monthly plans, works offline.
             </p>
           </div>
 

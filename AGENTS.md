@@ -3,7 +3,9 @@
 ## Project Structure & Module Organization
 Diwan combines a static storefront with a PHP payment, authentication, licensing, and download backend backed by MySQL.
 - `frontend/src/`: editable HTML, `css/`, `js/`, and `assets/`. `frontend/dist/` is generated and ignored; never edit it directly.
-- `backend/public/`: HTTP entrypoints served under `/api/`. Keep these thin; place business logic in domain modules under `backend/src/` (`Auth`, `Payment`, `License`, `Download`).
+- `backend/public/`: HTTP entrypoints served under `/api/`. Keep these thin; place business logic in domain modules under `backend/src/` (`Auth`, `Payment`, `License`, `Download`, `Plan`, `Admin`, `Notification`). Admin endpoints are `admin-*.php` and start with `AdminGuard::require()`.
+- `frontend/src/admin/`: the private admin panel (static; every figure and action comes from `/api/admin-*.php`). Plans and their features live in the database (`Diwan\Plan\PlanCatalog`) — never type a price or a plan feature into HTML; `js/plans.js` renders the cards. See `docs/PLANS-AND-ADMIN.md`.
+- `backend/src/Workspace/`: one business workspace per licence, shared by its counters (POS terminals). `SyncEngine::ENTITIES` must match the POS's `workspace::spec::TABLES`; a counter's token is the only credential the sync endpoints accept and it alone decides the business — never read a business or customer id from a request. Stock changes only by keyed deltas (`stock_ledger`). A push that lists `fields` replaces only those fields (`SyncEngine::merge`). Photos are files in `private-storage/media/<business>/` served only through `pos-media.php` (`MediaStore`); PIN hashes arrive sealed by the counters and must never be unsealed or logged here. See `docs/MULTI-COUNTER.md`.
 - `database/schema.sql` and `database/migrations/`: full schema and incremental changes.
 - `scripts/`: development, smoke checks, and deployment utilities. `.github/workflows/` defines CI/deployment; `docs/` contains hosting instructions.
 

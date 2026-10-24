@@ -19,30 +19,61 @@ final class LicenseService
     /** Paid issuance only; the paid lifetime remains perpetual by default. */
     public function issueForOrder(PDO $pdo, int $orderId, string $email): array
     {
-        $this->requireOrderKind($pdo, $orderId, false);
+        $this->requireOrderKind($pdo, $orderId, 'paid');
         return $this->issue($pdo, $orderId, $email, Env::int('LICENSE_VALIDITY_DAYS', 0));
+    }
+
+    /**
+     * Admin-approved plan licence (LicenseRequestService::approve). The order
+     * is the zero-gateway `admin` order created for the request; the plan,
+     * the request, the approving administrator and the device limit are
+     * recorded on the licence itself.
+     */
+    public function issueForPlan(
+        PDO $pdo,
+        int $orderId,
+        string $email,
+        int $planId,
+        int $requestId,
+        int $adminId,
+        int $validityDays,
+        int $maxDevices
+    ): array {
+        $this->requireOrderKind($pdo, $orderId, 'admin');
+        return $this->issue($pdo, $orderId, $email, $validityDays, [
+            'plan_id'            => $planId,
+            'license_request_id' => $requestId,
+            'issued_by'          => $adminId,
+            'max_devices'        => max(1, $maxDevices),
+        ]);
     }
 
     /** TEMPORARY no-payment path. Trial duration never reads the paid setting. */
     public function issueTrialForOrder(PDO $pdo, int $orderId, string $email): array
     {
-        $this->requireOrderKind($pdo, $orderId, true);
+        $this->requireOrderKind($pdo, $orderId, 'trial');
         return $this->issue($pdo, $orderId, $email, TrialService::DAYS);
     }
 
-    private function requireOrderKind(PDO $pdo, int $orderId, bool $trial): void
+    /** $kind: 'paid' (a verified payment), 'trial' or 'admin' (an approved request). */
+    private function requireOrderKind(PDO $pdo, int $orderId, string $kind): void
     {
         $stmt = $pdo->prepare('SELECT gateway, status FROM orders WHERE id = :id');
         $stmt->execute(['id' => $orderId]);
         $order = $stmt->fetch();
-        if (!$order || ($order['gateway'] === 'trial') !== $trial
-            || $order['status'] !== ($trial ? 'fulfilled' : 'paid')) {
+        $eligible = $order !== false && match ($kind) {
+            'paid'  => !in_array($order['gateway'], ['trial', 'admin'], true) && $order['status'] === 'paid',
+            'trial' => $order['gateway'] === 'trial' && $order['status'] === 'fulfilled',
+            'admin' => $order['gateway'] === 'admin' && $order['status'] === 'fulfilled',
+        };
+        if (!$eligible) {
             throw new RuntimeException('Order is not eligible for this licence issuance path.');
         }
     }
 
     /** Shared key storage only: trial eligibility and payments stay separate. */
-    private function issue(PDO $pdo, int $orderId, string $email, int $validityDays): array
+    /** $extra: additional licences columns (plan-issued licences only). */
+    private function issue(PDO $pdo, int $orderId, string $email, int $validityDays, array $extra = []): array
     {
         $existing = $pdo->prepare('SELECT id FROM licenses WHERE order_id = :order LIMIT 1');
         $existing->execute(['order' => $orderId]);
@@ -68,12 +99,14 @@ final class LicenseService
             ? 'DATE_ADD(NOW(), INTERVAL :validity_days DAY)'
             : 'NULL';
 
+        $extraColumns = implode('', array_map(static fn (string $c): string => ", {$c}", array_keys($extra)));
+        $extraValues  = implode('', array_map(static fn (string $c): string => ", :{$c}", array_keys($extra)));
         $stmt = $pdo->prepare(
             'INSERT INTO licenses (order_id, customer_id, license_key_hash, license_key_encrypted,
                                    license_key_prefix, customer_email, status, max_downloads,
-                                   downloads_used, expires_at, created_at)
+                                   downloads_used, expires_at, created_at' . $extraColumns . ')
              SELECT :order, o.customer_id, :hash, :enc, :prefix, :email, "active", :max, 0,
-                    ' . $expiresSql . ', NOW()
+                    ' . $expiresSql . ', NOW()' . $extraValues . '
                FROM orders o WHERE o.id = :order_lookup'
         );
 
@@ -89,21 +122,24 @@ final class LicenseService
         if ($validityDays > 0) {
             $params['validity_days'] = $validityDays;
         }
-        $stmt->execute($params);
+        $stmt->execute($params + $extra);
+        $licenseId = (int) $pdo->lastInsertId();
 
         Logger::info('Licence issued', ['order_id' => $orderId, 'prefix' => substr($key, 0, 11)]);
 
-        return ['license_key' => $key, 'already_issued' => false];
+        return ['license_key' => $key, 'already_issued' => false, 'license_id' => $licenseId];
     }
 
     /** Looks up an active, unexpired licence by the key the customer pasted. */
     public function findActive(string $key): ?array
     {
         $stmt = Database::pdo()->prepare(
-            'SELECT * FROM licenses
-              WHERE license_key_hash = :hash
-                AND status = "active"
-                AND (expires_at IS NULL OR expires_at > NOW())
+            'SELECT l.* FROM licenses l
+          LEFT JOIN customers c ON c.id = l.customer_id
+              WHERE l.license_key_hash = :hash
+                AND l.status = "active"
+                AND (l.expires_at IS NULL OR l.expires_at > NOW())
+                AND (c.status IS NULL OR c.status = "active")
               LIMIT 1'
         );
         $stmt->execute(['hash' => $this->hash($this->normalize($key))]);
@@ -121,7 +157,7 @@ final class LicenseService
             'SELECT l.id, l.license_key_encrypted, l.customer_email
                FROM licenses l
                JOIN orders o ON o.id = l.order_id
-              WHERE l.id = :license AND o.customer_id = :customer
+              WHERE l.id = :license AND o.customer_id = :customer AND l.status <> "revoked"
               LIMIT 1'
         );
         $stmt->execute(['license' => $licenseId, 'customer' => $customerId]);
@@ -151,19 +187,21 @@ final class LicenseService
     }
 
     /**
-     * One-time device activation. `activation_status` is separate from the
-     * entitlement `status` used by findActive()/downloads: a licence can be
-     * fully entitled and still "unused" the first time this runs.
+     * Device activation, up to the licence's `max_devices` (1 unless the plan
+     * or an administrator allows more). `activation_status` is separate from
+     * the entitlement `status` used by findActive()/downloads: a licence can
+     * be fully entitled and still "unused" the first time this runs.
      *
-     * Locks the row (SELECT ... FOR UPDATE) so two activation calls racing on
-     * the same key cannot both observe "unused" and both win — the second
-     * one always sees the first one's write.
+     * Locks the licence row (SELECT ... FOR UPDATE) so two activations racing
+     * for the last free slot cannot both take it.
      *
      * Returns one of:
-     *   invalid_key             — key doesn't exist, or is revoked/expired
-     *   activated                — first activation, now bound to this device
-     *   already_active_same_device — re-activation from the bound device (no-op, success)
-     *   device_mismatch          — bound to a different device
+     *   invalid_key                 — key doesn't exist, is revoked/suspended/
+     *                                 expired, or the account is suspended
+     *   activated                   — this device now holds a slot
+     *   already_active_same_device  — this device already held one (no-op)
+     *   device_mismatch             — every slot is taken by other devices
+     *                                 (with `max_devices`)
      */
     public function activate(string $rawKey, string $fingerprintHash, ?string $machineHint): array
     {
@@ -171,51 +209,84 @@ final class LicenseService
 
         return Database::transaction(function (PDO $pdo) use ($hash, $fingerprintHash, $machineHint) {
             $stmt = $pdo->prepare(
-                'SELECT id, activation_status, activated_machine_hash,
-                        (status = "active" AND (expires_at IS NULL OR expires_at > NOW())) AS entitled
-                   FROM licenses
-                  WHERE license_key_hash = :hash
+                'SELECT l.id, l.max_devices,
+                        (l.status = "active" AND (l.expires_at IS NULL OR l.expires_at > NOW())
+                         AND (c.status IS NULL OR c.status = "active")) AS entitled
+                   FROM licenses l
+              LEFT JOIN customers c ON c.id = l.customer_id
+                  WHERE l.license_key_hash = :hash
                   LIMIT 1 FOR UPDATE'
             );
             $stmt->execute(['hash' => $hash]);
             $license = $stmt->fetch();
 
-            if (!$license) {
+            // Same response for "doesn't exist" and "not entitled": a revoked
+            // or suspended key must not be distinguishable from a wrong one.
+            if (!$license || !(bool) $license['entitled']) {
                 return ['result' => 'invalid_key'];
             }
+            $licenseId = (int) $license['id'];
 
-            if (!(bool) $license['entitled']) {
-                // Same response as "doesn't exist" — a revoked/expired key
-                // must not be distinguishable from a wrong one.
-                return ['result' => 'invalid_key'];
+            if ($this->hasActiveDevice($pdo, $licenseId, $fingerprintHash)) {
+                $pdo->prepare(
+                    'UPDATE license_activations SET last_seen_at = NOW()
+                      WHERE license_id = :id AND machine_hash = :fp'
+                )->execute(['id' => $licenseId, 'fp' => $fingerprintHash]);
+                return ['result' => 'already_active_same_device', 'license_id' => $licenseId];
             }
 
-            if ($license['activation_status'] === 'unused') {
-                $update = $pdo->prepare(
-                    'UPDATE licenses
-                        SET activation_status = "activated",
-                            activated_machine_hash = :fp,
-                            activated_machine_hint = :hint,
-                            activated_at = NOW()
-                      WHERE id = :id'
-                );
-                $update->execute([
-                    'fp'   => $fingerprintHash,
-                    'hint' => $machineHint,
-                    'id'   => $license['id'],
-                ]);
-
-                return ['result' => 'activated', 'license_id' => (int) $license['id']];
+            $maxDevices = max(1, (int) $license['max_devices']);
+            if ($this->activeDeviceCount($pdo, $licenseId) >= $maxDevices) {
+                return ['result' => 'device_mismatch', 'max_devices' => $maxDevices];
             }
 
-            // Already activated: same device is a no-op success (app restarts,
-            // reinstalls without a machine-id change); different device is refused.
-            if (hash_equals((string) $license['activated_machine_hash'], $fingerprintHash)) {
-                return ['result' => 'already_active_same_device', 'license_id' => (int) $license['id']];
-            }
-
-            return ['result' => 'device_mismatch'];
+            $this->bindDevice($pdo, $licenseId, $fingerprintHash, $machineHint);
+            return ['result' => 'activated', 'license_id' => $licenseId];
         });
+    }
+
+    /** Whether this device currently holds one of the licence's slots. */
+    public function hasActiveDevice(PDO $pdo, int $licenseId, string $fingerprintHash): bool
+    {
+        $stmt = $pdo->prepare(
+            'SELECT 1 FROM license_activations
+              WHERE license_id = :id AND machine_hash = :fp AND deactivated_at IS NULL'
+        );
+        $stmt->execute(['id' => $licenseId, 'fp' => $fingerprintHash]);
+        return $stmt->fetchColumn() !== false;
+    }
+
+    public function activeDeviceCount(PDO $pdo, int $licenseId): int
+    {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM license_activations WHERE license_id = :id AND deactivated_at IS NULL'
+        );
+        $stmt->execute(['id' => $licenseId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Gives this device a slot (re-using its old row if an administrator had
+     * freed it). The licence's own activated_machine_* columns keep the first
+     * binding for older readers. The caller holds the licence row lock and
+     * has already checked the device limit.
+     */
+    public function bindDevice(PDO $pdo, int $licenseId, string $fingerprintHash, ?string $machineHint): void
+    {
+        $pdo->prepare(
+            'INSERT INTO license_activations (license_id, machine_hash, machine_hint, activated_at, last_seen_at)
+             VALUES (:id, :fp, :hint, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE deactivated_at = NULL, activated_at = NOW(), last_seen_at = NOW(),
+                                     machine_hint = COALESCE(VALUES(machine_hint), machine_hint)'
+        )->execute(['id' => $licenseId, 'fp' => $fingerprintHash, 'hint' => $machineHint]);
+        $pdo->prepare(
+            'UPDATE licenses
+                SET activation_status = "activated",
+                    activated_machine_hash = COALESCE(activated_machine_hash, :fp),
+                    activated_machine_hint = COALESCE(activated_machine_hint, :hint),
+                    activated_at = COALESCE(activated_at, NOW())
+              WHERE id = :id'
+        )->execute(['fp' => $fingerprintHash, 'hint' => $machineHint, 'id' => $licenseId]);
     }
 
     /**
@@ -244,14 +315,18 @@ final class LicenseService
     public function statusForDevice(string $rawKey, string $fingerprintHash): array
     {
         $stmt = Database::pdo()->prepare(
-            'SELECT status, activation_status, activated_machine_hash,
-                    UNIX_TIMESTAMP(expires_at) AS expires_ts,
-                    (expires_at IS NOT NULL AND expires_at <= NOW()) AS past_expiry
-               FROM licenses
-              WHERE license_key_hash = :hash
+            'SELECT l.id, l.status, l.plan_id, l.activation_status, a.id AS activation_id,
+                    c.status AS customer_status,
+                    UNIX_TIMESTAMP(l.expires_at) AS expires_ts,
+                    (l.expires_at IS NOT NULL AND l.expires_at <= NOW()) AS past_expiry
+               FROM licenses l
+          LEFT JOIN customers c ON c.id = l.customer_id
+          LEFT JOIN license_activations a
+                 ON a.license_id = l.id AND a.machine_hash = :fp AND a.deactivated_at IS NULL
+              WHERE l.license_key_hash = :hash
               LIMIT 1'
         );
-        $stmt->execute(['hash' => $this->hash($this->normalize($rawKey))]);
+        $stmt->execute(['hash' => $this->hash($this->normalize($rawKey)), 'fp' => $fingerprintHash]);
         $license = $stmt->fetch();
 
         if (!$license) {
@@ -260,17 +335,29 @@ final class LicenseService
         if ($license['activation_status'] !== 'activated') {
             return ['result' => 'not_activated'];
         }
-        if (!hash_equals((string) $license['activated_machine_hash'], $fingerprintHash)) {
+        // Not one of this licence's devices (or an administrator freed its
+        // slot): the same answer as a wrong key.
+        if ($license['activation_id'] === null) {
             return ['result' => 'unknown'];
         }
+
+        Database::pdo()->prepare('UPDATE license_activations SET last_seen_at = NOW() WHERE id = :id')
+            ->execute(['id' => $license['activation_id']]);
 
         $status = $license['status'];
         if ($status === 'active' && (bool) $license['past_expiry']) {
             $status = 'expired';
         }
+        // A suspended account suspends every licence it owns, without
+        // touching the licences themselves — reactivating restores them.
+        if ($license['customer_status'] === 'suspended' && in_array($status, ['active', 'expired'], true)) {
+            $status = 'suspended';
+        }
 
         return [
             'result'     => 'ok',
+            'license_id' => (int) $license['id'],
+            'plan_id'    => $license['plan_id'] === null ? null : (int) $license['plan_id'],
             'status'     => $status,
             'expires_at' => $license['expires_ts'] === null ? null : (int) $license['expires_ts'],
         ];
@@ -285,26 +372,21 @@ final class LicenseService
      */
     public function findLicenseForDevice(string $rawKey, string $fingerprintHash): ?array
     {
-        $stmt = \Diwan\Database\Database::pdo()->prepare(
-            'SELECT id, customer_id, customer_email, status, activation_status, activated_machine_hash,
-                    (expires_at IS NOT NULL AND expires_at <= NOW()) AS past_expiry
-               FROM licenses
-              WHERE license_key_hash = :hash
+        $stmt = Database::pdo()->prepare(
+            'SELECT l.id, l.customer_id, l.customer_email, l.status
+               FROM licenses l
+               JOIN license_activations a
+                 ON a.license_id = l.id AND a.machine_hash = :fp AND a.deactivated_at IS NULL
+          LEFT JOIN customers c ON c.id = l.customer_id
+              WHERE l.license_key_hash = :hash
+                AND l.status = "active"
+                AND (l.expires_at IS NULL OR l.expires_at > NOW())
+                AND (c.status IS NULL OR c.status = "active")
               LIMIT 1'
         );
-        $stmt->execute(['hash' => $this->hash($this->normalize($rawKey))]);
+        $stmt->execute(['hash' => $this->hash($this->normalize($rawKey)), 'fp' => $fingerprintHash]);
         $license = $stmt->fetch();
-
         if (!$license) {
-            return null;
-        }
-        if ($license['activation_status'] !== 'activated') {
-            return null;
-        }
-        if (!hash_equals((string) $license['activated_machine_hash'], $fingerprintHash)) {
-            return null;
-        }
-        if ($license['status'] !== 'active' || (bool) $license['past_expiry']) {
             return null;
         }
 
@@ -314,6 +396,34 @@ final class LicenseService
             'customer_email' => (string) $license['customer_email'],
             'status'         => (string) $license['status'],
         ];
+    }
+
+    /**
+     * A fresh key for an existing licence (an administrator rotating a leaked
+     * key). The old key stops working at once; the licence keeps its plan,
+     * expiry and device slots, so a device that enters the new key
+     * re-activates into the slot it already held. Returns the new key — the
+     * only time it is in plaintext outside the owner's dashboard.
+     */
+    public function rotateKey(PDO $pdo, int $licenseId): string
+    {
+        $key = $this->generateKey();
+        $pdo->prepare(
+            'UPDATE licenses SET license_key_hash = :hash, license_key_encrypted = :enc, license_key_prefix = :prefix
+              WHERE id = :id'
+        )->execute([
+            'hash'   => $this->hash($key),
+            'enc'    => $this->encrypt($key),
+            'prefix' => substr($key, 0, 11),
+            'id'     => $licenseId,
+        ]);
+        return $key;
+    }
+
+    /** The value a licence is looked up by (`license_key_hash`) for a key as typed. */
+    public function lookupHash(string $rawKey): string
+    {
+        return $this->hash($this->normalize($rawKey));
     }
 
     /** The canonical form of a key as the app must store and resend it. */

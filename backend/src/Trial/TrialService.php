@@ -10,7 +10,9 @@ use PDO;
 use RuntimeException;
 
 /**
- * TEMPORARY no-payment onboarding. Disable TRIAL_SIGNUP_ENABLED to stop new
+ * Optional free trial. OFF unless TRIAL_SIGNUP_ENABLED=true: since plan
+ * licensing (migration 016) a licence is normally issued only when an
+ * administrator approves a request. Disable TRIAL_SIGNUP_ENABLED to stop new
  * grants; keep historical orders/grants when introducing paid upgrades.
  * Call inside the account creation or authenticated trial-start transaction.
  */
@@ -58,7 +60,7 @@ final class TrialService
             return ['status' => 'existing_trial'];
         }
 
-        if (!Env::bool('TRIAL_SIGNUP_ENABLED', true)) {
+        if (!Env::bool('TRIAL_SIGNUP_ENABLED', false)) {
             return ['status' => 'disabled'];
         }
 

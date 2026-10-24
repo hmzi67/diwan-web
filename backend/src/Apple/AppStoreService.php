@@ -252,7 +252,8 @@ final class AppStoreService
             if (!$license || $license['activation_status'] !== 'activated') {
                 return 'unused';
             }
-            if (hash_equals((string) $license['activated_machine_hash'], $fingerprintHash)) {
+            $licenses = new LicenseService();
+            if ($licenses->hasActiveDevice($pdo, $licenseId, $fingerprintHash)) {
                 return 'same_device';
             }
             if (!(bool) $license['may_move']) {
@@ -264,6 +265,10 @@ final class AppStoreService
                         last_reactivated_at = NOW(), reactivated_count = reactivated_count + 1
                   WHERE id = :id'
             )->execute(['fp' => $fingerprintHash, 'hint' => $hint, 'id' => $licenseId]);
+            // A move, not an extra device: the old one gives up its slot.
+            $pdo->prepare('UPDATE license_activations SET deactivated_at = NOW() WHERE license_id = :id AND deactivated_at IS NULL')
+                ->execute(['id' => $licenseId]);
+            $licenses->bindDevice($pdo, $licenseId, $fingerprintHash, $hint);
             Logger::info('App Store licence moved to a new device', ['license_id' => $licenseId]);
             return 'moved';
         });

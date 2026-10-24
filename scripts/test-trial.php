@@ -71,7 +71,7 @@ if (($argv[2] ?? '') === '--claim') {
 }
 
 // A separate invocation verifies the kill switch without changing application config.
-if (!Env::bool('TRIAL_SIGNUP_ENABLED', true)) {
+if (!Env::bool('TRIAL_SIGNUP_ENABLED', false)) {
     $pdo->beginTransaction();
     try {
         $id = TestKit::customer($pdo);

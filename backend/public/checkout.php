@@ -23,6 +23,13 @@ use Diwan\Support\Logger;
 
 Http::requireMethod('POST');
 
+// Online payment is switched off: plans are requested and approved by an
+// administrator instead (license-requests.php). Gateway webhooks stay live
+// so an order paid before the switch is still fulfilled.
+if (!Diwan\Config\Env::bool('PAYMENTS_ENABLED', false)) {
+    Http::fail('Online checkout is not available. Choose a plan on the pricing page to request access.', 410);
+}
+
 $customerId = Session::customerId();
 if ($customerId === null) {
     Http::fail('Please log in first.', 401);

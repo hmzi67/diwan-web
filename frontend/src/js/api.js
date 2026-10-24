@@ -12,13 +12,16 @@
     }
   }
 
+  // Sent with every request — the admin panel sets its CSRF token here.
+  const extraHeaders = {};
+
   // Never rejects for an HTTP error status: callers branch on `ok`/`status`.
   // Rejects only when the server could not be reached at all.
   async function request(method, path, body) {
     const res = await fetch(BASE + path, {
       method,
       credentials: 'same-origin',
-      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      headers: { ...extraHeaders, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
@@ -48,5 +51,9 @@
     postJson: (path, body = {}) => unwrap(request('POST', path, body)),
     setStatus,
     ApiError,
+    setHeader: (name, value) => {
+      if (value === null) delete extraHeaders[name];
+      else extraHeaders[name] = value;
+    },
   };
 })();

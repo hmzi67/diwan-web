@@ -6,7 +6,9 @@ and an inactive `diwan-pos-trial` SKU. The full schema includes the same changes
 Do not run an older copy of migration 005: only the updated version excludes
 trial orders from the historical paid-expiry repair.
 
-`TRIAL_SIGNUP_ENABLED=true` enables new grants (the temporary default). This is
+Since plan licensing (migration 016, `docs/PLANS-AND-ADMIN.md`) trials are
+**off by default**: a trial issues a licence without an administrator's
+approval. `TRIAL_SIGNUP_ENABLED=true` enables new grants. This is
 also an environment-level GitHub deployment Variable. Set it to the string
 `false` and redeploy to stop new grants; existing trial and paid access continues.
 `LICENSE_VALIDITY_DAYS=0` remains the perpetual paid-licence setting. Trials use

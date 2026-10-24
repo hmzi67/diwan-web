@@ -22,6 +22,46 @@ final class TestKit
     /** Versions of fixture releases start with this. */
     public const RELEASE_PREFIX = 'test-';
 
+    /** Codes of fixture plans and features start with this. */
+    public const CODE_PREFIX = 'test_';
+
+    /** Highest ids before the run, for rows that carry no fixture marker. */
+    private static array $baseline = [];
+
+    /** Records where shared append-only tables stood, so cleanup() removes only this run's rows. */
+    public static function begin(): void
+    {
+        foreach (['notifications', 'audit_logs'] as $table) {
+            self::$baseline[$table] = (int) Database::pdo()->query("SELECT COALESCE(MAX(id), 0) FROM {$table}")->fetchColumn();
+        }
+    }
+
+    /** An administrator fixture; returns the admin row AdminGuard would. */
+    public static function admin(string $password = 'correct horse battery'): array
+    {
+        $id = Diwan\Admin\AdminAuth::createOrReset(self::email(), 'Test Admin', $password, false);
+        $stmt = Database::pdo()->prepare('SELECT id, email, name, session_epoch, last_login_at FROM admin_users WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch();
+    }
+
+    /** A verified customer, as plan requests require. */
+    public static function verifiedCustomer(): int
+    {
+        $id = self::customer();
+        self::exec('UPDATE customers SET email_verified_at = NOW() WHERE id = :id', ['id' => $id]);
+        return $id;
+    }
+
+    /** Submits and approves a request; returns [approval result, customer id]. */
+    public static function approvedPlan(string $plan = 'basic', ?int $customerId = null): array
+    {
+        $customerId ??= self::verifiedCustomer();
+        $request = (new Diwan\License\LicenseRequestService())->submit($customerId, $plan, ['business_name' => 'Test Shop']);
+        $result = (new Diwan\License\LicenseRequestService())->approve((int) $request['id'], self::admin());
+        return [$result, $customerId];
+    }
+
     /** RFC 5737 TEST-NET-3: never a real client address. */
     public static function ip(): string
     {
@@ -127,21 +167,44 @@ final class TestKit
 
         // MySQL refuses a subquery on the table being deleted from, hence the
         // derived tables (SELECT id FROM (...) t).
+        $codes = ['code' => self::CODE_PREFIX . '%'];
+        $businesses = "SELECT id FROM businesses WHERE license_id IN (SELECT id FROM ({$licenses}) t)";
         $statements = [
+            "DELETE FROM business_sales WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM sync_media WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM sync_conflicts WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM stock_reservations WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM stock_ledger WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM sync_stock WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM sync_rows WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM pos_terminals WHERE business_id IN ({$businesses})" => $domain,
+            "DELETE FROM businesses WHERE license_id IN (SELECT id FROM ({$licenses}) t)" => $domain,
+            "DELETE FROM download_events WHERE customer_id IN ({$customers})" => $domain,
+            "DELETE FROM download_events WHERE license_id IN (SELECT id FROM ({$licenses}) t)" => $domain,
+            'DELETE FROM download_events WHERE release_id IN (SELECT id FROM releases WHERE version LIKE :prefix)' => ['prefix' => self::RELEASE_PREFIX . '%'],
+            "DELETE FROM license_activations WHERE license_id IN (SELECT id FROM ({$licenses}) t)" => $domain,
             "DELETE FROM download_tokens WHERE license_id IN (SELECT id FROM ({$licenses}) t)" => $domain,
             "DELETE FROM webhook_events WHERE order_ref IN (SELECT order_ref FROM orders WHERE customer_id IN ({$customers}))" => $domain,
             "DELETE FROM trial_grants WHERE customer_id IN ({$customers})" => $domain,
             "DELETE FROM apple_transactions WHERE order_id IN (SELECT id FROM ({$orders}) t)" => $domain,
             "DELETE FROM licenses WHERE order_id IN (SELECT id FROM ({$orders}) t)" => $domain,
+            "DELETE FROM license_requests WHERE customer_id IN ({$customers})" => $domain,
             "DELETE FROM orders WHERE customer_id IN (SELECT id FROM ({$customers}) t)" => $domain,
             "DELETE FROM password_reset_tokens WHERE customer_id IN ({$customers})" => $domain,
             "DELETE FROM email_verification_tokens WHERE customer_id IN ({$customers})" => $domain,
+            "DELETE FROM notifications WHERE customer_id IN ({$customers})" => $domain,
             'DELETE FROM customers WHERE email LIKE :domain' => $domain,
+            'DELETE FROM admin_users WHERE email LIKE :domain' => $domain,
+            'DELETE FROM plans WHERE code LIKE :code' => $codes,
+            'DELETE FROM features WHERE code LIKE :code' => $codes,
             'DELETE FROM download_tokens WHERE release_id IN (SELECT id FROM releases WHERE version LIKE :prefix)' => ['prefix' => self::RELEASE_PREFIX . '%'],
             'DELETE FROM releases WHERE version LIKE :prefix' => ['prefix' => self::RELEASE_PREFIX . '%'],
             "DELETE FROM login_attempts WHERE ip LIKE '203.0.113.%'" => [],
             "DELETE FROM download_attempts WHERE ip LIKE '203.0.113.%'" => [],
             "DELETE FROM license_activation_attempts WHERE ip LIKE '203.0.113.%'" => [],
+            "DELETE FROM admin_login_attempts WHERE ip LIKE '203.0.113.%'" => [],
+            'DELETE FROM notifications WHERE id > :after' => ['after' => self::$baseline['notifications'] ?? PHP_INT_MAX],
+            'DELETE FROM audit_logs WHERE id > :after' => ['after' => self::$baseline['audit_logs'] ?? PHP_INT_MAX],
         ];
         foreach ($statements as $sql => $params) {
             self::exec($sql, $params);

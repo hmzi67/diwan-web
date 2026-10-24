@@ -13,9 +13,9 @@
 //              password checks out, and this page swaps in the resend panel.
 //
 // The `plan` query param rides through the whole flow. Someone who clicked a
-// pricing card lands here as ?plan=diwan-pos-standard, and after verifying or
-// signing in goes straight to that plan's checkout instead of the dashboard —
-// losing it would drop them at a generic page mid-purchase.
+// pricing card lands here as ?plan=advance, and after verifying or signing in
+// goes straight to that plan's request form in the dashboard — losing it
+// would drop them at a generic page mid-request.
 //
 // API calls go through DiwanApi (api.js): `post` resolves to {ok, status,
 // data} for every HTTP status and rejects only when the server is unreachable.
@@ -24,9 +24,9 @@ const params = new URLSearchParams(window.location.search);
 const plan = params.get('plan');
 const planQuery = plan ? `?plan=${encodeURIComponent(plan)}` : '';
 
-/** Where to go once authenticated: back to the chosen plan, else the dashboard. */
+/** Where to go once authenticated: the chosen plan's request form, else the dashboard. */
 function destination() {
-  return plan ? `/checkout.html${planQuery}` : '/dashboard.html';
+  return plan ? `/dashboard.html?request=${encodeURIComponent(plan)}#plan` : '/dashboard.html';
 }
 
 const { setStatus } = DiwanApi;
@@ -234,7 +234,7 @@ if (document.getElementById('reset-form') && !resetToken) {
 // Reached from the emailed link with the token in the query string. Redeems
 // it immediately — nobody clicks a verification link to look at a button —
 // and on success the backend has already started the session, so we just walk
-// on to the dashboard (or the plan checkout they started from).
+// on to the dashboard (or the plan request they started from).
 if (document.getElementById('verify-panel')) {
   const token = params.get('token');
   const status = document.getElementById('verify-status');
