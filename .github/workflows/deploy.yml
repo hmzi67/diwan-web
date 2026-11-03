@@ -483,16 +483,17 @@ jobs:
           rc=$?
           set -e
           # 0 = passed. 1 = a real failure (site broken, or something private is
-          # reachable) — must break the build. 2 = the host's edge blocked the
-          # runner, so nothing could be verified; that is not evidence the deploy
-          # is bad, so warn loudly and carry on. The same API checks already ran
+          # reachable) — must break the build. 2 = the runner could not get a
+          # usable answer (the host's edge blocked it, or no connection at all),
+          # so nothing could be verified; that is not evidence the deploy is bad,
+          # so warn loudly and carry on. The same API checks already ran
           # against this exact commit before the deploy (ci.yml, `verify` job),
           # so a blocked run here never means the build went out untested.
           if [ "$rc" -eq 2 ]; then
-            echo "::warning::Post-deploy smoke test was INCONCLUSIVE (edge blocked the runner). Pre-deploy checks passed; verify the live site manually."
+            echo "::warning::Post-deploy smoke test was INCONCLUSIVE (the runner was blocked or could not connect). Pre-deploy checks passed; verify the live site manually."
             exit 0
           fi
-          exit "$rc""
+          exit "$rc"
 
   # ==========================================================================
   # 3. PRODUCTION — dry run first, then a gated real deploy
@@ -954,13 +955,14 @@ jobs:
           rc=$?
           set -e
           # 0 = passed. 1 = a real failure (site broken, or something private is
-          # reachable) — must break the build. 2 = the host's edge blocked the
-          # runner, so nothing could be verified; that is not evidence the deploy
-          # is bad, so warn loudly and carry on. The same API checks already ran
+          # reachable) — must break the build. 2 = the runner could not get a
+          # usable answer (the host's edge blocked it, or no connection at all),
+          # so nothing could be verified; that is not evidence the deploy is bad,
+          # so warn loudly and carry on. The same API checks already ran
           # against this exact commit before the deploy (ci.yml, `verify` job),
           # so a blocked run here never means the build went out untested.
           if [ "$rc" -eq 2 ]; then
-            echo "::warning::Post-deploy smoke test was INCONCLUSIVE (edge blocked the runner). Pre-deploy checks passed; verify the live site manually."
+            echo "::warning::Post-deploy smoke test was INCONCLUSIVE (the runner was blocked or could not connect). Pre-deploy checks passed; verify the live site manually."
             exit 0
           fi
-          exit "$rc""
+          exit "$rc"

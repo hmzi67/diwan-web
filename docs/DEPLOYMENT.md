@@ -127,6 +127,10 @@ the workflow if:
   `/.env`, `/src/bootstrap.php`, the FTP state file, and others,
 - `download.php` accepts a request with no token or a bogus token.
 
+If the host blocks the runner or never answers it (403, 429 or no connection),
+the test can't check anything. It exits 2, and the deploy stays green with a
+warning, so **check the live site by hand when you see that warning**.
+
 Run it by hand any time:
 
 ```bash

@@ -12,7 +12,8 @@
 # NOTE ON EXIT CODES
 #   0  all checks passed
 #   1  a real failure — the site is broken, or something private is reachable
-#   2  the test could not run (bad usage, or the host's bot protection blocked us)
+#   2  the test could not run (bad usage, the host's bot protection blocked us,
+#      or no connection to the site at all)
 #
 # Exit 2 exists because a blocked run is NOT a passing run and NOT a failing
 # site. The host's CDN challenges datacenter IPs (which is what a CI runner is)
@@ -38,19 +39,25 @@ BASE="${1%/}"
 failures=0
 reachable=0
 
-# A plain curl looks like a bot to most CDNs. Presenting a normal browser UA
-# does not defeat a real JS challenge, but it avoids the trivial UA-only rules.
-UA="${SMOKE_UA:-Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36}"
-CURL=(curl -sS --max-time 25 -A "$UA")
+# curl's own user agent: Hostinger's CDN answers 429 to curl claiming to be a
+# browser, and 200 to plain curl. SMOKE_UA overrides it for other hosts.
+CURL=(curl -sS --max-time 25)
+if [[ -n "${SMOKE_UA-}" ]]; then CURL+=(-A "$SMOKE_UA"); fi
 
 # Signatures of an interstitial rather than our own content.
 CHALLENGE_RE='Checking your browser before accessing|/hcdn-cgi/|__cf_chl|Just a moment'
 
-code() { "${CURL[@]}" -o /dev/null -w '%{http_code}' -L "$1" 2>/dev/null || echo 000; }
+# curl already writes 000 when it gets no answer; the fallback is for when it writes nothing.
+code() {
+  local got; got="$("${CURL[@]}" -o /dev/null -w '%{http_code}' -L "$1" 2>/dev/null || true)"
+  echo "${got:-000}"
+}
 # No -L: an API answer is checked as given, never after a redirect.
 post_code() {
-  "${CURL[@]}" -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
-    --data "${2:-{\}}" "$1" 2>/dev/null || echo 000
+  local got
+  got="$("${CURL[@]}" -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+    --data "${2:-{\}}" "$1" 2>/dev/null || true)"
+  echo "${got:-000}"
 }
 body() { "${CURL[@]}" -L "$1" 2>/dev/null || true; }
 
@@ -118,14 +125,15 @@ if [[ "$reachable" -ne 1 ]]; then
   echo
   # Split "we were blocked" (inconclusive, exit 2) from "the site is wrong"
   # (a real failure, exit 1). A challenge page, a 403 or a 429 all mean the
-  # edge refused US; a 500 or a 404 on the homepage is the site's own problem
-  # and must still break the build.
-  if is_challenge "${home_body-}" || [[ "$home_code" == "403" || "$home_code" == "429" ]]; then
+  # edge refused US, and 000 means no answer reached us at all (the host drops
+  # connections from CI runners); a 500 or a 404 on the homepage is the site's
+  # own problem and must still break the build.
+  if is_challenge "${home_body-}" || [[ "$home_code" == "403" || "$home_code" == "429" || "$home_code" == "000" ]]; then
     cat >&2 <<MSG
-::warning::Smoke test could not run — the host's edge blocked this runner (HTTP ${home_code}).
+::warning::Smoke test could not run — the host's edge blocked this runner or never answered it (HTTP ${home_code}).
 
-Requests were refused by bot protection or rate limiting, so no assertion below
-can be trusted. THIS DOES NOT MEAN THE SITE IS DOWN — it means CI cannot see it.
+Requests were refused, rate limited or dropped before reaching the site, so no
+assertion below can be trusted. THIS DOES NOT MEAN THE SITE IS DOWN — it means CI cannot see it.
 Verify from a normal browser before assuming a problem.
 
 To fix, do one of:
