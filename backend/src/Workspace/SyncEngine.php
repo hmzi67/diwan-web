@@ -39,6 +39,7 @@ final class SyncEngine
         'order_items', 'order_status_events', 'attendance', 'salary_payments', 'customer_payments',
         'purchase_orders', 'purchase_order_items', 'goods_receipts', 'goods_receipt_items',
         'supplier_payments', 'stock_movements', 'stock_takes', 'stock_take_lines',
+        'departments', 'sub_categories', 'manufacturers', 'locations', 'bank_accounts',
     ];
 
     public const MAX_CHANGES = 500;
@@ -48,6 +49,7 @@ final class SyncEngine
     private const MAX_ROW_BYTES = 262144;
 
     /**
+     * @param array $ctx   the counter, or the owner's web dashboard (`terminal_id` null, see OwnerWorkspace)
      * @param array $input {changes: [{id, entity, gid, op, data}], stock: [{key, item_gid, qty, tag?}],
      *                      releases: [key], pending?: int, last_error?: string|null}
      */
@@ -95,7 +97,7 @@ final class SyncEngine
                 $fieldVersions = null;
                 if (!$deleted) {
                     $current->execute(['b' => $businessId, 'e' => $change['entity'], 'g' => $change['gid']]);
-                    [$merged, $fieldVersions, $overwritten] = self::merge($current->fetch() ?: null, $change, $version, $ctx['terminal_id']);
+                    [$merged, $fieldVersions, $overwritten] = self::merge($current->fetch() ?: null, $change, $version, (int) $ctx['terminal_id']);
                     if ($overwritten !== []) {
                         $this->conflict($pdo, $ctx, 'concurrent_edit', $change['entity'], $change['gid'],
                             'Two counters changed ' . implode(', ', $overwritten) . ' of this record at the same time; '
@@ -135,7 +137,9 @@ final class SyncEngine
 
             $pdo->prepare('UPDATE businesses SET sync_version = :v, pin_key_check = COALESCE(:k, pin_key_check) WHERE id = :b')
                 ->execute(['v' => $version, 'k' => $sealedWith, 'b' => $businessId]);
-            $this->report($pdo, $ctx, $input, 'last_push_at');
+            if ($ctx['terminal_id'] !== null) {
+                $this->report($pdo, $ctx, $input, 'last_push_at');
+            }
 
             return [
                 'accepted'          => $accepted,

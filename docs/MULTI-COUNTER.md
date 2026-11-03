@@ -345,6 +345,10 @@ room for about a thousand businesses with a few hundred photos each; the
 load panel (§9) shows when request volume, not storage, calls for bigger
 hosting.
 
+**Order for the owner's back office (§13).** No migration is needed. Deploy
+the site first, because the server must know the new record types before a
+POS build sends them, then release the POS build.
+
 ## 11. Tests
 
 ```sh
@@ -354,6 +358,15 @@ cd ../point-of-sale/src-tauri && cargo test workspace   # two real counter datab
 # End to end: two counter databases, the real PHP server (4 workers), real MySQL:
 DIWAN_LICENSE_API_BASE=http://127.0.0.1:8099/api DIWAN_LIVE_LICENSE_KEY=DIWAN-… \
   cargo test live_two_counters -- --ignored --nocapture
+```
+
+The owner's web dashboard end to end (the real endpoint, a real counter
+database and real MySQL), with the licence owner's session cookie:
+
+```sh
+php scripts/tests/run.php <test.env> business
+DIWAN_LICENSE_API_BASE=http://127.0.0.1:8099/api DIWAN_LIVE_LICENSE_KEY=DIWAN-… DIWAN_LIVE_SESSION=<cookie> \
+  cargo test live_web_dashboard -- --ignored --nocapture
 ```
 
 The live test:
@@ -390,3 +403,64 @@ The live test:
 - **iOS / Android** use the same code path, but were only exercised in this
   change through the desktop build and the tests; the same-network nudge is
   desktop only.
+
+## 13. The owner's back office (web dashboard)
+
+The customer dashboard's **Business** section reads and edits the same shared
+records the counters hold. It is `frontend/src/js/business.js`, calling
+`backend/public/business.php`, with the logic in `OwnerWorkspace` and
+`OwnerReports`.
+
+**How a web change reaches the app.**
+- A save calls `SyncEngine::push` with `terminal_id` null, the same path as a
+  counter's push. It takes the next `sync_version`, so every counter pulls it
+  on its next round: within 30 seconds, sooner when the business is busy.
+- A form sends only the fields that changed (`fields`, `base`), so an owner's
+  edit never overwrites what a counter changed meanwhile, and the reverse.
+- Records made on the web have gids starting `web:`, derived from the
+  dialog's `request_id`, so a retry after a lost reply lands on the same
+  record. Stock changes are keyed deltas with a `stock_movements` row, as on a
+  counter.
+- The open dashboard polls `view=head` every 30 seconds and redraws when the
+  business has changed.
+
+**Who may do what.** The session decides the customer and the customer decides
+the business; a `business` value only picks among the customer's own. An
+inactive licence can read but not write. Only fields in
+`OwnerWorkspace::SCHEMA` are ever written, so PIN hashes, stock levels and
+device settings cannot be set from a request.
+
+| Screen | Records | From the web |
+|---|---|---|
+| Dashboard, Reports | `business_sales`, sales, purchases, stock | Read only. Profit and loss uses the POS's definitions (`db/insights.rs`). |
+| Catalog | `departments`, `categories`, `sub_categories`, `manufacturers`, `locations` | Add, edit, delete |
+| Supplier, Customer, Bank | `suppliers`, `customers`, `bank_accounts` | Add, edit, delete; suppliers import from CSV. Balances are read only. |
+| Product, Services | `items` (`is_service`) | Add, edit, delete, change stock |
+| Purchases | `purchase_orders`, `goods_receipts`, `supplier_payments` | Create and receive, following `db/purchasing.rs` |
+| Sales, Refunds, In-progress orders | `sales`, `refunds`, `orders` | Read only: these are recorded on the POS |
+| Table management, Payout, Settings | `tables`, `expenses`, `app_config`, `counters`, `delivery_platforms` | Edit |
+
+**What the app does with the catalog.**
+- An inactive category leaves the billing screen with its items.
+- The item form offers sub category, manufacturer and location once any exist.
+- A **service** is sold without counting or checking stock: a sale leaves
+  `stock_qty` alone and asks the server for no reservation. `Item.stock_qty`
+  reads as a large stand-in, so billing's stock limits never stop it.
+- Department, sub category, manufacturer, location and bank account are managed
+  on the web only, and no report groups by them yet.
+
+**Older POS builds.** They ignore the new tables and columns and the server keeps
+those values, so nothing is lost. A service reads as out of stock there until
+the counter updates. An updated counter reads the whole business once more
+(`sync_state.catalog_pulled`), because it had skipped those records.
+
+**Known limits.**
+- A deleted record must be unused: the check looks for its gid in every record.
+  Anything in use can be marked inactive instead.
+- Checks run just before the push, outside the business lock. A counter creating
+  the same name offline in that instant gets it parked under *Needs a look*, as
+  in §4.
+- A customer's credit payment is taken on the POS, because the cash belongs to a
+  drawer. Staff accounts stay on the POS because their PINs are sealed.
+- Reports join JSON records in PHP. Sales are listed up to 2,000 per range.
+

@@ -188,6 +188,8 @@ expect      "$BASE/api/plans.php"                             200 "plans.php lis
 expect      "$BASE/api/license-requests.php"                  401 "license-requests.php needs a session"
 expect_post "$BASE/api/license-requests.php" '{"plan":"basic"}' 401 "a plan request needs a session"
 expect      "$BASE/api/notifications.php"                     401 "notifications.php needs a session"
+expect      "$BASE/api/business.php?view=context"             401 "business.php needs a session"
+expect_post "$BASE/api/business.php" '{"action":"save"}'      401 "business edits need a session"
 expect_post "$BASE/api/admin-login.php" '{}'                  422 "admin-login.php rejects an empty form"
 for admin_get in admin-session admin-dashboard admin-users admin-license-requests admin-licenses \
                  admin-plans admin-downloads admin-releases admin-notifications admin-audit-logs admin-settings; do
