@@ -4,19 +4,85 @@ declare(strict_types=1);
 namespace Diwan\Admin;
 
 use Diwan\Database\Database;
+use Diwan\Download\DownloadService;
+use Diwan\Download\GitHubReleases;
+use Diwan\Download\ReleaseRegistrar;
 use Diwan\Notification\NotificationService;
 use Diwan\Support\AuditLog;
+use Diwan\Support\Logger;
 use Diwan\Support\UserFacingException;
 use PDO;
+use RuntimeException;
 
 /**
  * Application versions: the `releases` catalogue that downloads are served
- * from. Releases are registered by scripts/sync-github-release.php (or by
- * hand); here an administrator can take a build offline, edit its notes and
- * tell licensed customers a new version is out.
+ * from. An administrator registers a published GitHub release here (or with
+ * scripts/sync-github-release.php), and can take a build offline, edit its
+ * notes and tell licensed customers a new version is out.
  */
 final class ReleaseAdmin
 {
+    /** What registering this tag would serve. Reads GitHub; changes nothing. */
+    public function previewGithub(string $tag): array
+    {
+        return self::describe($tag, ReleaseRegistrar::choose($this->githubAssets($tag)));
+    }
+
+    public function registerGithub(string $tag, array $admin): array
+    {
+        return $this->registerAssets($tag, $this->githubAssets($tag), $admin);
+    }
+
+    /**
+     * @param list<array{name:string,size:int}> $assets as GitHub reports them
+     */
+    public function registerAssets(string $tag, array $assets, array $admin): array
+    {
+        $chosen = ReleaseRegistrar::choose($assets);
+        if (!$chosen) {
+            throw new UserFacingException("Release {$tag} has no installers on it.", 422);
+        }
+        $summary = self::describe($tag, $chosen);
+        Database::transaction(static function (PDO $pdo) use ($tag, $chosen, $summary, $admin): void {
+            ReleaseRegistrar::save($pdo, $tag, $chosen);
+            AuditLog::record('admin', (int) $admin['id'], (string) $admin['email'], 'release.register', 'release', null,
+                ['tag' => $tag, 'platforms' => array_keys($chosen), 'not_on_release' => $summary['missing']], $pdo);
+        });
+        return $summary;
+    }
+
+    private function githubAssets(string $tag): array
+    {
+        if (!preg_match(ReleaseRegistrar::TAG_PATTERN, $tag)) {
+            throw new UserFacingException('Enter a release tag, like v1.3.3.', 422);
+        }
+        try {
+            return (new GitHubReleases())->assets($tag);
+        } catch (RuntimeException $e) {
+            Logger::warning('GitHub release lookup failed', ['tag' => $tag, 'error' => $e->getMessage()]);
+            throw new UserFacingException(
+                "Could not read release {$tag} from GitHub. Check the tag, and that the release has finished building: it stays a draft until every platform is done.",
+                422
+            );
+        }
+    }
+
+    private static function describe(string $tag, array $chosen): array
+    {
+        $builds = [];
+        foreach ($chosen as $platform => $variants) {
+            foreach ($variants as $variant => $asset) {
+                $builds[] = ['platform' => $platform, 'variant' => (string) $variant, 'filename' => $asset['name'], 'size_bytes' => $asset['size']];
+            }
+        }
+        return [
+            'tag'     => $tag,
+            'version' => ReleaseRegistrar::versionOf($tag),
+            'builds'  => $builds,
+            'missing' => array_values(array_diff(DownloadService::PLATFORMS, array_keys($chosen))),
+        ];
+    }
+
     public function update(int $releaseId, array $input, array $admin): void
     {
         Database::transaction(static function (PDO $pdo) use ($releaseId, $input, $admin): void {

@@ -1,6 +1,7 @@
 <?php
 /**
  * Registers the installers on a GitHub release as the active downloads.
+ * The admin panel's Application versions page does the same from a browser.
  *
  *   php scripts/sync-github-release.php v1.1.5            # write to the DB in .env
  *   php scripts/sync-github-release.php v1.1.5 --sql      # print SQL for phpMyAdmin
@@ -9,17 +10,7 @@
  *   ... --asset=windows=Diwan_x64-setup.exe               # override a pick
  *   ... --asset=macos:intel=Diwan_x64.dmg                 # override one variant
  *
- * Picking, per platform (anything else — .blockmap, .yml, .zip, .deb,
- * .tar.gz, checksums — is ignored):
- *   windows  a "-setup.exe" over any other .exe, then .msi; if the release has
- *            both a 64-bit and a 32-bit build, BOTH are registered (variants
- *            x64 / x86) and the customer chooses; otherwise one build, variant ''
- *   macos    .dmg over .pkg; if the release has both an Apple Silicon and an
- *            Intel build, BOTH are registered (variants apple-silicon / intel)
- *            and the customer chooses; otherwise one build, variant ''
- *   linux    every package format present, one variant each: appimage, deb,
- *            rpm (a 64-bit build over any other within a format)
- *   android  a "universal" .apk if there is one, else the largest
+ * What gets picked per platform is described on Diwan\Download\ReleaseRegistrar.
  *
  * Every chosen asset is upserted into `releases` as source = github. The
  * platform's other releases are deactivated first, so exactly this release's
@@ -33,6 +24,7 @@ use Diwan\Config\Env;
 use Diwan\Database\Database;
 use Diwan\Download\DownloadService;
 use Diwan\Download\GitHubReleases;
+use Diwan\Download\ReleaseRegistrar;
 
 if (PHP_SAPI !== 'cli') {
     exit(1);
@@ -63,7 +55,7 @@ foreach (array_slice($argv, 1) as $arg) {
         exit(2);
     }
 }
-if ($tag === null || !preg_match('/^[A-Za-z0-9._-]{1,64}$/', $tag)) {
+if ($tag === null || !preg_match(ReleaseRegistrar::TAG_PATTERN, $tag)) {
     fwrite(STDERR, $usage);
     exit(2);
 }
@@ -75,51 +67,6 @@ $log = static function (string $line) use ($mode): void {
     fwrite($mode === 'sql' ? STDERR : STDOUT, $line);
 };
 
-const EXTENSIONS = [
-    'exe' => 'windows', 'msi' => 'windows',
-    'dmg' => 'macos',   'pkg' => 'macos',
-    'appimage' => 'linux', 'deb' => 'linux', 'rpm' => 'linux',
-    'apk' => 'android',
-];
-
-/** CPU architecture from a file name: arm64, x64, x86, universal or ''. */
-function archOf(string $name): string
-{
-    $n = strtolower($name);
-    return match (true) {
-        (bool) preg_match('/aarch64|arm64|apple[-_]?silicon/', $n) => 'arm64',
-        (bool) preg_match('/x86[-_]64|x64|amd64|intel/', $n)       => 'x64',
-        (bool) preg_match('/x86|i[36]86|ia32|[-_]386/', $n)        => 'x86',
-        str_contains($n, 'universal')                              => 'universal',
-        default                                                    => '',
-    };
-}
-
-/** Higher is better; used to sort candidates for one slot. */
-function score(array $asset): array
-{
-    $name = strtolower($asset['name']);
-    $ext  = pathinfo($name, PATHINFO_EXTENSION);
-    $arch = archOf($name);
-    return [
-        match ($arch) { 'x64', 'arm64', 'universal' => 2, '' => 1, default => 0 },
-        match (true) {
-            $ext === 'exe' && str_contains($name, 'setup') => 3,
-            $ext === 'dmg', $ext === 'apk'                 => 3,
-            $ext === 'exe'                                 => 2,
-            default                                        => 1,   // .msi, .pkg
-        },
-        str_contains($name, 'universal') ? 1 : 0,
-        $asset['size'],
-    ];
-}
-
-function best(array $candidates): array
-{
-    usort($candidates, static fn (array $a, array $b): int => score($b) <=> score($a));
-    return $candidates[0];
-}
-
 try {
     $assets = (new GitHubReleases())->assets($tag);
 } catch (RuntimeException $e) {
@@ -130,7 +77,7 @@ try {
 $byName = array_column($assets, null, 'name');
 $byPlatform = [];
 foreach ($assets as $asset) {
-    $platform = EXTENSIONS[strtolower(pathinfo($asset['name'], PATHINFO_EXTENSION))] ?? null;
+    $platform = ReleaseRegistrar::platformOf($asset['name']);
     if ($platform === null) {
         $log("  skip      {$asset['name']}\n");
         continue;
@@ -138,42 +85,7 @@ foreach ($assets as $asset) {
     $byPlatform[$platform][] = $asset;
 }
 
-// Chosen builds: platform => [variant => asset].
-$chosen = [];
-foreach (DownloadService::PLATFORMS as $platform) {
-    $candidates = $byPlatform[$platform] ?? [];
-    if (!$candidates) {
-        continue;
-    }
-    if ($platform === 'linux') {
-        // Formats are not interchangeable (a .deb will not install on Fedora),
-        // so each one present is its own build.
-        $byFormat = [];
-        foreach ($candidates as $asset) {
-            $byFormat[strtolower(pathinfo($asset['name'], PATHINFO_EXTENSION))][] = $asset;
-        }
-        ksort($byFormat);
-        $chosen['linux'] = array_map('best', $byFormat);
-        continue;
-    }
-    if ($platform === 'windows') {
-        $x64 = array_values(array_filter($candidates, static fn ($a) => archOf($a['name']) === 'x64'));
-        $x86 = array_values(array_filter($candidates, static fn ($a) => archOf($a['name']) === 'x86'));
-        if ($x64 && $x86) {
-            $chosen['windows'] = ['x64' => best($x64), 'x86' => best($x86)];
-            continue;
-        }
-    }
-    if ($platform === 'macos') {
-        $arm   = array_values(array_filter($candidates, static fn ($a) => archOf($a['name']) === 'arm64'));
-        $intel = array_values(array_filter($candidates, static fn ($a) => archOf($a['name']) === 'x64'));
-        if ($arm && $intel) {
-            $chosen['macos'] = ['apple-silicon' => best($arm), 'intel' => best($intel)];
-            continue;
-        }
-    }
-    $chosen[$platform] = ['' => best($candidates)];
-}
+$chosen = ReleaseRegistrar::choose($assets);
 
 // Explicit --asset picks replace the automatic ones.
 foreach ($overrides as $slot => $name) {
@@ -190,7 +102,7 @@ foreach ($overrides as $slot => $name) {
     }
 }
 
-$version = ltrim($tag, 'vV');
+$version = ReleaseRegistrar::versionOf($tag);
 $log("\n");
 foreach (DownloadService::PLATFORMS as $platform) {
     if (empty($chosen[$platform])) {
@@ -215,12 +127,8 @@ if ($mode === 'dry') {
     exit(0);
 }
 
-$deactivate = 'UPDATE releases SET is_active = 0 WHERE platform = %s';
-$upsert = 'INSERT INTO releases (platform, variant, version, filename, storage_path, source, github_tag, github_asset, size_bytes, is_active, released_at)
-VALUES (%s, %s, %s, %s, \'\', \'github\', %s, %s, %d, 1, NOW())
-ON DUPLICATE KEY UPDATE filename = VALUES(filename), storage_path = \'\', source = \'github\',
-  github_tag = VALUES(github_tag), github_asset = VALUES(github_asset),
-  size_bytes = VALUES(size_bytes), is_active = 1';
+$deactivate = ReleaseRegistrar::DEACTIVATE_SQL;
+$upsert = ReleaseRegistrar::UPSERT_SQL;
 
 if ($mode === 'sql') {
     // Values come from GitHub asset names; quote them the way MySQL expects.
@@ -238,21 +146,5 @@ if ($mode === 'sql') {
     exit(0);
 }
 
-$pdo = Database::pdo();
-Database::transaction(static function () use ($pdo, $chosen, $version, $tag, $upsert, $deactivate): void {
-    foreach ($chosen as $platform => $builds) {
-        $pdo->prepare(sprintf($deactivate, ':platform'))->execute(['platform' => $platform]);
-        foreach ($builds as $variant => $asset) {
-            $pdo->prepare(sprintf($upsert, ':platform', ':variant', ':version', ':filename', ':tag', ':asset', $asset['size']))
-                ->execute([
-                    'platform' => $platform,
-                    'variant'  => (string) $variant,
-                    'version'  => $version,
-                    'filename' => $asset['name'],
-                    'tag'      => $tag,
-                    'asset'    => $asset['name'],
-                ]);
-        }
-    }
-});
+Database::transaction(static fn (PDO $pdo) => ReleaseRegistrar::save($pdo, $tag, $chosen));
 $log("\nRegistered {$tag} as the active release for: " . implode(', ', array_keys($chosen)) . "\n");

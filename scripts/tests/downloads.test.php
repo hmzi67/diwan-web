@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
 
+use Diwan\Admin\ReleaseAdmin;
 use Diwan\Download\DownloadDenied;
 use Diwan\Download\DownloadService;
+use Diwan\Download\ReleaseRegistrar;
+use Diwan\Support\UserFacingException;
 
 /** A local installer file in private storage plus its active release row. */
 function fixtureRelease(string $platform = 'windows', string $variant = ''): int
@@ -123,5 +126,54 @@ return [
         ), 'intel build chosen');
         TestKit::throws(RuntimeException::class, static fn () => $service->issueToken(licenseRow($licenseId), 'android', TestKit::ip()),
             'a platform with no release has nothing to issue', 'No active release');
+    },
+    'a release picks one installer per build and ignores everything else' => static function (): void {
+        $asset = static fn (string $name, int $size = 1000): array => ['name' => $name, 'size' => $size];
+        $chosen = ReleaseRegistrar::choose([
+            $asset('Diwan_1.3.3_x64-setup.exe'), $asset('Diwan_1.3.3_x64_en-US.msi'),
+            $asset('Diwan_1.3.3_x86-setup.exe'), $asset('Diwan_1.3.3_x86_en-US.msi'),
+            $asset('Diwan_1.3.3_aarch64.dmg'), $asset('Diwan_1.3.3_x64.dmg'),
+            $asset('Diwan_1.3.3_amd64.AppImage'), $asset('Diwan_1.3.3_amd64.deb'), $asset('Diwan-1.3.3-1.x86_64.rpm'),
+            $asset('app-universal-release.apk'), $asset('app-arm64-release.apk', 9000), $asset('app-universal-release.aab'),
+            $asset('latest.json'), $asset('Diwan_x64.app.tar.gz'),
+        ]);
+        $names = array_map(static fn (array $builds): array => array_map(static fn (array $a): string => $a['name'], $builds), $chosen);
+        TestKit::same([
+            'windows' => ['x64' => 'Diwan_1.3.3_x64-setup.exe', 'x86' => 'Diwan_1.3.3_x86-setup.exe'],
+            'macos'   => ['apple-silicon' => 'Diwan_1.3.3_aarch64.dmg', 'intel' => 'Diwan_1.3.3_x64.dmg'],
+            'linux'   => ['appimage' => 'Diwan_1.3.3_amd64.AppImage', 'deb' => 'Diwan_1.3.3_amd64.deb', 'rpm' => 'Diwan-1.3.3-1.x86_64.rpm'],
+            'android' => ['' => 'app-universal-release.apk'],
+        ], $names, 'the picks match the documented rules');
+    },
+
+    'registering a release replaces only the platforms it has builds for' => static function (): void {
+        $admin = TestKit::admin();
+        $oldWindows = fixtureRelease('windows');
+        $oldMac = fixtureRelease('macos');
+        $tag = TestKit::RELEASE_PREFIX . bin2hex(random_bytes(4));
+        $assets = [
+            ['name' => 'Diwan_x64-setup.exe', 'size' => 100],
+            ['name' => 'Diwan_x86-setup.exe', 'size' => 90],
+        ];
+
+        $summary = (new ReleaseAdmin())->registerAssets($tag, $assets, $admin);
+
+        TestKit::same(0, (int) TestKit::scalar('SELECT is_active FROM releases WHERE id = :id', ['id' => $oldWindows]), 'the old Windows build stops being served');
+        TestKit::same(1, (int) TestKit::scalar('SELECT is_active FROM releases WHERE id = :id', ['id' => $oldMac]), 'macOS keeps the build it had');
+        TestKit::same(2, (int) TestKit::scalar('SELECT COUNT(*) FROM releases WHERE github_tag = :t AND is_active = 1 AND source = "github"', ['t' => $tag]), 'both Windows builds are live');
+        TestKit::same(['macos', 'linux', 'android'], $summary['missing'], 'the admin is told what was not on the release');
+        TestKit::same(1, (int) TestKit::scalar('SELECT COUNT(*) FROM audit_logs WHERE action = "release.register" AND details LIKE :t', ['t' => "%{$tag}%"]), 'it is audited');
+
+        (new ReleaseAdmin())->registerAssets($tag, $assets, $admin);
+        TestKit::same(2, (int) TestKit::scalar('SELECT COUNT(*) FROM releases WHERE github_tag = :t', ['t' => $tag]), 'registering twice changes nothing');
+    },
+
+    'a release with no installers or a malformed tag changes nothing' => static function (): void {
+        $admin = TestKit::admin();
+        $old = fixtureRelease('windows');
+        $tag = TestKit::RELEASE_PREFIX . bin2hex(random_bytes(4));
+        TestKit::throws(UserFacingException::class, static fn () => (new ReleaseAdmin())->registerAssets($tag, [['name' => 'notes.txt', 'size' => 1]], $admin), 'no installers is refused');
+        TestKit::throws(UserFacingException::class, static fn () => (new ReleaseAdmin())->previewGithub('../../etc'), 'a bad tag never reaches GitHub');
+        TestKit::same(1, (int) TestKit::scalar('SELECT is_active FROM releases WHERE id = :id', ['id' => $old]), 'the current build keeps serving');
     },
 ];

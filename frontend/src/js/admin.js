@@ -875,7 +875,14 @@
     const d = await api('/admin-releases.php');
     const versions = [...new Set(d.releases.filter((r) => r.is_active).map((r) => r.version))];
     main.innerHTML = `
-      ${head('Application versions', 'The installers customers can download. Builds are registered by <code>scripts/sync-github-release.php</code>; here you can take one offline, edit its notes and tell licensed customers about a release.')}
+      ${head('Application versions', 'The installers customers can download. Register a new release here, take a build offline, edit its notes and tell licensed customers about a release.')}
+      <section class="panel"><h2>Register a release</h2>
+        <form class="filters" data-release-register>
+          <label class="filter filter--grow"><span>GitHub release tag</span><input class="input" type="text" name="tag" placeholder="v1.3.3" maxlength="64" required autocomplete="off"></label>
+          <button class="btn btn--primary btn--sm" type="submit">Preview</button>
+        </form>
+        <p class="panel__note">Shows what the release contains before anything changes. Customers start getting the new version as soon as you confirm, so test the build first.</p>
+      </section>
       <section class="panel"><h2>Announce a version</h2>
         <form class="filters" data-announce>
           ${select('version', 'Version', versions.length ? versions.map((v) => [v, v]) : [['', 'No active builds']], versions[0] || '')}
@@ -1018,6 +1025,29 @@
       e.preventDefault(); savePlan(form);
     } else if (form.dataset.featuresForm) {
       e.preventDefault(); saveFeatures(form);
+    } else if (form.hasAttribute('data-release-register')) {
+      e.preventDefault();
+      const tag = String(new FormData(form).get('tag')).trim();
+      let preview;
+      try {
+        ({ preview } = await post('/admin-releases.php', { action: 'github_preview', tag }));
+      } catch (err) {
+        toast(err.message || 'Could not read that release.', 'error');
+        return;
+      }
+      if (!preview.builds.length) {
+        toast(`Release ${tag} has no installers on it.`, 'error');
+        return;
+      }
+      const ok = await ask({ title: `Register ${tag}?`, ok: 'Register',
+        body: `<p>Customers will download these builds of version ${esc(preview.version)}:</p>
+          <ul>${preview.builds.map((b) => `<li>${esc(b.platform)}${b.variant ? ` · ${esc(b.variant)}` : ''}: ${esc(b.filename)} (${(b.size_bytes / 1048576).toFixed(1)} MB)</li>`).join('')}</ul>
+          ${preview.missing.length ? `<p><strong>Not on this release:</strong> ${preview.missing.map(esc).join(', ')}. Customers on these keep the build they get today.</p>` : ''}`,
+        onSubmit: () => post('/admin-releases.php', { action: 'github_register', tag }) });
+      if (ok) {
+        toast(`${tag} is now live for customers.`);
+        viewVersions();
+      }
     } else if (form.hasAttribute('data-announce')) {
       e.preventDefault();
       const version = new FormData(form).get('version');
