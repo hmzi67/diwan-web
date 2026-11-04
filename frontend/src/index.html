@@ -264,137 +264,38 @@
             Monthly plans · Works offline · Windows, macOS, Linux &amp; Android
           </p>
 
-          <!-- Product mockup: no image asset, drawn in CSS to keep page weight down -->
           <div
-            class="relative mx-auto mt-[clamp(3rem,6vw,4.5rem)] max-w-[980px] overflow-hidden rounded-lg border border-line-hi bg-elevated text-left shadow-[0_0_0_1px_rgba(0,0,0,.4),0_40px_80px_-30px_rgba(0,0,0,.9),0_0_90px_-30px_var(--color-glow)]"
-            role="img"
-            aria-label="Diwan billing screen: a product grid on the left and a running bill totalling Rs 2,480 on the right."
+            class="relative mx-auto mt-[clamp(3rem,6vw,4.5rem)] max-w-[980px] overflow-hidden rounded-lg border border-line-hi bg-elevated shadow-[0_0_0_1px_rgba(0,0,0,.4),0_40px_80px_-30px_rgba(0,0,0,.9),0_0_90px_-30px_var(--color-glow)]"
           >
-            <div
-              class="flex items-center gap-2 border-b border-line bg-surface px-[.95rem] py-[.7rem]"
+            <!-- Started by main.js, so a visitor who asked for less motion or data downloads only the poster -->
+            <video
+              class="block aspect-video w-full"
+              id="hero-video"
+              width="1920"
+              height="1080"
+              muted
+              loop
+              playsinline
+              preload="none"
+              poster="/assets/video/diwan-hero-loop-poster.jpg"
+              aria-label="Diwan POS in use: billing, inventory, reports and tables."
             >
-              <div class="flex gap-[.4rem]" aria-hidden="true">
-                <i class="size-[10px] rounded-full bg-line-hi"></i
-                ><i class="size-[10px] rounded-full bg-line-hi"></i
-                ><i class="size-[10px] rounded-full bg-line-hi"></i>
-              </div>
-              <span
-                class="mx-auto rounded-full border border-line bg-canvas px-[.8rem] py-[.22rem] font-mono text-[.74rem] text-faint"
-                >diwan · counter 1 · shift open</span
-              >
-            </div>
-
-            <div
-              class="grid grid-cols-[1.55fr_1fr] min-h-[380px] max-[860px]:grid-cols-1"
-              aria-hidden="true"
+              <source src="/assets/video/diwan-hero-loop.mp4" type="video/mp4" />
+            </video>
+            <button
+              class="absolute bottom-3 right-3 rounded-full border border-line-hi bg-canvas/85 px-4 py-[.4rem] text-[.8rem] font-semibold text-ink backdrop-blur-[6px] hover:bg-surface-hi"
+              id="hero-video-toggle"
+              type="button"
+              hidden
             >
-              <div
-                class="border-r border-line p-[1.1rem] max-[860px]:border-r-0 max-[860px]:border-b"
-              >
-                <p
-                  class="mb-[.7rem] text-[.68rem] uppercase tracking-[.12em] text-faint"
-                >
-                  Quick items — press 1–9
-                </p>
-                <div
-                  class="grid grid-cols-4 gap-[.55rem] max-[860px]:grid-cols-3 max-xs:grid-cols-2"
-                >
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Chicken Karahi</span>Rs 1,150
-                  </div>
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Naan</span>Rs 30
-                  </div>
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Cold Drink</span>Rs 120
-                  </div>
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Raita</span>Rs 80
-                  </div>
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Biryani</span>Rs 450
-                  </div>
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Kebab Roll</span>Rs 320
-                  </div>
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Tea</span>Rs 60
-                  </div>
-                  <div
-                    class="flex flex-col justify-end rounded-sm border border-line bg-surface p-2 text-[.68rem] text-muted [&>span]:text-[.74rem] [&>span]:font-semibold [&>span]:text-ink"
-                  >
-                    <span>Salad</span>Rs 90
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex flex-col bg-canvas p-[1.1rem]">
-                <p
-                  class="mb-[.7rem] text-[.68rem] uppercase tracking-[.12em] text-faint"
-                >
-                  Table 4 · Bill #1042
-                </p>
-                <div class="mb-[.8rem] flex flex-1 flex-col gap-2">
-                  <div
-                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
-                  >
-                    <b class="font-semibold text-ink">Chicken Karahi</b
-                    ><span>× 1 · 1,150</span>
-                  </div>
-                  <div
-                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
-                  >
-                    <b class="font-semibold text-ink">Naan</b
-                    ><span>× 6 · 180</span>
-                  </div>
-                  <div
-                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
-                  >
-                    <b class="font-semibold text-ink">Cold Drink</b
-                    ><span>× 4 · 480</span>
-                  </div>
-                  <div
-                    class="flex items-baseline justify-between border-b border-dashed border-line pb-2 text-[.78rem] text-muted"
-                  >
-                    <b class="font-semibold text-ink">Kebab Roll</b
-                    ><span>× 2 · 640</span>
-                  </div>
-                </div>
-                <div
-                  class="flex items-baseline justify-between border-t border-line-hi pt-[.7rem] text-[.8rem] text-muted"
-                >
-                  <span>Total payable</span
-                  ><b class="text-[1.35rem] tracking-[-.02em] text-accent"
-                    >Rs 2,450</b
-                  >
-                </div>
-                <div
-                  class="mt-[.85rem] rounded-sm bg-accent p-[.7rem] text-center text-[.82rem] font-bold text-accent-ink"
-                >
-                  Ctrl + Enter — Place order
-                </div>
-                <p
-                  class="mt-[.6rem] text-center font-mono text-[.68rem] text-faint"
-                >
-                  Ctrl + K print token · T4 switch table
-                </p>
-              </div>
-            </div>
+              Play
+            </button>
           </div>
+          <p class="mt-5 text-[.92rem] text-muted">
+            <a class="font-semibold text-accent hover:text-accent-hi" href="#demo"
+              >Watch the 1-minute demo</a
+            >
+          </p>
         </div>
       </section>
 
@@ -432,6 +333,45 @@
               PKT.
             </p>
           </div>
+        </div>
+      </section>
+
+      <!-- ================= 2b. FULL DEMO ================= -->
+      <section class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]" id="demo">
+        <div class="mx-auto w-full max-w-[1180px] px-[clamp(1.25rem,4vw,2rem)]">
+          <div class="mx-auto mb-12 max-w-[640px] text-center">
+            <p
+              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
+            >
+              See it in action
+            </p>
+            <h2 class="mb-3 text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">
+              One minute, start to receipt.
+            </h2>
+            <p class="text-[1rem] leading-[1.7] text-muted">
+              Sign in, ring up a sale, get the receipt, then check the stock and
+              the day's numbers.
+            </p>
+          </div>
+
+          <video
+            class="mx-auto block aspect-video w-full max-w-[980px] rounded-lg border border-line-hi bg-elevated"
+            width="1920"
+            height="1080"
+            controls
+            playsinline
+            preload="none"
+            poster="/assets/video/diwan-pos-showcase-poster.jpg"
+            aria-label="One-minute product demo of Diwan POS."
+          >
+            <source src="/assets/video/diwan-pos-showcase.mp4" type="video/mp4" />
+          </video>
+          <p class="mt-4 text-center text-[.84rem] text-faint">
+            Shown with sample data.
+            <a class="underline hover:text-ink" href="/assets/video/image-credits.txt"
+              >Product photo credits</a
+            >
+          </p>
         </div>
       </section>
 

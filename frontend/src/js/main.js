@@ -22,6 +22,21 @@ document.addEventListener('click', async (e) => {
   }
 });
 
+// Hero loop: plays itself unless the visitor asked for less motion or data. The
+// button is its pause control, and stays hidden if this script never runs.
+{
+  const video = document.getElementById('hero-video');
+  const toggle = document.getElementById('hero-video-toggle');
+  if (video && toggle) {
+    toggle.hidden = false;
+    toggle.addEventListener('click', () => (video.paused ? video.play() : video.pause()));
+    video.addEventListener('play', () => { toggle.textContent = 'Pause'; });
+    video.addEventListener('pause', () => { toggle.textContent = 'Play'; });
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData;
+    if (!calm) video.play().catch(() => {});   // refused (e.g. iOS Low Power): poster and Play stay
+  }
+}
+
 const downloadForm = document.getElementById('download-form');
 downloadForm?.addEventListener('submit', async (e) => {
   e.preventDefault();

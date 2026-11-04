@@ -42,8 +42,14 @@ DirectoryIndex index.html index.php
   Require all denied
 </FilesMatch>
 
+# nosniff above means a wrong type stops the video playing.
+<IfModule mod_mime.c>
+  AddType video/mp4 .mp4
+</IfModule>
+
 <IfModule mod_expires.c>
   ExpiresActive On
+  ExpiresByType video/mp4 "access plus 30 days"
   ExpiresByType text/css "access plus 7 days"
   ExpiresByType application/javascript "access plus 7 days"
   ExpiresByType image/svg+xml "access plus 30 days"
