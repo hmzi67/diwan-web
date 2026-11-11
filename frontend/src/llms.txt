@@ -22,6 +22,10 @@ Key facts:
 - [Retail POS](https://diwan.codehunts.co.uk/retail-pos.html): keyboard checkout, stock decremented per sale, and support for older and low-cost PCs
 - [Pharmacy POS](https://diwan.codehunts.co.uk/pharmacy-pos.html): quick billing, stock control and offline selling, with sales data kept on the store's own machine
 
+## Blog
+
+- [Introducing Diwan POS](https://diwan.codehunts.co.uk/blog/introducing-diwan-pos.html): the launch post: why Diwan exists, keyboard-first offline billing, platforms, plans and how to get started
+
 ## Support
 
 - [Docs & Support](https://diwan.codehunts.co.uk/support.html): downloading the installer, activating a licence, updating, and getting help
