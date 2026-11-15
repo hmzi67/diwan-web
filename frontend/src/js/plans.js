@@ -72,13 +72,16 @@
   }
 
   async function mount(container) {
+    // Cards written in at build time (frontend/prerender-plans.mjs) stay up while
+    // the live ones load, and stay if the API fails.
+    const prerendered = container.children.length > 0;
     container.setAttribute('aria-busy', 'true');
-    container.innerHTML = '<p class="plans-status">Loading plans…</p>';
+    if (!prerendered) container.innerHTML = '<p class="plans-status">Loading plans…</p>';
     try {
       render(container, await load());
     } catch {
       pending = null;
-      container.innerHTML = '<p class="plans-status">We couldn\'t load the plans just now. '
+      if (!prerendered) container.innerHTML = '<p class="plans-status">We couldn\'t load the plans just now. '
         + '<a class="text-accent" href="/contact.html">Contact us</a> or refresh the page.</p>';
     } finally {
       container.removeAttribute('aria-busy');

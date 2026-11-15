@@ -39,6 +39,10 @@ and what still needs a decision.
 1. The pricing cards (home page, `pricing.html`, `products.html`, the
    industry pages, the dashboard) are rendered by `frontend/src/js/plans.js`
    from `GET /api/plans.php` — prices and features are never typed into HTML.
+   At deploy, `frontend/prerender-plans.mjs` writes the same cards, the blog's
+   `<span data-plan-price="CODE">` prices and the JSON-LD `offers` into the
+   built pages from that API, so crawlers see prices without JavaScript.
+   **Redeploy after changing a price** so the static copy catches up.
 2. **Request Access** → sign in or sign up → the dashboard's **Plan & access**
    view with that plan pre-selected → `POST /api/license-requests.php`.
    The request is `pending`; nothing is issued. The customer is notified, and

@@ -9,13 +9,30 @@ DirectoryIndex index.html index.php
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-  # Enable only once HTTPS is confirmed working on every hostname:
-  # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  # HTTPS answers on the apex and www (checked 2026-11-15). Browsers cache this for a year.
+  # No includeSubDomains: staging or other hosts under this name may not all have HTTPS.
+  Header always set Strict-Transport-Security "max-age=31536000"
 </IfModule>
 
-# Force HTTPS
+# Account, checkout and admin pages carry <meta name="robots" content="noindex">;
+# the header also covers anything served there that is not HTML.
+<IfModule mod_setenvif.c>
+  SetEnvIf Request_URI "^/(auth/|admin/|checkout\.html|dashboard\.html)" DIWAN_NOINDEX
+</IfModule>
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow" env=DIWAN_NOINDEX
+</IfModule>
+
+ErrorDocument 404 /404.html
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
+
+  # One host: www → apex in a single hop (also upgrades http).
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+  # Force HTTPS
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
