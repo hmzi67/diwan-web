@@ -68,11 +68,13 @@ const ICONS = {
 const icon = (name, size = 18) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
 
-const money = (paisa, currency) => {
-  if (!paisa) return 'Free';
-  const amount = (paisa / 100).toLocaleString('en-PK', { minimumFractionDigits: 0 });
-  return currency === 'PKR' ? `Rs ${amount}` : `${currency} ${amount}`;
+// A figure: zero is "Rs 0".
+const amount = (paisa, currency) => {
+  const value = (Number(paisa || 0) / 100).toLocaleString('en-PK', { minimumFractionDigits: 0 });
+  return currency === 'PKR' ? `Rs ${value}` : `${currency} ${value}`;
 };
+// A price: zero is "Free".
+const money = (paisa, currency) => (paisa ? amount(paisa, currency) : 'Free');
 
 const date = (isoish) => isoish
   ? new Date(String(isoish).replace(' ', 'T')).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -815,15 +817,15 @@ function renderStoreRecords(pos, customerId) {
     if (el) el.textContent = val;
   };
 
-  setTxt('[data-pos-today-sales]', money(today.total_sales_minor, 'PKR'));
+  setTxt('[data-pos-today-sales]', amount(today.total_sales_minor, 'PKR'));
   setTxt('[data-pos-today-txns]', `${today.transaction_count || 0} orders`);
-  setTxt('[data-pos-month-sales]', money(month.total_sales_minor, 'PKR'));
+  setTxt('[data-pos-month-sales]', amount(month.total_sales_minor, 'PKR'));
   setTxt('[data-pos-month-txns]', `${month.transaction_count || 0} orders`);
-  setTxt('[data-pos-alltime-sales]', money(allTime.total_sales_minor, 'PKR'));
+  setTxt('[data-pos-alltime-sales]', amount(allTime.total_sales_minor, 'PKR'));
   setTxt('[data-pos-alltime-txns]', `${allTime.transaction_count || 0} orders`);
-  setTxt('[data-pos-cash-sales]', `Cash: ${money(today.cash_minor, 'PKR')}`);
-  setTxt('[data-pos-card-sales]', `Card: ${money(today.card_minor, 'PKR')}${
-    today.credit_minor > 0 ? ` · Pay later: ${money(today.credit_minor, 'PKR')}` : ''
+  setTxt('[data-pos-cash-sales]', `Cash: ${amount(today.cash_minor, 'PKR')}`);
+  setTxt('[data-pos-card-sales]', `Card: ${amount(today.card_minor, 'PKR')}${
+    today.credit_minor > 0 ? ` · Pay later: ${amount(today.credit_minor, 'PKR')}` : ''
   }`);
 
   // Devices List
@@ -836,7 +838,6 @@ function renderStoreRecords(pos, customerId) {
             <div class="order-card__icon">${icon('device', 18)}</div>
             <div>
               <h3 class="order-card__product" style="font-size: 0.95rem;">${escapeHtml(d.device_name)}</h3>
-              <div class="order-card__meta" style="font-size: 0.8rem;">Fingerprint: <code>${escapeHtml(d.device_fingerprint.slice(0, 16))}…</code></div>
             </div>
           </div>
           <span class="badge badge--active" style="font-size: 0.76rem;"><span class="dot dot--ok"></span>Synced ${d.last_sync_at}</span>
@@ -853,96 +854,21 @@ function renderStoreRecords(pos, customerId) {
         <td><code>#${s.local_sale_id}</code>${s.order_no ? ` <small style="color:var(--color-muted);">(#${s.order_no})</small>` : ''}</td>
         <td><small>${escapeHtml(s.sale_created_at)}</small></td>
         <td>${escapeHtml(s.cashier_name || '—')}${s.table_name ? ` <small style="color:var(--color-muted);">(${escapeHtml(s.table_name)})</small>` : ''}</td>
-        <td><strong>${s.items_count} items</strong>${s.items_summary ? `<br><small style="color:var(--color-muted); font-size: 0.78rem;">${escapeHtml(s.items_summary)}</small>` : ''}</td>
+        <td style="white-space: normal; min-width: 14rem;"><strong>${s.items_count} item${s.items_count === 1 ? '' : 's'}</strong>${s.items_summary ? `<br><small style="color:var(--color-muted); font-size: 0.78rem;">${escapeHtml(s.items_summary)}</small>` : ''}</td>
         <td>
           <span class="badge--method badge--${escapeHtml(s.payment_method)}">${escapeHtml(POS_METHOD_LABELS[s.payment_method] || s.payment_method)}</span>
-          ${s.credit_minor > 0 ? `<br><small style="color:var(--color-warn);">${money(s.credit_minor, s.currency)} on credit</small>` : ''}
+          ${s.credit_minor > 0 ? `<br><small style="color:var(--color-warn);">${amount(s.credit_minor, s.currency)} on credit</small>` : ''}
           ${s.customer_name ? `<br><small style="color:var(--color-muted);">${escapeHtml(s.customer_name)}</small>` : ''}
         </td>
-        <td style="text-align: right; font-weight: 700;">${money(s.total_minor, s.currency)}</td>
+        <td style="text-align: right; font-weight: 700;">${amount(s.total_minor, s.currency)}</td>
       </tr>
     `).join('') || '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--color-muted);">No transactions recorded yet.</td></tr>';
   }
-
-  // Daily Trends Table
-  const trendsTbody = document.getElementById('pos-daily-trends-tbody');
-  if (trendsTbody) {
-    trendsTbody.innerHTML = (pos.daily_trends || []).map((t) => `
-      <tr>
-        <td><strong>${escapeHtml(t.summary_date)}</strong></td>
-        <td>${t.transaction_count}</td>
-        <td>${money(t.cash_minor, t.currency)}</td>
-        <td>${money(t.card_minor, t.currency)}</td>
-        <td style="color: var(--color-warn);">${t.refunds_minor > 0 ? `-${money(t.refunds_minor, t.currency)}` : '—'}</td>
-        <td style="text-align: right; font-weight: 700; color: var(--color-accent);">${money(t.net_sales_minor, t.currency)}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--color-muted);">No sales history recorded yet.</td></tr>';
-  }
-
-  renderAllPosRecords(pos.records || {});
 }
-
-const posRecordState = { records: {}, entity: '', search: '', from: '', to: '' };
 
 /** Display names for a synced sale's payment_method ("split" = several
  * tenders, "credit" = pay later). Anything else is shown as sent. */
 const POS_METHOD_LABELS = { split: 'Split', credit: 'Pay later', platform: 'Platform' };
-
-function posRecordLabel(entity) {
-  return entity.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function renderAllPosRecords(records) {
-  posRecordState.records = records && typeof records === 'object' ? records : {};
-  const select = document.getElementById('pos-record-entity');
-  if (!select) return;
-  const entities = Object.keys(posRecordState.records).sort();
-  select.innerHTML = '<option value="">All record types</option>' +
-    entities.map((entity) => `<option value="${escapeHtml(entity)}">${escapeHtml(posRecordLabel(entity))}</option>`).join('');
-  renderFilteredPosRecords();
-}
-
-function renderFilteredPosRecords() {
-  const thead = document.getElementById('pos-records-thead');
-  const tbody = document.getElementById('pos-records-tbody');
-  const empty = document.getElementById('pos-record-empty');
-  const count = document.querySelector('[data-pos-record-count]');
-  if (!thead || !tbody) return;
-
-  const selected = posRecordState.entity
-    ? { [posRecordState.entity]: posRecordState.records[posRecordState.entity] || [] }
-    : posRecordState.records;
-  const rows = Object.entries(selected).flatMap(([entity, values]) =>
-    (Array.isArray(values) ? values : []).map((record) => ({ entity, record }))
-  ).filter(({ entity, record }) => {
-    const text = JSON.stringify(record).toLowerCase();
-    if (posRecordState.search && !text.includes(posRecordState.search.toLowerCase())) return false;
-    const dateValue = Object.entries(record).find(([key]) => /date|created|updated|opened|closed|paid|check_in|check_out/i.test(key))?.[1];
-    const dateText = dateValue ? String(dateValue).slice(0, 10) : '';
-    if (posRecordState.from && (!dateText || dateText < posRecordState.from)) return false;
-    if (posRecordState.to && (!dateText || dateText > posRecordState.to)) return false;
-    return true;
-  });
-  const columns = ['entity', ...new Set(rows.flatMap(({ record }) => Object.keys(record))).values()].slice(0, 9);
-  thead.innerHTML = `<tr>${columns.map((column) => `<th>${escapeHtml(column === 'entity' ? 'Record type' : column.replaceAll('_', ' '))}</th>`).join('')}</tr>`;
-  tbody.innerHTML = rows.map(({ entity, record }) => `<tr>${
-    columns.map((column) => {
-      const value = column === 'entity' ? posRecordLabel(entity) : record[column];
-      const rendered = value === null || value === undefined || value === '' ? '—' : typeof value === 'object' ? JSON.stringify(value) : String(value);
-      return `<td title="${escapeHtml(rendered)}">${escapeHtml(rendered.length > 120 ? `${rendered.slice(0, 117)}…` : rendered)}</td>`;
-    }).join('')
-  }</tr>`).join('');
-  empty.hidden = rows.length > 0;
-  count.textContent = `${rows.length} records`;
-}
-
-['entity', 'search', 'from', 'to'].forEach((name) => {
-  const id = `pos-record-${name}`;
-  document.getElementById(id)?.addEventListener(name === 'entity' ? 'change' : 'input', (event) => {
-    posRecordState[name] = event.target.value;
-    renderFilteredPosRecords();
-  });
-});
 
 // --- Load -------------------------------------------------------------------
 async function load() {
