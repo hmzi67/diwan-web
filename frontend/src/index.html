@@ -20,6 +20,7 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Diwan POS — run your counter at the speed of typing" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preload" as="image" href="/assets/video/diwan-hero-loop-poster.jpg" fetchpriority="high" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <script type="application/ld+json">
@@ -109,7 +110,7 @@
             "applicationCategory": "BusinessApplication",
             "applicationSubCategory": "Point of Sale",
             "operatingSystem": "Windows, macOS, Linux, Android",
-            "offers": { "@type": "AggregateOffer", "priceCurrency": "PKR", "lowPrice": "10000", "highPrice": "20000", "offerCount": "3" },
+            "creator": { "@type": "Organization", "name": "Codehunts", "url": "https://codehunts.co.uk/" },
             "image": "https://diwan.codehunts.co.uk/assets/og-image.jpg",
             "publisher": {
               "@id": "https://diwan.codehunts.co.uk/#organization"
@@ -119,6 +120,7 @@
       }
     </script>
     <meta name="theme-color" content="#0A0F0D" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap">
     <link rel="stylesheet" href="/css/styles.css" />
     <script src="/js/theme.js"></script>
     <link rel="icon" type="image/png" href="/assets/logo.png" />
@@ -142,7 +144,7 @@
           class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]"
           href="/"
         >
-          <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28" />
+          <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28" />
           Diwan
         </a>
 
@@ -235,7 +237,7 @@
           <h1
             class="mx-auto mb-5 max-w-[15ch] text-[clamp(2.4rem,6.4vw,4.3rem)] font-bold leading-[1.04] tracking-[-.035em]"
           >
-            Run your counter at
+            Point of sale at
             <em
               class="bg-[linear-gradient(120deg,var(--color-accent-hi),var(--color-accent-dim))] bg-clip-text font-normal text-transparent"
               >the speed of typing.</em
@@ -315,7 +317,7 @@
           <div>
             <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
             <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
-              Desktop builds on every plan; Android and iOS where your plan includes the app.
+              Desktop builds on every plan; the Android app where your plan includes it.
             </p>
           </div>
           <div>
@@ -687,7 +689,7 @@
             </h2>
             <p class="text-[1rem] leading-[1.7] text-muted">
               The builds are not sold separately — the desktop builds come with
-              every plan, and the Android and iOS apps with plans that include
+              every plan, and the Android app with plans that include
               the mobile application. The network is required once, for activation; not to
               sell.
             </p>
@@ -1135,10 +1137,12 @@
               <p
                 class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
               >
-                No. Diwan is offline-first: your sales, stock and customers stay
-                on your own machine and are never uploaded to us. We keep only
-                the account, order and licence records needed to sell and
-                support the software — detailed in the
+                Yes. Your business data is stored on our server: when a counter is online it syncs
+              your products, stock, sales, customers, staff and settings to your business
+              workspace, so every counter shares one inventory and your dashboard can show
+              your reports. Billing still works offline and catches up when the connection
+              returns. Staff PINs are sealed on the counter and we cannot read them. Details
+              are in the
                 <a class="text-accent hover:underline" href="privacy.html"
                   >Privacy Policy</a
                 >.
@@ -1219,7 +1223,7 @@
                   placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"
               /></label>
               <select
-                class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none"
+                class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" aria-label="Platform"
                 name="platform"
               >
                 <option value="windows:x64">Windows 64-bit (.exe)</option>
@@ -1262,7 +1266,7 @@
               class="mb-[.9rem] inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]"
               href="/"
             >
-              <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28" />
+              <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28" />
               Diwan
             </a>
             <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">

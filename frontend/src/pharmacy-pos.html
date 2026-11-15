@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pharmacy POS Software for Medical Stores | Diwan POS</title>
-  <meta name="description" content="Quick billing, stock control and offline selling for pharmacies and medical stores. Your sales data stays on your own machine. Monthly plans, no online payment.">
+  <meta name="description" content="Quick billing, stock control and offline selling for pharmacies and medical stores. Works offline and keeps every counter in sync. Monthly plans, no online payment.">
   <link rel="canonical" href="https://diwan.codehunts.co.uk/pharmacy-pos.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Diwan POS">
   <meta property="og:title" content="Pharmacy POS Software for Medical Stores | Diwan POS">
-  <meta property="og:description" content="Quick billing, stock control and offline selling for pharmacies and medical stores. Your sales data stays on your own machine. Monthly plans, no online payment.">
+  <meta property="og:description" content="Quick billing, stock control and offline selling for pharmacies and medical stores. Works offline and keeps every counter in sync. Monthly plans, no online payment.">
   <meta property="og:url" content="https://diwan.codehunts.co.uk/pharmacy-pos.html">
   <meta property="og:image" content="https://diwan.codehunts.co.uk/assets/og-image.jpg">
   <meta property="og:image:width" content="1200">
@@ -27,7 +27,7 @@
           "@id": "https://diwan.codehunts.co.uk/pharmacy-pos.html#webpage",
           "url": "https://diwan.codehunts.co.uk/pharmacy-pos.html",
           "name": "Pharmacy POS Software for Medical Stores | Diwan POS",
-          "description": "Quick billing, stock control and offline selling for pharmacies and medical stores. Your sales data stays on your own machine. Monthly plans, no online payment.",
+          "description": "Quick billing, stock control and offline selling for pharmacies and medical stores. Works offline and keeps every counter in sync. Monthly plans, no online payment.",
           "inLanguage": "en",
           "isPartOf": {
             "@id": "https://diwan.codehunts.co.uk/#website"
@@ -65,6 +65,7 @@
     }
   </script>
   <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap">
   <link rel="stylesheet" href="/css/styles.css">
   <script src="/js/theme.js"></script>
   <link rel="icon" type="image/png" href="/assets/logo.png">
@@ -76,7 +77,7 @@
     <header class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line" id="nav">
     <div class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]">
       <a class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
-        <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
+        <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28">
         Diwan
       </a>
 
@@ -168,24 +169,25 @@
 
         <div class="mt-14">
           <div class="mb-2 flex flex-wrap items-baseline gap-[.9rem]">
-            <h2 class="text-[1.3rem] tracking-[-.02em]">Your data, your machine</h2>
+            <h2 class="text-[1.3rem] tracking-[-.02em]">One inventory, every counter</h2>
             <span class="rounded-full border border-line-hi bg-surface px-[.7rem] py-[.28rem] text-[.68rem] font-bold uppercase tracking-[.06em] text-muted">Every licence</span>
           </div>
           <p class="mb-7 max-w-[62ch] text-[.9rem] leading-[1.7] text-muted">
-            Diwan is offline-first. Your sales, stock and customers stay on your own
-            machine and are never uploaded to us.
+            Diwan is offline-first: billing runs on the counter itself. When a counter is online it
+            syncs your stock, sales and customers to your business workspace on our server, so
+            every counter sells from the same stock.
           </p>
 
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
             <article class="flex flex-col rounded-md border border-line bg-surface p-6">
               <p class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint">04</p>
-              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">Records stay local</h3>
+              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">Synced, not locked in</h3>
               <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
-                We keep only the account, order and licence records needed to sell and support the software, as set out in the Privacy Policy.
+                Your workspace is used only to run your counters and your dashboard, as set out in the Privacy Policy.
               </p>
               <ul class="dots mb-5 flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted">
-                <li>Sales data stays on your machine</li>
-                <li>Only licence records held by us</li>
+                <li>Sells offline, syncs when back online</li>
+                <li>Staff PINs sealed, unreadable to us</li>
                 <li>See the <a class="text-accent hover:underline" href="privacy.html">Privacy Policy</a></li>
               </ul>
             </article>
@@ -241,7 +243,7 @@
         </div>
         <div>
           <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
-          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Desktop builds on every plan; Android and iOS where your plan includes the app.</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Desktop builds on every plan; the Android app where your plan includes it.</p>
         </div>
         <div>
           <p class="text-[1.5rem] font-bold tracking-[-.02em]">Offline-first</p>
@@ -294,7 +296,13 @@
           <details class="group rounded-md border border-line bg-surface">
             <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">Is customer and sales data sent to Diwan?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
             <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
-              No. Your sales, stock and customers stay on your own machine. We keep only the account, order and licence records needed to sell and support the software.
+              Yes, when a counter is online. Your stock, sales and customers sync to your business workspace on our server so every counter shares one inventory and your dashboard can show reports. Billing keeps working offline, and staff PINs are sealed so we cannot read them.
+            </p>
+          </details>
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">Does Diwan integrate with FBR, PRA or SRB?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              No. Diwan does not report sales to FBR, PRA or SRB, and its receipts do not carry a tax-authority invoice number. If your pharmacy must be integrated with a tax authority's POS system, check that before you buy, and email us if you are unsure.
             </p>
           </details>
         </div>
@@ -306,7 +314,7 @@
       <div class="mx-auto grid w-full max-w-[1180px] grid-cols-[1.1fr_1fr] items-start gap-12 px-[clamp(1.25rem,4vw,2rem)] max-[860px]:grid-cols-1">
         <div>
           <p class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent">Get started</p>
-          <h2 class="mb-4 max-w-[16ch] text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">Run your counter at the speed of typing.</h2>
+          <h2 class="mb-4 max-w-[16ch] text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">A faster pharmacy counter.</h2>
           <p class="mb-7 max-w-[52ch] text-[1rem] leading-[1.7] text-muted">
             Pick a plan and send a request. Once we approve it, your licence key and installer are in your dashboard and inbox. First bill usually takes minutes, not days.
           </p>
@@ -325,7 +333,7 @@
           <p class="mb-5 text-[.9rem] text-muted">Paste your licence key to get a single-use installer link. No sign-in required.</p>
           <form class="flex flex-col gap-3" id="download-form">
             <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted">Licence key <input class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
-            <select class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" name="platform">
+            <select class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" aria-label="Platform" name="platform">
               <option value="windows:x64">Windows 64-bit (.exe)</option>
               <option value="windows:x86">Windows 32-bit (.exe)</option>
               <option value="macos:apple-silicon">macOS, Apple Silicon (.dmg)</option>
@@ -352,7 +360,7 @@
       <div class="grid gap-10 grid-cols-[1.4fr_1fr_1fr_1.3fr] max-[860px]:grid-cols-2 max-[860px]:gap-8 max-xs:grid-cols-1">
         <div class="max-[860px]:col-span-2">
           <a class="mb-[.9rem] inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
-            <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
+            <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28">
             Diwan
           </a>
           <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">

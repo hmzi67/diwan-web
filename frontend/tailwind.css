@@ -1,8 +1,5 @@
-/* ponytail: remote Google Fonts import — extra RTT before render, ties the
-   build to a third party; self-host the three woff2 files as local @font-face
-   if latency/offline matters. */
-/* @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Manrope:wght@400..800&family=Source+Sans+3:wght@400..700&display=swap"); */
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/* Fonts load from a <link> in each page's <head>: an @import here would wait for
+   this stylesheet before fetching them, delaying first paint. */
 @import "tailwindcss";
 @import "./components.css";
 @source "./src";

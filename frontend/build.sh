@@ -38,7 +38,8 @@ echo "==> Generating sitemap.xml for $SITE_URL"
   echo '<?xml version="1.0" encoding="UTF-8"?>'
   echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
   while IFS= read -r rel; do
-    grep -qiE '<meta[^>]+name="robots"[^>]+noindex' "$SRC/$rel" && continue
+    # Either attribute order: <meta name="robots" content="noindex"> or <meta content="noindex" name="robots">.
+    grep -qiE '<meta[^>]+(name="robots"[^>]+noindex|noindex[^>]+name="robots")' "$SRC/$rel" && continue
     lastmod="$(git -C "$ROOT" log -1 --format=%cs -- "src/$rel" 2>/dev/null || true)"
     [[ -n "$lastmod" ]] || lastmod="$(date -u +%Y-%m-%d)"
     path="/$rel"; [[ "$rel" == "index.html" ]] && path="/"
@@ -47,6 +48,11 @@ echo "==> Generating sitemap.xml for $SITE_URL"
   echo '</urlset>'
 } > "$DIST/sitemap.xml"
 echo "    $(grep -c '<loc>' "$DIST/sitemap.xml") URLs"
+
+# Plans into the static HTML and JSON-LD, so prices are crawlable without JS.
+# Prices are never typed into src: they come from the live plans API.
+echo "==> Prerendering plans"
+node "$ROOT/prerender-plans.mjs" "$DIST" "$SITE_URL"
 
 # ---------------------------------------------------------------------------
 # CSS: Tailwind v4 compiles tailwind.css -> dist/css/styles.css, scanning

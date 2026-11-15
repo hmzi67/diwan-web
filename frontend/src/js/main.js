@@ -33,7 +33,9 @@ document.addEventListener('click', async (e) => {
     video.addEventListener('play', () => { toggle.textContent = 'Pause'; });
     video.addEventListener('pause', () => { toggle.textContent = 'Play'; });
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData;
-    if (!calm) video.play().catch(() => {});   // refused (e.g. iOS Low Power): poster and Play stay
+    // After load, so the multi-MB loop doesn't compete with the poster for first paint.
+    const start = () => video.play().catch(() => {});   // refused (e.g. iOS Low Power): poster and Play stay
+    if (!calm) document.readyState === 'complete' ? start() : addEventListener('load', start, { once: true });
   }
 }
 

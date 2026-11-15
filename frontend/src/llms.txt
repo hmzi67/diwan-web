@@ -1,15 +1,16 @@
 # Diwan POS
 
-> Diwan POS is keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies. It is offered as three monthly plans and runs on Windows, macOS and Linux, with Android and iOS apps on plans that include the mobile application.
+> Diwan POS is keyboard-first, offline-first point-of-sale software for retail shops, restaurants and pharmacies. It is offered as three monthly plans and runs on Windows, macOS and Linux, with an Android app on plans that include the mobile application.
 
 Key facts:
 
 - Plans: BASIC, ADVANCE and ALL-IN-ONE, billed monthly in Pakistani Rupees. Current prices and what each plan includes are published at https://diwan.codehunts.co.uk/pricing.html (and as JSON at https://diwan.codehunts.co.uk/api/plans.php).
 - No online payment: create an account at https://diwan.codehunts.co.uk/auth/signup.html, request a plan from the dashboard, and the Diwan team approves it and issues the licence.
-- Platforms: Windows 10+ (64-bit or 32-bit, .exe), macOS 11+ (separate Apple Silicon and Intel builds, .dmg), Linux x86_64 (.AppImage, .deb or .rpm) and Android 8.0+ (.apk). The desktop builds come with every plan; the mobile apps with plans that include them.
+- Platforms: Windows 10+ (64-bit or 32-bit, .exe), macOS 11+ (separate Apple Silicon and Intel builds, .dmg), Linux x86_64 (.AppImage, .deb or .rpm) and Android 8.0+ (.apk). The desktop builds come with every plan; the Android app with plans that include it.
 - Works offline: an internet connection is needed once, for activation. Billing, stock tracking and printing continue without a connection, and sync resumes automatically.
 - Delivery: once a request is approved, the licence key appears in the customer dashboard and is emailed. There is no physical product.
 - Refunds: full refund within 14 days of purchase if the licence key has not been activated.
+- Maker: Diwan POS is built by Codehunts (https://codehunts.co.uk/).
 - Operator: Diwan is a sole proprietorship run by Hamza Waheed, I-10/2, Islamabad 44000, Pakistan. Support: hamzawaheed057@gmail.com, +92 314 3288112, Monday to Saturday 10:00am–7:00pm PKT.
 
 ## Product
@@ -20,7 +21,7 @@ Key facts:
 - [Pricing](https://diwan.codehunts.co.uk/pricing.html): edition prices, what each includes, and pricing FAQ
 - [Restaurant POS](https://diwan.codehunts.co.uk/restaurant-pos.html): per-table bills, one-key tokens, kitchen chits and Android order-taking for restaurants and cafés
 - [Retail POS](https://diwan.codehunts.co.uk/retail-pos.html): keyboard checkout, stock decremented per sale, and support for older and low-cost PCs
-- [Pharmacy POS](https://diwan.codehunts.co.uk/pharmacy-pos.html): quick billing, stock control and offline selling, with sales data kept on the store's own machine
+- [Pharmacy POS](https://diwan.codehunts.co.uk/pharmacy-pos.html): quick billing, stock control and offline selling, selling offline and syncing stock across counters
 
 ## Blog
 

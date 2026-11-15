@@ -70,7 +70,7 @@
             "applicationCategory": "BusinessApplication",
             "applicationSubCategory": "Point of Sale",
             "operatingSystem": "Windows, macOS, Linux, Android",
-            "offers": { "@type": "AggregateOffer", "priceCurrency": "PKR", "lowPrice": "10000", "highPrice": "20000", "offerCount": "3" },
+            "creator": { "@type": "Organization", "name": "Codehunts", "url": "https://codehunts.co.uk/" },
             "image": "https://diwan.codehunts.co.uk/assets/og-image.jpg",
             "publisher": {
               "@id": "https://diwan.codehunts.co.uk/#organization"
@@ -80,6 +80,7 @@
       }
     </script>
     <meta name="theme-color" content="#0A0F0D" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap">
     <link rel="stylesheet" href="/css/styles.css" />
     <script src="/js/theme.js"></script>
     <link rel="icon" type="image/png" href="/assets/logo.png" />
@@ -103,7 +104,7 @@
           class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]"
           href="/"
         >
-          <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28" />
+          <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28" />
           Diwan
         </a>
 
@@ -188,7 +189,7 @@
             <h1
               class="mb-[.85rem] text-[clamp(1.9rem,4vw,2.6rem)] tracking-[-.03em]"
             >
-              Simple monthly plans.
+              Diwan POS pricing: simple monthly plans.
             </h1>
             <p class="text-[1.02rem] text-muted">
               Three monthly plans, from a single shop to your whole business.
@@ -277,7 +278,7 @@
                   placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"
               /></label>
               <select
-                class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none"
+                class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" aria-label="Platform"
                 name="platform"
               >
                 <option value="windows:x64">Windows 64-bit (.exe)</option>
@@ -317,7 +318,7 @@
           <div>
             <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
             <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">
-              Desktop builds on every plan; Android and iOS where your plan includes the app.
+              Desktop builds on every plan; the Android app where your plan includes it.
             </p>
           </div>
           <div>
@@ -490,10 +491,12 @@
               <p
                 class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted"
               >
-                No. Diwan is offline-first: your sales, stock and customers stay
-                on your own machine and are never uploaded to us. We keep only
-                the account, order and licence records needed to sell and
-                support the software — detailed in the
+                Yes. Your business data is stored on our server: when a counter is online it syncs
+              your products, stock, sales, customers, staff and settings to your business
+              workspace, so every counter shares one inventory and your dashboard can show
+              your reports. Billing still works offline and catches up when the connection
+              returns. Staff PINs are sealed on the counter and we cannot read them. Details
+              are in the
                 <a class="text-accent hover:underline" href="privacy.html"
                   >Privacy Policy</a
                 >.
@@ -526,7 +529,7 @@
               class="mb-[.9rem] inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]"
               href="/"
             >
-              <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28" />
+              <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28" />
               Diwan
             </a>
             <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">

@@ -65,6 +65,7 @@
     }
   </script>
   <meta name="theme-color" content="#0A0F0D">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap">
   <link rel="stylesheet" href="/css/styles.css">
   <script src="/js/theme.js"></script>
   <link rel="icon" type="image/png" href="/assets/logo.png">
@@ -76,7 +77,7 @@
     <header class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line" id="nav">
     <div class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]">
       <a class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
-        <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
+        <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28">
         Diwan
       </a>
 
@@ -279,7 +280,7 @@
         </div>
         <div>
           <p class="text-[1.5rem] font-bold tracking-[-.02em]">4 platforms</p>
-          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Desktop builds on every plan; Android and iOS where your plan includes the app.</p>
+          <p class="mt-1.5 text-[.85rem] leading-[1.6] text-muted">Desktop builds on every plan; the Android app where your plan includes it.</p>
         </div>
         <div>
           <p class="text-[1.5rem] font-bold tracking-[-.02em]">Offline-first</p>
@@ -335,6 +336,12 @@
               Yes. Each licence covers an agreed number of devices, which our team can raise — or move you to a bigger plan — when you send a request from your dashboard.
             </p>
           </details>
+          <details class="group rounded-md border border-line bg-surface">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[.97rem] font-semibold [&::-webkit-details-marker]:hidden">Does Diwan integrate with FBR, PRA or SRB?<span aria-hidden="true" class="text-[1.3rem] font-normal text-accent transition-transform duration-200 ease-diwan group-open:rotate-45">+</span></summary>
+            <p class="border-t border-line px-6 py-5 text-[.9rem] leading-[1.7] text-muted">
+              No. Diwan does not report sales to FBR, PRA or SRB, and its receipts do not carry a tax-authority invoice number. If your shop must be integrated with a tax authority's POS system, check that before you buy, and email us if you are unsure.
+            </p>
+          </details>
         </div>
 
         <p class="mt-9 text-center"><a class="text-[.9rem] text-muted hover:text-accent" href="support.html">More answers in Docs &amp; Support →</a></p>
@@ -344,7 +351,7 @@
       <div class="mx-auto grid w-full max-w-[1180px] grid-cols-[1.1fr_1fr] items-start gap-12 px-[clamp(1.25rem,4vw,2rem)] max-[860px]:grid-cols-1">
         <div>
           <p class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent">Get started</p>
-          <h2 class="mb-4 max-w-[16ch] text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">Run your counter at the speed of typing.</h2>
+          <h2 class="mb-4 max-w-[16ch] text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]">Faster checkout for your shop.</h2>
           <p class="mb-7 max-w-[52ch] text-[1rem] leading-[1.7] text-muted">
             Pick a plan and send a request. Once we approve it, your licence key and installer are in your dashboard and inbox. First bill usually takes minutes, not days.
           </p>
@@ -363,7 +370,7 @@
           <p class="mb-5 text-[.9rem] text-muted">Paste your licence key to get a single-use installer link. No sign-in required.</p>
           <form class="flex flex-col gap-3" id="download-form">
             <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted">Licence key <input class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" type="text" name="license_key" required placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"></label>
-            <select class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" name="platform">
+            <select class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" aria-label="Platform" name="platform">
               <option value="windows:x64">Windows 64-bit (.exe)</option>
               <option value="windows:x86">Windows 32-bit (.exe)</option>
               <option value="macos:apple-silicon">macOS, Apple Silicon (.dmg)</option>
@@ -390,7 +397,7 @@
       <div class="grid gap-10 grid-cols-[1.4fr_1fr_1fr_1.3fr] max-[860px]:grid-cols-2 max-[860px]:gap-8 max-xs:grid-cols-1">
         <div class="max-[860px]:col-span-2">
           <a class="mb-[.9rem] inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
-            <img class="brand__mark" src="/assets/logo.png" alt="" width="28" height="28">
+            <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28">
             Diwan
           </a>
           <p class="max-w-[34ch] text-[.88rem] leading-[1.7] text-muted">
