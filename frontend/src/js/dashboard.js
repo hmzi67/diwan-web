@@ -315,7 +315,7 @@ function noteFor(order) {
     return '30-day free trial · One device · No payment required';
   }
   if (order.gateway === 'admin') {
-    return `${order.plan_name || 'Plan'} licence · approved by the Diwan team · up to ${plural(Number(order.max_devices || 1), 'device')}`;
+    return `${escapeHtml(order.plan_name || 'Plan')} licence · approved by the Diwan team · up to ${plural(Number(order.max_devices || 1), 'device')}`;
   }
   if (order.gateway === 'apple') {
     return order.license_status === 'revoked'

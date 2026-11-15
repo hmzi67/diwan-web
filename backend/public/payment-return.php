@@ -17,6 +17,11 @@ $paid = $order !== null && $order['status'] === 'paid';
 
 header('Content-Type: text/html; charset=utf-8');
 $safeRef = htmlspecialchars($orderRef, ENT_QUOTES, 'UTF-8');
+// Anyone holding the URL sees this page, and a reference is a timestamp plus 24
+// random bits: show enough of the address to reassure, not to disclose it.
+$email = (string) ($order['customer_email'] ?? '');
+$at = strrpos($email, '@');
+$maskedEmail = $at === false ? '' : mb_substr($email, 0, 1) . '•••' . substr($email, $at);
 ?>
 <!doctype html>
 <meta charset="utf-8">
@@ -26,7 +31,7 @@ $safeRef = htmlspecialchars($orderRef, ENT_QUOTES, 'UTF-8');
 <main style="padding:4rem 1.5rem;max-width:640px;margin:0 auto">
 <?php if ($paid): ?>
   <h1>Payment received</h1>
-  <p>Your licence key is on its way to <strong><?= htmlspecialchars((string) $order['customer_email'], ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+  <p>Your licence key is on its way to <strong><?= htmlspecialchars($maskedEmail, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
   <p>Order reference: <code><?= $safeRef ?></code></p>
   <p><a class="btn" href="/#download">Go to downloads</a></p>
 <?php else: ?>

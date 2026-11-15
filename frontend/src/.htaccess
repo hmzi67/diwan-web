@@ -12,6 +12,15 @@ DirectoryIndex index.html index.php
   # HTTPS answers on the apex and www (checked 2026-11-15). Browsers cache this for a year.
   # No includeSubDomains: staging or other hosts under this name may not all have HTTPS.
   Header always set Strict-Transport-Security "max-age=31536000"
+  # Scripts only from this site: an injected <script> or inline handler never runs.
+  #  - 'unsafe-eval': the mascot's library (js/lib/avatar-web-*.js) validates its character
+  #    with ajv, which compiles validators with new Function. Drop it if the mascot goes.
+  #  - style 'unsafe-inline': a few style="" attributes in the pages and dashboard.
+  #  - no form-action: checkout posts to the payment gateway, which redirects on to hosts
+  #    we do not control; a form-action list would break payments on such a hop.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set X-Permitted-Cross-Domain-Policies "none"
 </IfModule>
 
 # Account, checkout and admin pages carry <meta name="robots" content="noindex">;

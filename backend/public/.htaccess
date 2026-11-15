@@ -23,9 +23,21 @@ DirectoryIndex index.php
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "no-referrer"
+  # Responses are JSON or a file stream: nothing here should ever run as a page.
+  Header always set Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Permitted-Cross-Domain-Policies "none"
   # Download links must never be cached by a proxy.
   Header always set Cache-Control "no-store"
 </IfModule>
+
+# The one HTML page here (where the browser lands after paying): the site's
+# stylesheet and the inline style on its <main>, still no scripts.
+<Files "payment-return.php">
+  <IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'none'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
+  </IfModule>
+</Files>
 
 # Large installers stream through download.php; give them room.
 <IfModule mod_php.c>
