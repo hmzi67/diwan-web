@@ -112,6 +112,40 @@ if ($checks['database'] ?? false) {
     }
 }
 
+// Migrations are applied by hand, so a deploy can run code ahead of its schema.
+// One table or column per sync-era migration: a missing 018 made every counter
+// push fail (sync_rows.field_versions) while this endpoint still said "ok".
+if ($checks['database']) {
+    $checks['schema'] = false;
+    try {
+        $markers = [
+            '013_pos_data_sync'                       => ['pos_sales', null],
+            '014_pos_full_records'                    => ['pos_records', null],
+            '015_pos_tenders_and_record_privacy'      => ['pos_sales', 'cash_minor'],
+            '016_plans_admin_and_license_requests'    => ['plans', null],
+            '017_business_workspaces_and_counter_sync' => ['sync_rows', null],
+            '018_media_merge_and_load'                => ['sync_rows', 'field_versions'],
+        ];
+        $present = Database::pdo()->prepare(
+            'SELECT COUNT(*) FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t AND (:c1 IS NULL OR COLUMN_NAME = :c2)'
+        );
+        $missing = [];
+        foreach ($markers as $migration => [$table, $column]) {
+            $present->execute(['t' => $table, 'c1' => $column, 'c2' => $column]);
+            if ((int) $present->fetchColumn() === 0) {
+                $missing[] = $migration;
+            }
+        }
+        $checks['schema'] = $missing === [];
+        if ($missing !== []) {
+            $hints['migrations_missing'] = $missing;
+        }
+    } catch (Throwable $e) {
+        $hints['schema'] = 'unreadable';
+    }
+}
+
 $ok = !in_array(false, $checks, true);
 
 $body = [

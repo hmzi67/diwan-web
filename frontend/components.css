@@ -967,19 +967,7 @@ a.stat:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, var(--c
 .data-table td { padding: .85rem .9rem; border-bottom: 1px solid var(--color-line); color: var(--color-ink); white-space: nowrap; }
 .data-table tbody tr:hover { background: var(--color-surface-hi); }
 .data-table td code { font-family: var(--font-mono); font-size: .82rem; color: var(--color-accent); }
-.pos-record-filters {
-  display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(12rem, 2fr) repeat(2, minmax(8rem, 1fr));
-  gap: .75rem; padding: 1rem 0; align-items: end;
-}
-.pos-record-filters label { display: grid; gap: .35rem; color: var(--color-muted); font-size: .78rem; font-weight: 600; }
-.pos-record-filters input, .pos-record-filters select {
-  min-width: 0; padding: .65rem .75rem; color: var(--color-ink); background: var(--color-surface);
-  border: 1px solid var(--color-line-hi); border-radius: .55rem; font: inherit;
-}
 .panel__note { margin: .25rem 0 0; color: var(--color-muted); font-size: .82rem; font-weight: 400; }
-@media (max-width: 760px) {
-  .pos-record-filters { grid-template-columns: 1fr 1fr; }
-}
 .badge--method { display: inline-block; padding: .2rem .55rem; border-radius: var(--radius-pill); font-size: .74rem; font-weight: 600; text-transform: uppercase; background: var(--color-surface-hi); border: 1px solid var(--color-line); }
 .badge--cash { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 35%, transparent); }
 .badge--card { color: #82aaff; border-color: rgba(130, 170, 255, 0.35); }
