@@ -3,6 +3,7 @@
 @import "tailwindcss";
 @import "./components.css";
 @source "./src";
+@source not "./src/js/lib";
 
 /* ==========================================================================
    Design tokens. Every colour, radius and easing value lives here; the markup
