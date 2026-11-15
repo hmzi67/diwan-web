@@ -109,10 +109,9 @@
           id="nav-links"
           aria-label="Primary"
         >
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/">Home</a>
           <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/features.html">Features</a>
-          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/products.html">Products</a>
           <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/pricing.html" aria-current="page">Pricing</a>
-          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/support.html">Docs &amp; Support</a>
           <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/contact.html">Contact</a>
           <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base min-[961px]:hidden" href="/auth/login.html">Log in</a>
           <a class="mt-1 rounded-2xl bg-accent px-4 py-3 text-center text-base font-semibold text-accent-ink transition-colors hover:bg-accent-hi sm:hidden" href="/pricing.html">Get Started</a>
@@ -184,95 +183,6 @@
       </section>
 
       <!-- ================= 10. GET STARTED + DOWNLOAD ================= -->
-      <section
-        class="border-t border-line py-[clamp(4.5rem,9vw,8rem)]"
-        id="download"
-      >
-        <div
-          class="mx-auto grid w-full max-w-[1180px] grid-cols-[1.1fr_1fr] items-start gap-12 px-[clamp(1.25rem,4vw,2rem)] max-[860px]:grid-cols-1"
-        >
-          <div>
-            <p
-              class="mb-4 text-[.76rem] font-semibold uppercase tracking-[.14em] text-accent"
-            >
-              Get started
-            </p>
-            <h2
-              class="mb-4 max-w-[16ch] text-[clamp(1.9rem,4vw,2.7rem)] tracking-[-.03em]"
-            >
-              Run your counter at the speed of typing.
-            </h2>
-            <p class="mb-7 max-w-[52ch] text-[1rem] leading-[1.7] text-muted">
-              Pick a plan and send a request. Once we approve it, your licence key and installer are in your dashboard and inbox. First bill usually takes minutes, not days.
-            </p>
-            <div class="flex flex-wrap gap-3">
-              <a
-                class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-7 py-[.95rem] text-[1rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
-                href="#pricing"
-                >See plans &amp; pricing</a
-              >
-              <a
-                class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-line-hi bg-transparent px-7 py-[.95rem] text-[1rem] font-semibold text-ink transition duration-200 ease-diwan hover:border-accent-dim hover:bg-surface-hi"
-                href="contact.html"
-                >Talk to us</a
-              >
-            </div>
-            <p class="mt-6 text-[.84rem] text-faint">
-              Support Monday to Saturday, 10:00am &ndash; 7:00pm PKT ·
-              <a class="hover:text-accent" href="tel:+923143288112"
-                >0314 3288112</a
-              >
-            </p>
-          </div>
-
-          <div
-            class="rounded-lg border border-line bg-surface p-7 max-[860px]:mt-2"
-          >
-            <h3 class="mb-1 text-[1.15rem] tracking-[-.01em]">
-              Already purchased?
-            </h3>
-            <p class="mb-5 text-[.9rem] text-muted">
-              Paste your licence key to get a single-use installer link. No
-              sign-in required.
-            </p>
-            <form class="flex flex-col gap-3" id="download-form">
-              <label class="flex flex-col gap-[.35rem] text-[.85rem] text-muted"
-                >Licence key
-                <input
-                  class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none"
-                  type="text"
-                  name="license_key"
-                  required
-                  placeholder="DIWAN-XXXX-XXXX-XXXX-XXXX"
-              /></label>
-              <select
-                class="rounded-sm border border-line bg-canvas px-4 py-[.8rem] text-[.95rem] text-ink focus:border-accent-dim focus:outline-none" aria-label="Platform"
-                name="platform"
-              >
-                <option value="windows:x64">Windows 64-bit (.exe)</option>
-                <option value="windows:x86">Windows 32-bit (.exe)</option>
-                <option value="macos:apple-silicon">macOS, Apple Silicon (.dmg)</option>
-                <option value="macos:intel">macOS, Intel (.dmg)</option>
-                <option value="linux:appimage">Linux, any distribution (.AppImage)</option>
-                <option value="linux:deb">Linux, Ubuntu/Debian (.deb)</option>
-                <option value="linux:rpm">Linux, Fedora/RHEL (.rpm)</option>
-                <option value="android">Android (.apk)</option>
-              </select>
-              <button
-                class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
-                type="submit"
-              >
-                Get download link
-              </button>
-            </form>
-            <p
-              class="min-h-6 text-[.9rem] text-muted"
-              id="download-status"
-              role="status"
-            ></p>
-          </div>
-        </div>
-      </section>
       <section class="border-y border-line bg-elevated">
         <div
           class="mx-auto grid w-full max-w-[1180px] grid-cols-4 gap-8 px-[clamp(1.25rem,4vw,2rem)] py-10 max-[760px]:grid-cols-2 max-[760px]:gap-y-7"
