@@ -1,13 +1,14 @@
-// Diwan's helper: a page guide that hops beside the section being read, thinks,
-// then says one short line about it, and watches the form fields (moves to the
-// one in focus, frowns at an invalid value, smiles at a valid one). Drawn by
-// @bible-strong/avatar-web (vendored in js/lib/, MIT). The character is the
-// Avatar Lab export diwan-dark.avatar.json, inlined because .htaccess refuses
-// to serve .json. A module, so nothing here is global.
+// Diwan's helper: a page guide that glides beside the section being read,
+// thinks, then says one short line about it, and watches the form fields: it
+// stands on the one in focus, gets angry at a wrong value (shakes, turns red)
+// and cheers once it is fixed. Drawn by @bible-strong/avatar-web (vendored in
+// js/lib/, MIT). The character is the Avatar Lab export diwan-dark.avatar.json,
+// inlined because .htaccess refuses to serve .json. A module, so nothing here
+// is global.
 //
 // Not on phones: there is no room beside anything, and they are spared the
-// 70 KB download. Reduced motion: the library holds a still picture, lines
-// appear whole, and the base stylesheet turns the hops into jumps.
+// 70 KB download. Reduced motion: the library holds a still picture, the
+// helper jumps instead of gliding, and lines appear whole without pops.
 const HIDDEN_KEY = 'diwan-helper-hidden';
 let hiddenByVisitor = false;
 try { hiddenByVisitor = sessionStorage.getItem(HIDDEN_KEY) === '1'; } catch {}
@@ -54,25 +55,39 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
     license_key: 'Paste your licence key to get your installer link.',
     message: "Take your time, I'm listening.",
   };
+  // Said, crossly, about a field with a wrong value.
+  const complaint = (el) => {
+    if (!el.value.trim()) return 'Hey! You skipped this one.';
+    if (el.type === 'email') return "Hey! That's not a real email.";
+    if (el.tagName === 'TEXTAREA' || el.validity.tooShort) return 'Too short! Tell us a bit more.';
+    return "Hmm! That's not right.";
+  };
 
   const off = new AbortController();   // every listener goes when the visitor hides the helper
   const on = (target, type, fn, opts = {}) => target.addEventListener(type, fn, { ...opts, signal: off.signal });
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
   const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
-  const hop = 'transition-transform duration-700 ease-[cubic-bezier(.34,1.4,.64,1)]';
+  // ── markup ───────────────────────────────────────────────────────────
   const root = document.createElement('div');
-  root.className = `group fixed top-0 left-0 z-40 drop-shadow-[0_0_22px_var(--color-glow)] ${hop}`;
+  root.className = 'group fixed top-0 left-0 z-40 drop-shadow-[0_0_22px_var(--color-glow)] transition-[filter] duration-500 will-change-transform data-[mood=angry]:drop-shadow-[0_0_26px_rgb(255_77_61/.6)]';
   root.innerHTML = `
     <button type="button" class="block cursor-pointer border-0 bg-transparent p-0" aria-label="Diwan helper"></button>
     <button type="button" class="absolute -top-1 -right-1 grid size-6 cursor-pointer place-items-center rounded-full border border-line bg-surface text-[.85rem] leading-none text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-ink focus-visible:opacity-100" aria-label="Hide the helper">&times;</button>`;
   const [hit, hideButton] = root.querySelectorAll('button');
 
+  // The outer box only moves; the card inside it pops, fades and changes colour.
   const bubble = document.createElement('div');
-  bubble.className = `fixed top-0 left-0 z-40 w-max max-w-[17rem] rounded-2xl bg-[#e9fff5] px-4 py-3 text-[.9rem] leading-snug font-medium text-[#04120c] shadow-[0_10px_40px_-12px_rgb(0_229_160/.5)] ${hop}`;
+  bubble.className = 'fixed top-0 left-0 z-40 will-change-transform';
   bubble.hidden = true;
-  bubble.innerHTML = '<p aria-hidden="true"></p><a class="mt-2 inline-block rounded-full bg-[#04120c] px-3 py-1.5 text-[.82rem] font-semibold text-white hover:bg-black" hidden></a>';
-  const [said, act] = bubble.children;
+  bubble.innerHTML = `
+    <div class="relative w-max max-w-[17rem] rounded-2xl bg-[#e9fff5] px-4 py-3 text-[.9rem] leading-snug font-medium text-[#04120c] shadow-[0_14px_40px_-14px_rgb(0_229_160/.6),0_0_0_1px_rgb(0_229_160/.3)] transition-[background-color,color,box-shadow] duration-300 data-[mood=angry]:bg-[#ffebe8] data-[mood=angry]:text-[#5c0e07] data-[mood=angry]:shadow-[0_14px_40px_-14px_rgb(255_77_61/.65),0_0_0_1px_rgb(255_77_61/.4)]">
+      <span class="absolute size-3.5 rotate-45 rounded-[3px] bg-inherit"></span>
+      <p class="relative" aria-hidden="true"></p>
+      <a class="relative mt-2 inline-block rounded-full bg-[#04120c] px-3 py-1.5 text-[.82rem] font-semibold text-white transition-colors hover:bg-black" hidden></a>
+    </div>`;
+  const card = bubble.firstElementChild;
+  const [tail, said, act] = card.children;
   const live = document.createElement('p');   // screen readers get the whole line once, not every typed letter
   live.className = 'sr-only';
   live.setAttribute('aria-live', 'polite');
@@ -85,7 +100,46 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   const react = (state, ms) => {
     clearTimeout(back);
     mascot.setState(state);
-    if (ms) back = setTimeout(() => mascot.setState('idle'), ms);
+    root.dataset.mood = state === 'angry' ? 'angry' : '';
+    if (ms) back = setTimeout(() => react('idle'), ms);
+  };
+
+  // ── motion: a spring towards the goal, the bubble riding along ─────────
+  // Stiffness and damping give a quick glide with a small overshoot.
+  const K = 140, D = 16;
+  let x = innerWidth - S - EDGE, y = innerHeight - S - EDGE;   // starts in the corner, glides in
+  let gx = x, gy = y, vx = 0, vy = 0, raf = 0, last = 0;
+  let bw = 0, bh = 0;   // the card's size, measured when its text changes
+
+  const draw = () => {
+    root.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    if (bubble.hidden) return;
+    const bx = clamp(x + S * 0.55, EDGE, innerWidth - bw - EDGE);
+    const above = y - bh - 14 >= TOP;
+    const by = above ? y - bh - 14 : y + S + 14;
+    const tailX = clamp(x + S / 2 - bx - 7, 14, bw - 28);   // the tail points at the helper
+    bubble.style.transform = `translate3d(${bx}px, ${by}px, 0)`;
+    tail.style.left = `${tailX}px`;
+    tail.style.top = above ? '' : '-6px';
+    tail.style.bottom = above ? '-6px' : '';
+    card.style.transformOrigin = `${tailX + 7}px ${above ? '100%' : '0%'}`;
+  };
+  const step = (now) => {
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    vx += (K * (gx - x) - D * vx) * dt;
+    vy += (K * (gy - y) - D * vy) * dt;
+    x += vx * dt;
+    y += vy * dt;
+    if (Math.abs(gx - x) + Math.abs(gy - y) < 0.5 && Math.abs(vx) + Math.abs(vy) < 5) {
+      x = gx; y = gy; vx = vy = 0; raf = 0;
+    } else raf = requestAnimationFrame(step);
+    draw();
+  };
+  const moveTo = (nx, ny) => {
+    gx = nx; gy = ny;
+    if (reduced) { x = gx; y = gy; draw(); }
+    else if (!raf) { last = performance.now(); raf = requestAnimationFrame(step); }
   };
 
   // ── where it stands ──────────────────────────────────────────────────
@@ -103,25 +157,18 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   };
 
   const place = () => {
-    let x = innerWidth - S - EDGE, y = innerHeight - S - EDGE;   // no anchor: the corner
+    let nx = innerWidth - S - EDGE, ny = innerHeight - S - EDGE;   // no anchor: the corner
     if (anchor) {
       const r = boxOf(anchor);
-      x = r.right + 20;
-      y = r.top + r.height / 2 - S / 2;
+      nx = r.right + 20;
+      ny = r.top + r.height / 2 - S / 2;
       // A heading with no room on its right: its left. A field never goes left (the
       // field beside it is there); it, or a heading with no room either, gets the
       // helper standing on its top edge, at its right end.
-      if (x > innerWidth - S - EDGE && /^H\d$/.test(anchor.tagName)) x = r.left - S - 20;
-      if (x < EDGE || x > innerWidth - S - EDGE) { x = r.right - S; y = r.top - S + 14; }
+      if (nx > innerWidth - S - EDGE && /^H\d$/.test(anchor.tagName)) nx = r.left - S - 20;
+      if (nx < EDGE || nx > innerWidth - S - EDGE) { nx = r.right - S; ny = r.top - S + 14; }
     }
-    x = clamp(x, EDGE, innerWidth - S - EDGE);
-    y = clamp(y, TOP, innerHeight - S - EDGE);
-    root.style.transform = `translate(${x}px, ${y}px)`;
-    if (!bubble.hidden) {
-      let by = y - bubble.offsetHeight - 10;
-      if (by < TOP) by = y + S + 10;
-      bubble.style.transform = `translate(${clamp(x + S * 0.55, EDGE, innerWidth - bubble.offsetWidth - EDGE)}px, ${by}px)`;
-    }
+    moveTo(clamp(nx, EDGE, innerWidth - S - EDGE), clamp(ny, TOP, innerHeight - S - EDGE));
   };
 
   // The section being read: the last one whose top is above the middle of the window.
@@ -142,70 +189,126 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
 
   // ── talking ──────────────────────────────────────────────────────────
   let talk = 0, hushTimer;
-  const hush = () => { talk++; clearTimeout(hushTimer); bubble.hidden = true; };
-  const say = async ({ text, action }) => {
+  const measure = () => { bw = card.offsetWidth; bh = card.offsetHeight; draw(); };
+  const pop = () => {
+    if (!bubble.hidden) return measure();
+    bubble.hidden = false;
+    measure();
+    if (!reduced) card.animate(
+      [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }],
+      { duration: 340, easing: 'cubic-bezier(.34,1.56,.64,1)' },
+    );
+  };
+  const hush = () => {
     const me = ++talk;
     clearTimeout(hushTimer);
-    act.hidden = true;
-    bubble.style.width = '';
-    said.textContent = '…';
-    bubble.hidden = false;
-    place();
-    react('curious');   // thinks first
-    await wait(reduced ? 0 : 700);
-    if (me !== talk) return;
-    live.textContent = text;
-    react('happy', 1500);
-    // Sized for the whole line first, so typing never pushes the bubble off screen.
-    said.textContent = text;
-    bubble.style.width = `${bubble.offsetWidth}px`;
-    place();
-    if (!reduced) for (let i = 1; i <= text.length; i++) {
-      said.textContent = text.slice(0, i);
-      await wait(22);
-      if (me !== talk) return;
-    }
-    if (action) { [act.textContent, act.href] = action; act.hidden = false; }
-    place();
-    hushTimer = setTimeout(hush, 7000);
+    if (bubble.hidden) return;
+    if (reduced) { bubble.hidden = true; return; }
+    card.animate(
+      [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.85)' }],
+      { duration: 180, easing: 'ease-in' },
+    ).onfinish = () => { if (me === talk) bubble.hidden = true; };
   };
-  on(bubble, 'pointerenter', () => clearTimeout(hushTimer));
-  on(bubble, 'pointerleave', () => { if (!bubble.hidden) hushTimer = setTimeout(hush, 2500); });
+  // A normal line is thought about ("…"), then typed. An angry one bursts out whole.
+  const say = async ({ text, action, angry = false }) => {
+    const me = ++talk;
+    clearTimeout(hushTimer);
+    card.dataset.mood = angry ? 'angry' : '';
+    act.hidden = true;
+    act.style.visibility = '';
+    card.style.width = '';
+    said.textContent = angry ? text : '…';
+    pop();
+    if (!angry) {
+      react('curious');
+      await wait(reduced ? 0 : 650);
+      if (me !== talk) return;
+      react('happy', 1500);
+    }
+    live.textContent = text;
+    // Sized for the whole line first, so typing never reshapes or moves the bubble.
+    said.textContent = text;
+    card.style.width = `${card.offsetWidth}px`;
+    if (action) { [act.textContent, act.href] = action; act.hidden = false; }
+    measure();
+    if (!reduced && !angry) {
+      act.style.visibility = 'hidden';
+      for (let i = 1; i <= text.length; i++) {
+        said.textContent = text.slice(0, i);
+        await wait(22);
+        if (me !== talk) return;
+      }
+      act.style.visibility = '';
+    }
+    hushTimer = setTimeout(hush, angry ? 4500 : 7000);
+  };
+  on(card, 'pointerenter', () => clearTimeout(hushTimer));
+  on(card, 'pointerleave', () => { if (!bubble.hidden) hushTimer = setTimeout(hush, 2500); });
   on(act, 'click', hush);
 
   // ── fields ───────────────────────────────────────────────────────────
-  let warnedAt = -Infinity;
   const watched = (el) => el.matches?.('input, textarea, select') && el.type !== 'hidden'
     && el.tabIndex >= 0 && !el.closest('[aria-hidden="true"]');   // never the honeypot
+  // contact.js's email rule: the browser's alone lets "name@shop" through.
+  const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const wrong = (el) => !el.validity.valid || (el.type === 'email' && !!el.value && !EMAIL.test(el.value.trim()));
+  const SHAKE =[0, -8, 8, -6, 6, -3, 0].map((px) => ({ transform: `translateX(${px}px) rotate(${px / 2}deg)` }));
+  let warnedAt = -Infinity, lookBack;
+
+  // Cross at a field: goes to it, shakes, turns red, says what is wrong.
+  const scold = (el) => {
+    if (performance.now() - warnedAt < 400) return;   // one submit can flag several fields: the first is enough
+    warnedAt = performance.now();
+    // Cheers when it is fixed, but only for a wrong format: a skipped field
+    // would count as fixed at its first letter.
+    const v = el.validity;
+    if ((el.type === 'email' && el.value) || v.typeMismatch || v.patternMismatch || v.tooShort) el.helperFlagged = true;
+    anchor = el;
+    place();
+    react('angry', 2800);
+    if (!reduced) hit.animate(SHAKE, { duration: 520, easing: 'ease-in-out' });
+    say({ text: complaint(el), angry: true });
+    clearTimeout(lookBack);   // then back to whichever field is in focus
+    lookBack = setTimeout(() => { if (field) { anchor = field; place(); } }, 2800);
+  };
+
   on(document, 'focusin', (e) => {
     if (!watched(e.target)) return;
-    field = anchor = e.target;
+    field = e.target;
+    if (performance.now() - warnedAt < 2500) return;   // still pointing at the field it is cross about
+    anchor = field;
+    place();
     react('listening');
     const line = FIELD_LINES[field.name] ?? FIELD_LINES[field.type];
-    // A warning about the field just left is still showing: let it be read first.
-    if (line && !field.helperSaid && performance.now() - warnedAt > 3000) { field.helperSaid = true; say({ text: line }); } else place();
+    if (line && !field.helperSaid) { field.helperSaid = true; say({ text: line }); }
   });
   on(document, 'focusout', (e) => {
     if (e.target !== field) return;
     const el = field;
     field = null;
     if (el.value && el.type !== 'radio' && el.type !== 'checkbox') {
-      if (el.validity.valid) react('happy', 1800);
-      else {
-        warnedAt = performance.now();
-        react('confused', 2500);
-        say({ text: el.type === 'email' ? 'Hmm, that email looks off.' : 'Hmm, check that last field.' });
-      }
+      if (wrong(el)) return scold(el);
+      react('happy', 1800);
     } else react('idle');
     follow();
   });
-  // A submit the browser refused: go to the first field it complains about.
-  on(document, 'invalid', (e) => {
-    if (!watched(e.target) || e.target === field) return;
-    anchor = e.target;
-    react('confused', 2500);
-    say({ text: 'This one needs a look.' });
-  }, { capture: true });
+  // A field it was cross about, now right: cheers up.
+  on(document, 'input', (e) => {
+    const el = e.target;
+    if (!el.helperFlagged || !el.value || wrong(el)) return;
+    el.helperFlagged = false;
+    react('happy', 1800);
+    mascot.poke('bounce');
+    say({ text: "That's better, thank you!" });
+  });
+  // A submit the browser refused…
+  on(document, 'invalid', (e) => { if (watched(e.target)) scold(e.target); }, { capture: true });
+  // …or one a page script refused (contact.js marks the field aria-invalid).
+  const marks = new MutationObserver((records) => {
+    const el = records.find((r) => r.target.getAttribute('aria-invalid') === 'true' && watched(r.target))?.target;
+    if (el) scold(el);
+  });
+  marks.observe(document.body, { subtree: true, attributeFilter: ['aria-invalid'] });
 
   // ── scrolling, the pointer, idling ───────────────────────────────────
   let queued = false, lastY = scrollY, glance;
@@ -226,7 +329,7 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
 
   // Primary buttons (bg-accent) and the pricing cards' buttons.
   on(document, 'pointerover', (e) => {
-    if (e.target.closest?.('a.bg-accent, button.bg-accent, .plan__cta')) react('excited', 2000);
+    if (root.dataset.mood !== 'angry' && e.target.closest?.('a.bg-accent, button.bg-accent, .plan__cta')) react('excited', 2000);
   });
 
   // Dozes after 25 s without input, sleeps 25 s later; any input wakes it.
@@ -246,8 +349,10 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   on(hideButton, 'click', () => {
     try { sessionStorage.setItem(HIDDEN_KEY, '1'); } catch {}
     off.abort();
-    hush();
-    [back, quiet, glance].forEach(clearTimeout);
+    marks.disconnect();
+    talk++;
+    [back, quiet, glance, hushTimer, lookBack].forEach(clearTimeout);
+    cancelAnimationFrame(raf);
     mascot.destroy();
     root.remove();
     bubble.remove();

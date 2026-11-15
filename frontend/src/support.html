@@ -71,33 +71,59 @@
 <body>
   <a class="absolute -left-[9999px] z-[100] rounded-sm bg-accent px-[1.1rem] py-[.7rem] text-accent-ink focus:left-[clamp(1.25rem,4vw,2rem)] focus:top-3" href="#main">Skip to content</a>
 
-    <header class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line" id="nav">
-    <div class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]">
-      <a class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
-        <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28">
-        Diwan
-      </a>
+    <header class="group/nav sticky top-0 z-50 px-[clamp(.75rem,3vw,1.5rem)] pt-3" id="nav">
+      <div
+        class="relative mx-auto flex w-full max-w-[1180px] items-center gap-3 rounded-full border border-line/70 bg-canvas/70 py-2 pr-2 pl-5 shadow-[inset_0_1px_0_rgb(255_255_255/.04)] backdrop-blur-xl backdrop-saturate-150 transition-[background-color,border-color,box-shadow] duration-300 ease-diwan group-data-[stuck=true]/nav:border-line-hi group-data-[stuck=true]/nav:bg-surface/80 group-data-[stuck=true]/nav:shadow-[0_18px_40px_-24px_rgb(0_0_0/.8),inset_0_1px_0_rgb(255_255_255/.05)] max-[480px]:pl-4"
+      >
+        <div class="flex flex-1">
+          <a class="brand inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
+            <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28" />
+            Diwan
+          </a>
+        </div>
 
-      <nav class="flex items-center gap-1 rounded-full border border-line bg-surface p-[.3rem] max-[860px]:absolute max-[860px]:inset-x-[clamp(1.25rem,4vw,2rem)] max-[860px]:top-[calc(100%_+_0.5rem)] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[.15rem] max-[860px]:rounded-md max-[860px]:bg-elevated max-[860px]:p-2 max-[860px]:shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]" id="nav-links" aria-label="Primary">
-        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="features.html">Features</a>
-        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="products.html">Products</a>
-        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="pricing.html">Pricing</a>
-        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="support.html" aria-current="page">Docs &amp; Support</a>
-        <a class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink" href="contact.html">Contact</a>
-      </nav>
+        <nav
+          class="flex items-center gap-0.5 transition-[opacity,translate] duration-200 ease-diwan max-[960px]:absolute max-[960px]:inset-x-0 max-[960px]:top-[calc(100%+.6rem)] max-[960px]:flex-col max-[960px]:items-stretch max-[960px]:gap-1 max-[960px]:rounded-3xl max-[960px]:border max-[960px]:border-line max-[960px]:bg-surface max-[960px]:p-2 max-[960px]:shadow-[0_30px_60px_-24px_rgb(0_0_0/.85)] max-[960px]:backdrop-blur-xl max-[960px]:starting:-translate-y-2 max-[960px]:starting:opacity-0"
+          id="nav-links"
+          aria-label="Primary"
+        >
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/features.html">Features</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/products.html">Products</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/pricing.html">Pricing</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/support.html" aria-current="page">Docs &amp; Support</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/contact.html">Contact</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base min-[961px]:hidden" href="/auth/login.html">Log in</a>
+          <a class="mt-1 rounded-2xl bg-accent px-4 py-3 text-center text-base font-semibold text-accent-ink transition-colors hover:bg-accent-hi sm:hidden" href="/pricing.html">Get Started</a>
+        </nav>
 
-      <div class="flex items-center gap-2">
-        <a class="px-3 py-2 text-[.92rem] text-muted hover:text-ink max-[860px]:hidden" href="/auth/login.html">Log in</a>
-        <a class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]" href="pricing.html">Get Started</a>
-        <button class="hidden size-10 cursor-pointer place-items-center rounded-sm border border-line bg-surface p-0 text-ink max-[860px]:inline-grid" id="nav-toggle" type="button"
-                aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-            <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-        </button>
+        <div class="flex items-center justify-end gap-1.5 min-[961px]:flex-1">
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:text-ink max-[960px]:hidden" href="/auth/login.html">Log in</a>
+          <a
+            class="group/cta inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-[.9rem] font-semibold text-accent-ink shadow-[inset_0_1px_0_rgb(255_255_255/.25),0_8px_24px_-12px_var(--color-accent)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[inset_0_1px_0_rgb(255_255_255/.25),0_12px_30px_-10px_var(--color-accent)] max-sm:hidden"
+            href="/pricing.html"
+          >
+            Get Started
+            <svg class="transition-transform duration-200 ease-diwan group-hover/cta:translate-x-0.5" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+          <button
+            class="group/menu hidden size-10 cursor-pointer place-items-center rounded-full border border-line bg-surface p-0 text-ink transition-colors duration-200 ease-diwan hover:border-line-hi max-[960px]:inline-grid"
+            id="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="nav-links"
+            aria-label="Menu"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+              <path class="origin-center transition duration-300 ease-diwan [transform-box:fill-box] group-aria-expanded/menu:translate-y-1 group-aria-expanded/menu:rotate-45" d="M3 5h12" />
+              <path class="transition-opacity duration-200 group-aria-expanded/menu:opacity-0" d="M3 9h12" />
+              <path class="origin-center transition duration-300 ease-diwan [transform-box:fill-box] group-aria-expanded/menu:-translate-y-1 group-aria-expanded/menu:-rotate-45" d="M3 13h12" />
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
   <main id="main">
     <section class="doc border-t border-line py-[clamp(4.5rem,9vw,8rem)]">

@@ -275,3 +275,35 @@
     color: var(--color-accent-dim);
   }
 }
+
+/* ==========================================================================
+   Glass. A faint wash of the accent colour sits behind the marketing pages
+   (the ones with the site header, #nav: not the dashboard or admin), and the
+   bordered surface panels on them turn translucent and blur it. Unlayered so
+   it wins over the bg-surface utility those panels already carry, which keeps
+   the markup unchanged. Form controls keep their own fill and focus border.
+   ========================================================================== */
+:root {
+  --glass-fill: color-mix(in oklab, var(--color-surface) 58%, transparent);
+  --glass-edge: color-mix(in oklab, var(--color-ink) 11%, transparent);
+  --glass-blur: blur(16px) saturate(150%);
+}
+body:has(#nav)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 34% at 10% 28%, var(--color-glow) 0%, transparent 70%),
+    radial-gradient(34% 30% at 92% 62%, var(--color-glow) 0%, transparent 70%),
+    radial-gradient(30% 26% at 45% 105%, var(--color-glow-soft) 0%, transparent 70%);
+}
+#nav + main .bg-surface.border:not(input, select, textarea) {
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+#nav + main .bg-surface.border-line:not(input, select, textarea) {
+  border-color: var(--glass-edge);
+}

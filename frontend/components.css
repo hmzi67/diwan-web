@@ -157,7 +157,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--color-surface);
+  background: var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
   padding: 2rem 1.75rem;
@@ -223,7 +225,7 @@
   border-color: color-mix(in srgb, var(--plan-tint) 32%, var(--color-line));
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--plan-tint) 9%, transparent), transparent 42%),
-    var(--color-surface);
+    var(--glass-fill);
 }
 .plan[class*="plan--"]::before {
   content: "";

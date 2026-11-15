@@ -62,7 +62,7 @@ downloadForm?.addEventListener('submit', async (e) => {
   const toggle = document.getElementById('nav-toggle');
   const links  = document.getElementById('nav-links');
   const nav    = document.getElementById('nav');
-  const mobile = () => window.matchMedia('(max-width: 860px)').matches;
+  const mobile = () => window.matchMedia('(max-width: 960px)').matches;   // the header's max-[960px] breakpoint
 
   function close() {
     if (!links || !toggle) return;
@@ -77,11 +77,13 @@ downloadForm?.addEventListener('submit', async (e) => {
   });
 
   links?.addEventListener('click', (e) => { if (e.target.tagName === 'A') close(); });
+  // A tap outside the open mobile menu closes it.
+  document.addEventListener('click', (e) => { if (links && !links.hidden && mobile() && !nav?.contains(e.target)) close(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
   window.addEventListener('resize', close);
   close();
 
-  // Border appears only once the page has scrolled past the nav.
+  // The bar firms up (edge, fill, shadow) once the page has scrolled under it.
   if (nav) {
     const onScroll = () => nav.setAttribute('data-stuck', String(window.scrollY > 8));
     window.addEventListener('scroll', onScroll, { passive: true });

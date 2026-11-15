@@ -133,85 +133,54 @@
       >Skip to content</a
     >
 
-    <header
-      class="sticky top-0 z-50 border-b border-transparent bg-canvas/78 py-4 backdrop-blur-[14px] transition-colors duration-300 ease-diwan data-[stuck=true]:border-line"
-      id="nav"
-    >
+    <header class="group/nav sticky top-0 z-50 px-[clamp(.75rem,3vw,1.5rem)] pt-3" id="nav">
       <div
-        class="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-[clamp(1.25rem,4vw,2rem)]"
+        class="relative mx-auto flex w-full max-w-[1180px] items-center gap-3 rounded-full border border-line/70 bg-canvas/70 py-2 pr-2 pl-5 shadow-[inset_0_1px_0_rgb(255_255_255/.04)] backdrop-blur-xl backdrop-saturate-150 transition-[background-color,border-color,box-shadow] duration-300 ease-diwan group-data-[stuck=true]/nav:border-line-hi group-data-[stuck=true]/nav:bg-surface/80 group-data-[stuck=true]/nav:shadow-[0_18px_40px_-24px_rgb(0_0_0/.8),inset_0_1px_0_rgb(255_255_255/.05)] max-[480px]:pl-4"
       >
-        <a
-          class="mr-auto inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]"
-          href="/"
-        >
-          <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28" />
-          Diwan
-        </a>
+        <div class="flex flex-1">
+          <a class="brand inline-flex items-center gap-[.55rem] text-[1.15rem] font-bold tracking-[-.02em]" href="/">
+            <img class="brand__mark" src="/assets/logo-56.png" alt="" width="28" height="28" />
+            Diwan
+          </a>
+        </div>
 
         <nav
-          class="flex items-center gap-1 rounded-full border border-line bg-surface p-[.3rem] max-[860px]:absolute max-[860px]:inset-x-[clamp(1.25rem,4vw,2rem)] max-[860px]:top-[calc(100%_+_0.5rem)] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[.15rem] max-[860px]:rounded-md max-[860px]:bg-elevated max-[860px]:p-2 max-[860px]:shadow-[0_24px_50px_-20px_rgba(0,0,0,.9)]"
+          class="flex items-center gap-0.5 transition-[opacity,translate] duration-200 ease-diwan max-[960px]:absolute max-[960px]:inset-x-0 max-[960px]:top-[calc(100%+.6rem)] max-[960px]:flex-col max-[960px]:items-stretch max-[960px]:gap-1 max-[960px]:rounded-3xl max-[960px]:border max-[960px]:border-line max-[960px]:bg-surface max-[960px]:p-2 max-[960px]:shadow-[0_30px_60px_-24px_rgb(0_0_0/.85)] max-[960px]:backdrop-blur-xl max-[960px]:starting:-translate-y-2 max-[960px]:starting:opacity-0"
           id="nav-links"
           aria-label="Primary"
         >
-          <a
-            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
-            href="features.html"
-            >Features</a
-          >
-          <a
-            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
-            href="products.html"
-            >Products</a
-          >
-          <a
-            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
-            href="pricing.html"
-            >Pricing</a
-          >
-          <a
-            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
-            href="support.html"
-            >Docs &amp; Support</a
-          >
-          <a
-            class="rounded-full px-4 py-2 text-[.92rem] text-muted transition-colors duration-[180ms] ease-diwan hover:bg-surface-hi hover:text-ink"
-            href="contact.html"
-            >Contact</a
-          >
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/features.html">Features</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/products.html">Products</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/pricing.html">Pricing</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/support.html">Docs &amp; Support</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base" href="/contact.html">Contact</a>
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:bg-surface-hi hover:text-ink aria-[current=page]:bg-surface-hi aria-[current=page]:text-ink max-[960px]:rounded-2xl max-[960px]:px-4 max-[960px]:py-3 max-[960px]:text-base min-[961px]:hidden" href="/auth/login.html">Log in</a>
+          <a class="mt-1 rounded-2xl bg-accent px-4 py-3 text-center text-base font-semibold text-accent-ink transition-colors hover:bg-accent-hi sm:hidden" href="/pricing.html">Get Started</a>
         </nav>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center justify-end gap-1.5 min-[961px]:flex-1">
+          <a class="rounded-full px-3.5 py-2 text-[.9rem] text-muted whitespace-nowrap transition-colors duration-200 ease-diwan hover:text-ink max-[960px]:hidden" href="/auth/login.html">Log in</a>
           <a
-            class="px-3 py-2 text-[.92rem] text-muted hover:text-ink max-[860px]:hidden"
-            href="/auth/login.html"
-            >Log in</a
+            class="group/cta inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-[.9rem] font-semibold text-accent-ink shadow-[inset_0_1px_0_rgb(255_255_255/.25),0_8px_24px_-12px_var(--color-accent)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[inset_0_1px_0_rgb(255_255_255/.25),0_12px_30px_-10px_var(--color-accent)] max-sm:hidden"
+            href="/pricing.html"
           >
-          <a
-            class="inline-flex items-center justify-center gap-[.55rem] whitespace-nowrap rounded-full border border-transparent bg-accent px-6 py-[.8rem] text-[.95rem] font-semibold text-accent-ink shadow-[0_0_0_0_var(--color-glow)] transition duration-200 ease-diwan hover:-translate-y-px hover:bg-accent-hi hover:shadow-[0_8px_30px_-8px_var(--color-accent)]"
-            href="pricing.html"
-            >Get Started</a
-          >
+            Get Started
+            <svg class="transition-transform duration-200 ease-diwan group-hover/cta:translate-x-0.5" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
           <button
-            class="hidden size-10 cursor-pointer place-items-center rounded-sm border border-line bg-surface p-0 text-ink max-[860px]:inline-grid"
+            class="group/menu hidden size-10 cursor-pointer place-items-center rounded-full border border-line bg-surface p-0 text-ink transition-colors duration-200 ease-diwan hover:border-line-hi max-[960px]:inline-grid"
             id="nav-toggle"
             type="button"
             aria-expanded="false"
             aria-controls="nav-links"
             aria-label="Menu"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M2 5h14M2 9h14M2 13h14"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-              />
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+              <path class="origin-center transition duration-300 ease-diwan [transform-box:fill-box] group-aria-expanded/menu:translate-y-1 group-aria-expanded/menu:rotate-45" d="M3 5h12" />
+              <path class="transition-opacity duration-200 group-aria-expanded/menu:opacity-0" d="M3 9h12" />
+              <path class="origin-center transition duration-300 ease-diwan [transform-box:fill-box] group-aria-expanded/menu:-translate-y-1 group-aria-expanded/menu:-rotate-45" d="M3 13h12" />
             </svg>
           </button>
         </div>
@@ -497,103 +466,169 @@
             </p>
           </div>
 
-          <div
-            class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5"
-          >
+          <!-- Expanding cards: the one under the pointer (or keyboard focus) grows; below 900px
+               they stack with their details shown. Backgrounds are slices of the POS
+               screenshot the showcase video already uses. -->
+          <div class="flex h-[30rem] min-[900px]:-mx-1.5 max-[899px]:grid max-[899px]:h-auto max-[899px]:grid-cols-[repeat(auto-fit,minmax(260px,1fr))] max-[899px]:gap-4">
+
             <article
-              class="flex flex-col rounded-md border border-line bg-surface p-6"
+              class="group/card flex min-w-0 grow basis-0 outline-none transition-[flex-grow] duration-700 ease-[cubic-bezier(.22,1,.36,1)] min-[900px]:px-1.5 max-[899px]:min-h-[24rem] min-[900px]:hover:grow-[3.4] min-[900px]:focus-visible:grow-[3.4] min-[900px]:has-[:focus-visible]:grow-[3.4]"
+              tabindex="0"
+              aria-labelledby="feature-01"
             >
-              <p
-                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              <div
+                class="relative isolate flex w-full flex-col justify-end overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#06100c] p-6 text-white shadow-[0_24px_60px_-34px_rgb(0_0_0/.9)] transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:border-accent/45 group-hover/card:shadow-[0_0_60px_-18px_var(--color-accent)] group-focus-visible/card:border-accent group-has-[:focus-visible]/card:border-accent/45"
               >
-                Feature 01
-              </p>
-              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
-                Keyboard-first billing
-              </h3>
-              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
-                Nine quick-item slots, a running bill that updates as you type,
-                and no mouse required to close a sale.
-              </p>
-              <ul
-                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
-              >
-                <li>Quick items on keys 1&ndash;9</li>
-                <li><code>Ctrl + Enter</code> places the order</li>
-                <li><code>Ctrl + K</code> prints the token</li>
-              </ul>
+                <div
+                  class="absolute inset-0 -z-10 bg-[url(/assets/video/diwan-pos-showcase-poster.jpg)] bg-[length:auto_118%] bg-[position:38%_42%] bg-no-repeat opacity-60 transition-[scale,opacity] duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:scale-[1.06] group-hover/card:opacity-85"
+                  aria-hidden="true"
+                ></div>
+                <div class="absolute inset-0 -z-10 bg-[linear-gradient(to_top,#04100b_10%,rgb(4_16_11/.86)_42%,rgb(4_16_11/.2)_78%,rgb(4_16_11/.5))] max-[899px]:bg-[linear-gradient(to_top,#04100b_40%,rgb(4_16_11/.92)_70%,rgb(4_16_11/.7))]" aria-hidden="true"></div>
+
+                <span class="absolute top-5 left-5 grid size-11 place-items-center rounded-2xl border border-white/15 bg-white/10 text-accent shadow-[inset_0_1px_0_rgb(255_255_255/.12)] backdrop-blur-md" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+                </span>
+                <span class="absolute top-6 right-6 font-mono text-[.72rem] tracking-[.08em] text-white/55">01</span>
+
+                <h3 id="feature-01" class="text-[1.3rem] leading-[1.2] font-semibold tracking-[-.02em]">Keyboard-first billing</h3>
+                <div class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:grid-rows-[1fr] group-hover/card:grid-rows-[1fr] group-focus-visible/card:grid-rows-[1fr] group-has-[:focus-visible]/card:grid-rows-[1fr]">
+                  <div class="min-h-0 overflow-hidden">
+                    <div class="w-[24rem] opacity-0 transition-opacity duration-500 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:w-auto max-[899px]:opacity-100 group-hover/card:opacity-100 group-hover/card:delay-150 group-focus-visible/card:opacity-100 group-has-[:focus-visible]/card:opacity-100">
+                      <p class="pt-2 text-[.9rem] font-medium text-accent">Close a sale without the mouse</p>
+                      <p class="mt-3 text-[.9rem] leading-[1.6] text-white/75">Nine quick-item slots, a running bill that updates as you type, and no mouse required to close a sale.</p>
+                      <ul class="mt-4 flex flex-col gap-2 text-[.85rem] text-white/80 [&_kbd]:rounded [&_kbd]:border [&_kbd]:border-white/15 [&_kbd]:bg-white/10 [&_kbd]:px-1.5 [&_kbd]:font-mono [&_kbd]:text-[.78rem]">
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Quick items on keys 1&ndash;9</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span><kbd>Ctrl + Enter</kbd> places the order</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span><kbd>Ctrl + K</kbd> prints the token</span></li>
+                      </ul>
+                      <a class="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-[.85rem] font-semibold text-accent-ink transition hover:bg-accent-hi" href="/features.html">
+                        Learn more
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </article>
 
             <article
-              class="flex flex-col rounded-md border border-line bg-surface p-6"
+              class="group/card flex min-w-0 grow basis-0 outline-none transition-[flex-grow] duration-700 ease-[cubic-bezier(.22,1,.36,1)] min-[900px]:px-1.5 max-[899px]:min-h-[24rem] min-[900px]:hover:grow-[3.4] min-[900px]:focus-visible:grow-[3.4] min-[900px]:has-[:focus-visible]:grow-[3.4]"
+              tabindex="0"
+              aria-labelledby="feature-02"
             >
-              <p
-                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              <div
+                class="relative isolate flex w-full flex-col justify-end overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#06100c] p-6 text-white shadow-[0_24px_60px_-34px_rgb(0_0_0/.9)] transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:border-accent/45 group-hover/card:shadow-[0_0_60px_-18px_var(--color-accent)] group-focus-visible/card:border-accent group-has-[:focus-visible]/card:border-accent/45"
               >
-                Feature 02
-              </p>
-              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
-                Tables, tokens &amp; bills
-              </h3>
-              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
-                Open a bill against a table, print a token, and keep several
-                tables in flight at once without losing a running total.
-              </p>
-              <ul
-                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
-              >
-                <li>Per-table running bills</li>
-                <li>Instant token printing</li>
-                <li>Switch tables from the keyboard</li>
-              </ul>
+                <div
+                  class="absolute inset-0 -z-10 bg-[url(/assets/video/diwan-pos-showcase-poster.jpg)] bg-[length:auto_118%] bg-[position:90%_30%] bg-no-repeat opacity-60 transition-[scale,opacity] duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:scale-[1.06] group-hover/card:opacity-85"
+                  aria-hidden="true"
+                ></div>
+                <div class="absolute inset-0 -z-10 bg-[linear-gradient(to_top,#04100b_10%,rgb(4_16_11/.86)_42%,rgb(4_16_11/.2)_78%,rgb(4_16_11/.5))] max-[899px]:bg-[linear-gradient(to_top,#04100b_40%,rgb(4_16_11/.92)_70%,rgb(4_16_11/.7))]" aria-hidden="true"></div>
+
+                <span class="absolute top-5 left-5 grid size-11 place-items-center rounded-2xl border border-white/15 bg-white/10 text-accent shadow-[inset_0_1px_0_rgb(255_255_255/.12)] backdrop-blur-md" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                </span>
+                <span class="absolute top-6 right-6 font-mono text-[.72rem] tracking-[.08em] text-white/55">02</span>
+
+                <h3 id="feature-02" class="text-[1.3rem] leading-[1.2] font-semibold tracking-[-.02em]">Tables, tokens &amp; bills</h3>
+                <div class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:grid-rows-[1fr] group-hover/card:grid-rows-[1fr] group-focus-visible/card:grid-rows-[1fr] group-has-[:focus-visible]/card:grid-rows-[1fr]">
+                  <div class="min-h-0 overflow-hidden">
+                    <div class="w-[24rem] opacity-0 transition-opacity duration-500 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:w-auto max-[899px]:opacity-100 group-hover/card:opacity-100 group-hover/card:delay-150 group-focus-visible/card:opacity-100 group-has-[:focus-visible]/card:opacity-100">
+                      <p class="pt-2 text-[.9rem] font-medium text-accent">Many tables, one counter</p>
+                      <p class="mt-3 text-[.9rem] leading-[1.6] text-white/75">Open a bill against a table, print a token, and keep several tables in flight at once without losing a running total.</p>
+                      <ul class="mt-4 flex flex-col gap-2 text-[.85rem] text-white/80 [&_kbd]:rounded [&_kbd]:border [&_kbd]:border-white/15 [&_kbd]:bg-white/10 [&_kbd]:px-1.5 [&_kbd]:font-mono [&_kbd]:text-[.78rem]">
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Per-table running bills</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Instant token printing</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Switch tables from the keyboard</span></li>
+                      </ul>
+                      <a class="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-[.85rem] font-semibold text-accent-ink transition hover:bg-accent-hi" href="/features.html">
+                        Learn more
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </article>
 
             <article
-              class="flex flex-col rounded-md border border-line bg-surface p-6"
+              class="group/card flex min-w-0 grow basis-0 outline-none transition-[flex-grow] duration-700 ease-[cubic-bezier(.22,1,.36,1)] min-[900px]:px-1.5 max-[899px]:min-h-[24rem] min-[900px]:hover:grow-[3.4] min-[900px]:focus-visible:grow-[3.4] min-[900px]:has-[:focus-visible]:grow-[3.4]"
+              tabindex="0"
+              aria-labelledby="feature-03"
             >
-              <p
-                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              <div
+                class="relative isolate flex w-full flex-col justify-end overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#06100c] p-6 text-white shadow-[0_24px_60px_-34px_rgb(0_0_0/.9)] transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:border-accent/45 group-hover/card:shadow-[0_0_60px_-18px_var(--color-accent)] group-focus-visible/card:border-accent group-has-[:focus-visible]/card:border-accent/45"
               >
-                Feature 03
-              </p>
-              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
-                Receipt &amp; kitchen printers
-              </h3>
-              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
-                Customer receipts and kitchen chits from the same terminal, on
-                USB or network printers, on every plan.
-              </p>
-              <ul
-                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
-              >
-                <li>Receipt printer support</li>
-                <li>Kitchen / order chit printing</li>
-                <li>USB and network printers</li>
-              </ul>
+                <div
+                  class="absolute inset-0 -z-10 bg-[url(/assets/video/diwan-pos-showcase-poster.jpg)] bg-[length:auto_118%] bg-[position:92%_88%] bg-no-repeat opacity-60 transition-[scale,opacity] duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:scale-[1.06] group-hover/card:opacity-85"
+                  aria-hidden="true"
+                ></div>
+                <div class="absolute inset-0 -z-10 bg-[linear-gradient(to_top,#04100b_10%,rgb(4_16_11/.86)_42%,rgb(4_16_11/.2)_78%,rgb(4_16_11/.5))] max-[899px]:bg-[linear-gradient(to_top,#04100b_40%,rgb(4_16_11/.92)_70%,rgb(4_16_11/.7))]" aria-hidden="true"></div>
+
+                <span class="absolute top-5 left-5 grid size-11 place-items-center rounded-2xl border border-white/15 bg-white/10 text-accent shadow-[inset_0_1px_0_rgb(255_255_255/.12)] backdrop-blur-md" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>
+                </span>
+                <span class="absolute top-6 right-6 font-mono text-[.72rem] tracking-[.08em] text-white/55">03</span>
+
+                <h3 id="feature-03" class="text-[1.3rem] leading-[1.2] font-semibold tracking-[-.02em]">Receipt &amp; kitchen printers</h3>
+                <div class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:grid-rows-[1fr] group-hover/card:grid-rows-[1fr] group-focus-visible/card:grid-rows-[1fr] group-has-[:focus-visible]/card:grid-rows-[1fr]">
+                  <div class="min-h-0 overflow-hidden">
+                    <div class="w-[24rem] opacity-0 transition-opacity duration-500 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:w-auto max-[899px]:opacity-100 group-hover/card:opacity-100 group-hover/card:delay-150 group-focus-visible/card:opacity-100 group-has-[:focus-visible]/card:opacity-100">
+                      <p class="pt-2 text-[.9rem] font-medium text-accent">Receipts and chits on every plan</p>
+                      <p class="mt-3 text-[.9rem] leading-[1.6] text-white/75">Customer receipts and kitchen chits from the same terminal, on USB or network printers, on every plan.</p>
+                      <ul class="mt-4 flex flex-col gap-2 text-[.85rem] text-white/80 [&_kbd]:rounded [&_kbd]:border [&_kbd]:border-white/15 [&_kbd]:bg-white/10 [&_kbd]:px-1.5 [&_kbd]:font-mono [&_kbd]:text-[.78rem]">
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Receipt printer support</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Kitchen / order chit printing</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>USB and network printers</span></li>
+                      </ul>
+                      <a class="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-[.85rem] font-semibold text-accent-ink transition hover:bg-accent-hi" href="/features.html">
+                        Learn more
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </article>
 
             <article
-              class="flex flex-col rounded-md border border-line bg-surface p-6"
+              class="group/card flex min-w-0 grow basis-0 outline-none transition-[flex-grow] duration-700 ease-[cubic-bezier(.22,1,.36,1)] min-[900px]:px-1.5 max-[899px]:min-h-[24rem] min-[900px]:hover:grow-[3.4] min-[900px]:focus-visible:grow-[3.4] min-[900px]:has-[:focus-visible]:grow-[3.4]"
+              tabindex="0"
+              aria-labelledby="feature-04"
             >
-              <p
-                class="mb-[.6rem] font-mono text-[.72rem] tracking-[.08em] text-faint"
+              <div
+                class="relative isolate flex w-full flex-col justify-end overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#06100c] p-6 text-white shadow-[0_24px_60px_-34px_rgb(0_0_0/.9)] transition-[border-color,box-shadow] duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:border-accent/45 group-hover/card:shadow-[0_0_60px_-18px_var(--color-accent)] group-focus-visible/card:border-accent group-has-[:focus-visible]/card:border-accent/45"
               >
-                Feature 04
-              </p>
-              <h3 class="mb-2 text-[1.02rem] tracking-[-.01em]">
-                Billing &amp; inventory
-              </h3>
-              <p class="mb-4 text-[.88rem] leading-[1.65] text-muted">
-                Every sale decrements stock as it is rung up. Core billing and
-                inventory are in every plan, not an upgrade.
-              </p>
-              <ul
-                class="dots flex flex-col gap-[.45rem] [&>li]:flex [&>li]:gap-[.55rem] [&>li]:text-[.84rem] [&>li]:text-muted"
-              >
-                <li>Item and price management</li>
-                <li>Stock decremented per sale</li>
-                <li>The count on the shelf matches the screen</li>
-              </ul>
+                <div
+                  class="absolute inset-0 -z-10 bg-[url(/assets/video/diwan-pos-showcase-poster.jpg)] bg-[length:auto_118%] bg-[position:3%_40%] bg-no-repeat opacity-60 transition-[scale,opacity] duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:scale-[1.06] group-hover/card:opacity-85"
+                  aria-hidden="true"
+                ></div>
+                <div class="absolute inset-0 -z-10 bg-[linear-gradient(to_top,#04100b_10%,rgb(4_16_11/.86)_42%,rgb(4_16_11/.2)_78%,rgb(4_16_11/.5))] max-[899px]:bg-[linear-gradient(to_top,#04100b_40%,rgb(4_16_11/.92)_70%,rgb(4_16_11/.7))]" aria-hidden="true"></div>
+
+                <span class="absolute top-5 left-5 grid size-11 place-items-center rounded-2xl border border-white/15 bg-white/10 text-accent shadow-[inset_0_1px_0_rgb(255_255_255/.12)] backdrop-blur-md" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>
+                </span>
+                <span class="absolute top-6 right-6 font-mono text-[.72rem] tracking-[.08em] text-white/55">04</span>
+
+                <h3 id="feature-04" class="text-[1.3rem] leading-[1.2] font-semibold tracking-[-.02em]">Billing &amp; inventory</h3>
+                <div class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:grid-rows-[1fr] group-hover/card:grid-rows-[1fr] group-focus-visible/card:grid-rows-[1fr] group-has-[:focus-visible]/card:grid-rows-[1fr]">
+                  <div class="min-h-0 overflow-hidden">
+                    <div class="w-[24rem] opacity-0 transition-opacity duration-500 ease-[cubic-bezier(.22,1,.36,1)] max-[899px]:w-auto max-[899px]:opacity-100 group-hover/card:opacity-100 group-hover/card:delay-150 group-focus-visible/card:opacity-100 group-has-[:focus-visible]/card:opacity-100">
+                      <p class="pt-2 text-[.9rem] font-medium text-accent">Stock that matches the shelf</p>
+                      <p class="mt-3 text-[.9rem] leading-[1.6] text-white/75">Every sale decrements stock as it is rung up. Core billing and inventory are in every plan, not an upgrade.</p>
+                      <ul class="mt-4 flex flex-col gap-2 text-[.85rem] text-white/80 [&_kbd]:rounded [&_kbd]:border [&_kbd]:border-white/15 [&_kbd]:bg-white/10 [&_kbd]:px-1.5 [&_kbd]:font-mono [&_kbd]:text-[.78rem]">
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Item and price management</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>Stock decremented per sale</span></li>
+                      <li class="flex gap-2"><svg class="mt-[.2rem] shrink-0 text-accent" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><span>The count on the shelf matches the screen</span></li>
+                      </ul>
+                      <a class="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-[.85rem] font-semibold text-accent-ink transition hover:bg-accent-hi" href="/features.html">
+                        Learn more
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </article>
           </div>
 
