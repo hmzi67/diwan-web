@@ -6,14 +6,17 @@
 // inlined because .htaccess refuses to serve .json. A module, so nothing here
 // is global.
 //
+// Its × tucks it into the bottom-right corner, only its head peeking out, for
+// the rest of the visit; a click on it brings it back.
+//
 // Not on phones: there is no room beside anything, and they are spared the
 // 70 KB download. Reduced motion: the library holds a still picture, the
 // helper jumps instead of gliding, and lines appear whole without pops.
-const HIDDEN_KEY = 'diwan-helper-hidden';
-let hiddenByVisitor = false;
-try { hiddenByVisitor = sessionStorage.getItem(HIDDEN_KEY) === '1'; } catch {}
+const TUCKED_KEY = 'diwan-helper-tucked';
+let startTucked = false;
+try { startTucked = sessionStorage.getItem(TUCKED_KEY) === '1'; } catch {}
 
-if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
+if (matchMedia('(min-width: 640px)').matches) {
   const { createAvatar } = await import('./lib/avatar-web-1.1.0.js');
 
   const character = {
@@ -73,7 +76,7 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   root.className = 'group fixed top-0 left-0 z-40 drop-shadow-[0_0_22px_var(--color-glow)] transition-[filter] duration-500 will-change-transform data-[mood=angry]:drop-shadow-[0_0_26px_rgb(255_77_61/.6)]';
   root.innerHTML = `
     <button type="button" class="block cursor-pointer border-0 bg-transparent p-0" aria-label="Diwan helper"></button>
-    <button type="button" class="absolute -top-1 -right-1 grid size-6 cursor-pointer place-items-center rounded-full border border-line bg-surface text-[.85rem] leading-none text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-ink focus-visible:opacity-100" aria-label="Hide the helper">&times;</button>`;
+    <button type="button" class="absolute -top-1 -right-1 grid size-6 cursor-pointer place-items-center rounded-full border border-line bg-surface text-[.85rem] leading-none text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-ink focus-visible:opacity-100 group-data-[tucked=true]:hidden" aria-label="Hide the helper">&times;</button>`;
   const [hit, hideButton] = root.querySelectorAll('button');
 
   // The outer box only moves; the card inside it pops, fades and changes colour.
@@ -107,7 +110,11 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   // ── motion: a spring towards the goal, the bubble riding along ─────────
   // Stiffness and damping give a quick glide with a small overshoot.
   const K = 140, D = 16;
-  let x = innerWidth - S - EDGE, y = innerHeight - S - EDGE;   // starts in the corner, glides in
+  // Tucked: only the top of its head shows above the window's bottom edge, a
+  // little more while hovered or focused.
+  const PEEK = 0.4, PEEK_HOVER = 0.55;
+  let tucked = startTucked, peeking = false;
+  let x = innerWidth - S - EDGE, y = tucked ? innerHeight - S * PEEK : innerHeight - S - EDGE;   // the corner; glides in from there
   let gx = x, gy = y, vx = 0, vy = 0, raf = 0, last = 0;
   let bw = 0, bh = 0;   // the card's size, measured when its text changes
 
@@ -157,6 +164,7 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   };
 
   const place = () => {
+    if (tucked) return moveTo(innerWidth - S - EDGE, innerHeight - S * (peeking ? PEEK_HOVER : PEEK));
     let nx = innerWidth - S - EDGE, ny = innerHeight - S - EDGE;   // no anchor: the corner
     if (anchor) {
       const r = boxOf(anchor);
@@ -173,7 +181,7 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
 
   // The section being read: the last one whose top is above the middle of the window.
   const follow = () => {
-    if (!field && sections.length) {
+    if (!tucked && !field && sections.length) {
       let s = sections[0];
       for (const t of sections) if (t.el.getBoundingClientRect().top < innerHeight / 2) s = t;
       anchor = s.heading;
@@ -257,7 +265,7 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
 
   // Cross at a field: goes to it, shakes, turns red, says what is wrong.
   const scold = (el) => {
-    if (performance.now() - warnedAt < 400) return;   // one submit can flag several fields: the first is enough
+    if (tucked || performance.now() - warnedAt < 400) return;   // one submit can flag several fields: the first is enough
     warnedAt = performance.now();
     // Cheers when it is fixed, but only for a wrong format: a skipped field
     // would count as fixed at its first letter.
@@ -273,7 +281,7 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   };
 
   on(document, 'focusin', (e) => {
-    if (!watched(e.target)) return;
+    if (tucked || !watched(e.target)) return;
     field = e.target;
     if (performance.now() - warnedAt < 2500) return;   // still pointing at the field it is cross about
     anchor = field;
@@ -295,7 +303,7 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   // A field it was cross about, now right: cheers up.
   on(document, 'input', (e) => {
     const el = e.target;
-    if (!el.helperFlagged || !el.value || wrong(el)) return;
+    if (tucked || !el.helperFlagged || !el.value || wrong(el)) return;
     el.helperFlagged = false;
     react('happy', 1800);
     mascot.poke('bounce');
@@ -325,7 +333,41 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   on(window, 'scroll', onScroll, { passive: true });
   on(window, 'resize', onScroll);
 
-  on(hit, 'click', () => { react('laughing', 2500); mascot.poke('bounce'); say({ text: 'Hehe, that tickles!' }); });
+  // ── tucked away ──────────────────────────────────────────────────────
+  const setTucked = (on) => {
+    tucked = on;
+    try { on ? sessionStorage.setItem(TUCKED_KEY, '1') : sessionStorage.removeItem(TUCKED_KEY); } catch {}
+    root.dataset.tucked = String(on);
+    hit.setAttribute('aria-label', on ? 'Show the Diwan helper' : 'Diwan helper');
+  };
+  const tuck = () => {
+    setTucked(true);
+    hush();
+    clearTimeout(lookBack);
+    field = null;
+    react('shy', 1400);
+    place();
+  };
+  const untuck = () => {
+    setTucked(false);
+    peeking = false;
+    react('waking');
+    mascot.poke('bounce');
+    follow();
+    say({ text: "I'm back! Let's keep going." });
+  };
+  const peek = (up) => { if (tucked && peeking !== up) { peeking = up; place(); } };
+  for (const [type, up] of [['pointerenter', true], ['pointerleave', false], ['focus', true], ['blur', false]]) {
+    on(hit, type, () => peek(up));
+  }
+  on(hideButton, 'click', tuck);
+
+  on(hit, 'click', () => {
+    if (tucked) return untuck();
+    react('laughing', 2500);
+    mascot.poke('bounce');
+    say({ text: 'Hehe, that tickles!' });
+  });
 
   // Primary buttons (bg-accent) and the pricing cards' buttons.
   on(document, 'pointerover', (e) => {
@@ -336,29 +378,17 @@ if (matchMedia('(min-width: 640px)').matches && !hiddenByVisitor) {
   let quiet, nudged = false;
   const rouse = () => {
     clearTimeout(quiet);
-    if (mascot.getState().state === 'sleeping') { react('waking'); say({ text: "Oh! You're back. Hi!" }); }
+    if (mascot.getState().state === 'sleeping') { react('waking'); if (!tucked) say({ text: "Oh! You're back. Hi!" }); }
     else if (mascot.getState().state === 'drowsy') react('waking');
     quiet = setTimeout(() => {
       react('drowsy');
-      if (!nudged) { nudged = true; say({ text: "Still there? Take your time, I'll wait." }); }
+      if (!nudged && !tucked) { nudged = true; say({ text: "Still there? Take your time, I'll wait." }); }
       quiet = setTimeout(() => { hush(); react('sleeping'); }, 25000);
     }, 25000);
   };
   for (const type of ['pointermove', 'keydown', 'scroll']) on(window, type, rouse, { passive: true });
 
-  on(hideButton, 'click', () => {
-    try { sessionStorage.setItem(HIDDEN_KEY, '1'); } catch {}
-    off.abort();
-    marks.disconnect();
-    talk++;
-    [back, quiet, glance, hushTimer, lookBack].forEach(clearTimeout);
-    cancelAnimationFrame(raf);
-    mascot.destroy();
-    root.remove();
-    bubble.remove();
-    live.remove();
-  });
-
+  if (tucked) setTucked(true);   // tucked on an earlier page this visit
   rouse();
   follow();
 }
